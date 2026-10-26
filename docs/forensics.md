@@ -53,6 +53,22 @@ ssh deb-h61 'tail -60 ~/Desktop/pdd-runs/<日期>/<场次>/run.log'
 [calibration.md](calibration.md) 第四节，读结果时必须记住（尤其是"replay 只跑一轮"那条，
 `FIND_RETRY_bag=12` 的轮播扫描它复现不了）。
 
+**想拿一帧按别的 key 判定，得改文件名，不能只加 `--label`。** 判定用的 key 来自证据名
+`<秒数>-<key>-<轮次>.png`，`--label <key> <词...>` 只覆盖那个 key 的 `ALIAS_`，
+不会把别的帧拽过来判 —— 所以 `--label done ...` 配一批 `count-prove-bag` 帧，跑出来的是
+`bag`/`pend` 那几个 key 的账，`done` 一行都不出。10-26 数误报面时的做法是把帧复制成
+`<秒数>-done-1.png` 再放进展窗目录，这样区域闸门、`OCR_PSM_BAND_done` 那些档位走的都是线上同一套：
+
+```sh
+mkdir -p /tmp/batch/$(date +%F)/2231
+cp <某帧>.png /tmp/batch/$(date +%F)/2231/101133-done-1.png
+~/Desktop/pdd.sh replay /tmp/batch --ocr --size 720x1280      # 目录给到「日期」那一层
+```
+
+还有一条读法上的坑：汇总行在 10-26 之前只数 xml/ocr/coord/miss，**`band` 档不进总数**
+（修在 [pdd.sh:1863](../pdd.sh#L1863)），所以一批靠裁片认到的帧会在汇总里"消失"，
+把修复读成没修复；逐帧那行的 `band` 一直是对的，两处数字不一致时先怀疑汇总行那半。
+
 ## 两件已知的耗时与噪音
 
 1. **bag 那一步在恢复路径上会白烧约 90 秒**：`FIND_RETRY_bag=12 × FIND_INTERVAL_bag=3`。

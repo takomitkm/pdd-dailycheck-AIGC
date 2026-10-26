@@ -232,6 +232,13 @@ OCR_PSM_BAND=7
 # 全局加 6 会让 band 在 light/take 那几颗深底胶囊上提前出命中，把 pill_pass 挤掉
 # （10-10 矩阵：light 的 band 档 0/12、胶囊反色档 9/12），这个代价没实测过，不担。
 OCR_PSM_BAND_browse="7 6"
+# 同一把钥匙开第二把锁：只给 done 这一个键也补 psm 6。10-25/10-26 两天 rc=5 的那一屏
+# 顶部写着「5折 最高减15元 已使用」（券已经用掉了，进度行整行没了），band 档现档 psm 7
+# 读不出这一行 —— 拿存下的 12 帧离线量：裁 REGION_done + 放大 3 倍，psm 7 全空、psm 6 12/12
+# 命中，点恒在 (622,268)，分数 3。线上配置不动的话，这一档在同样 12 帧里只认到 4 帧
+# （走的是整页 psm 6 那一档，band 补不上）。理由和 browse 同一条：不动全局 OCR_PSM_BAND，
+# 因为 pick() 取文件顺序第一个 in-region 命中，全局加 6 会挤掉 light/take 那两颗深底胶囊的 pill 档。
+OCR_PSM_BAND_done="7 6"
 ABORT_IF_LOCKED=true                # 锁屏有密码时直接放弃，不瞎点
 CHECK_DONE_BEFORE=light             # 点「立即点亮」之前先读一遍屏幕，判断是哪种状态
 # 活动页上那行进度提示是能机器核对的证据：09-26 实测「7天内再点亮4次」点完变 3。
@@ -255,6 +262,7 @@ RECOVERY_NO_COORD=true
 VERIFY_WHY=
 PEND_SEEN=                        # 屏幕上读到「任务已完成/待兑换」那一档，本轮没得可点
 PEND_LABEL=                       # finder 命中的那几个字
+DONE_WORD=                        # 读到 done 那一档时屏幕上那几个字，进推送前压掉 OCR 塞的字间空格；日志仍留原文
 PEND_LINE=                        # 整页 OCR 抄下来的那一整句，进推送正文用
 PEND_DAYS=                        # 「N天后可兑换」里的 N，读不到就留空，绝不猜
 PAUSE_WRITTEN=                    # 这次写进 $PAUSE_FILE 的倒数天数，一个字都没写就留空
@@ -1059,6 +1067,15 @@ proof_ok() { # 轮播位那一格点对了才会落到活动页：进度行读�
     log CHECK "$1 点完读不到进度行，但屏幕上写着「$PEND_LABEL」：任务已完成、奖励在等人兑换"
     return 0
   fi
+  # 10-25/10-26 两天各 3 枪全栽在这一档上，报的是 rc=5「PDD 失败」，而屏幕上根本没坏：
+  # 她把兑换到的券用掉了，顶部那一行换成「5折 最高减15元 已使用」，进度行整行没了、
+  # 「任务已完成/待兑换」那三句也一个都不在，pend 那条救不上。认到 done 那一档
+  # （已点亮/明日再来/明天再来/已使用）说明页面进对了、这一轮已经到头；到底算哪种终态，
+  # 交给下一步 light 的 CHECK_DONE_BEFORE 判，这里不替它下结论。
+  if text_present done; then
+    log CHECK "$1 点完读不到进度行，但屏幕上写着「$FIND_LABEL」：页面进对了，这一轮没得可点"
+    return 0
+  fi
   log FAIL "$1 点完读不到进度行，多半停在轮播的另一帧"
   return 1
 }
@@ -1386,7 +1403,8 @@ cmd_run() {
         back_on_page "$key" || { rc=$code; break; }
         # 只有站在点亮那一屏上才判状态：首页信息流里也可能冒出「已使用」三个字
         if text_present done; then
-          lit=1; log DONE "今天已经点过，算完成"; break
+          lit=1; DONE_WORD=${FIND_LABEL//[[:space:]]/}
+          log DONE "屏幕上写着「$FIND_LABEL」，算完成，没重复点"; break
         fi
         if text_present exchange; then
           lit=2; log WARN "屏幕上是立即兑换，这步得人来点"; break
@@ -1480,7 +1498,7 @@ $pend_msg
 证据 $RUN_DIR" ;;
     *) if [ "$rc" = 0 ]; then
          notify "PDD 完成 $(date +%m-%d)" \
-"$([ $lit -eq 1 ] && echo '屏幕上已经点过，没重复点' || echo '三步点完，活动页那行进度核实过 + 下滑跑完')
+"$([ $lit -eq 1 ] && echo "屏幕上写着「${DONE_WORD:-已点亮/已使用}」，没重复点，也没往下点" || echo '三步点完，活动页那行进度核实过 + 下滑跑完')
 步骤 $STEPS
 证据 $RUN_DIR"
        elif [ "$rc" = 6 ]; then
@@ -1838,10 +1856,12 @@ cmd_replay() {
   done
 
   printf '\n汇总（每帧 × 每个试过的 key）\n'
+  # band 档必须单独数出来：10-20 修好了逐帧那行（replay_frame 里 hit|ocr|band 一视同仁），
+  # 这行总数漏了 band，于是一批帧里 8 帧走裁片只报 4 帧 —— 又是"把修复读成没修复"。
   awk -F'\t' '{ c[$1"|"$2]++; if (!($1 in seen)) { seen[$1]=1; ord[++n]=$1 } }
     END { for (i=1;i<=n;i++) { x=ord[i]
-            printf "  %-10s 认到字 %d / 走 OCR %d / 退坐标 %d / 认不到 %d\n",
-                   x, c[x"|hit"], c[x"|ocr"], c[x"|coord"], c[x"|miss"] } }' \
+            printf "  %-10s 认到字 %d / 走 OCR %d / 走裁片 band %d / 退坐标 %d / 认不到 %d\n",
+                   x, c[x"|hit"], c[x"|ocr"], c[x"|band"], c[x"|coord"], c[x"|miss"] } }' \
     "$TMP/replay-sum.tsv"
   printf '\n三处别误读：\n'
   printf '  退坐标那几帧最脆 —— 坐标是照着一版版面量下来的，版面一跳就点到别的东西上（10-16 那晚点到的是百事可乐那张贴），verify_light 对纯坐标那一枪本来就是判失败的。\n'

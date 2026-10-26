@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 桩沙箱：不碰手机，把同仓库那份 pdd.sh 的分支矩阵走一遍（37 例）。
+# 桩沙箱：不碰手机，把同仓库那份 pdd.sh 的分支矩阵走一遍（39 例）。
 # 推荐从本机跑 scripts/run-sandbox.sh，它会连上传带加锁一起办了。
 # 直接在主机上跑：bash /tmp/pddsandbox/in/sbx.sh        # 全跑
 #                ONLY=happy-ocr bash .../sbx.sh      # 只跑一个
@@ -78,7 +78,7 @@ base() {
       -e "s#^PAUSE_FILE=.*#PAUSE_FILE=$dir/pause#" \
       "$SRC" >"$dir/pdd.sh"
   # 上面每条 sed 都是靠行首锚点匹配的。锚点一旦失配，最坏的不是"跑得慢"，
-  # 是推送端点 / 账本路径没被换掉 —— 37 个用例往真实 ServerChan 端点推 37 条，
+  # 是推送端点 / 账本路径没被换掉 —— 39 个用例往真实 ServerChan 端点推 39 条，
   # 还会读写桌面上那个真账本。所以这里当场验一遍，不通过就直接停整个沙箱。
   grep -q 'PUSH_URL=http://stub.push/send' "$dir/pdd.sh" \
     || { echo "沙箱自检失败：PUSH_URL 没被替换，停（绝不往外推）"; exit 1; }
@@ -209,6 +209,10 @@ T_PRIZE="$(row 恭喜提前锁定限时翻倍券 150 560 420 34)$NL"
 # 注意 row 的签名是「文本 left top w h」，一句一行：把两句话塞成一个参数会让 left 列变成中文，
 # 整份 TSV 解析失败，连 bag 那一行都跟着读不到（10-11 就这么翻过一次）。
 T_PEND="$(row 点亮任务已完成 150 250 300 34)$(row 3天后可兑换 460 250 200 34)$NL"
+# 10-25/10-26 真机：她把兑换到的券用掉了，活动页顶部那一行整行换成「5折 最高减15元 已使用」，
+# 进度行和 pend 那三句一个都不在 —— 两天各 3 枪判"停在轮播另一帧"，rc=5 报「PDD 失败」。
+# 这一行的命中中心实测在 (622,268)、分数 3，桩照同一个位置摆。
+T_USED="$(row 已使用 560 250 120 35)$NL"
 # 胶囊档的坐标在裁片自己的坐标系里：×2 那档要除以 2 再叠 429,235 的原点
 P2_LIGHT="$(row 立即点亮 200 100 145 20)$NL"
 P1_DONE="$(row 今日已点亮 100 40 72 30)$NL"
@@ -328,6 +332,23 @@ reset_env; export SBX_PEND_TEXT=$'点亮任务已完成 3天后可兑换' SBX_PE
   EXPECT_TAPS=2 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=3 EXPECT_TITLE='PDD 已点亮' \
     EXPECT_LOG='天数=3（psm 11 读出的）' \
     run_case pend-days-psm-fallback 0 4 yes
+# 10-25/10-26 真机那一屏：进度行读不到、pend 词面也不在，屏幕上只有「已使用」。
+# proof_ok 新加的那条救场必须接住它 —— 而且接到之后一个坐标都不许点：
+# 桩里那颗「已使用」给的是 (622,268)，COORD_light 是 (598,285)：x 差 622-598=24、y 差 285-268=17，
+# 哪天 done 读不到，兜底那一枪就落在这张卡的下方边缘上。
+reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_USED"; countfile '' '' '' '' ''
+  EXPECT_TAPS=2 EXPECT_CLOSE=1 EXPECT_BACKS=0 EXPECT_TITLE='PDD 完成' \
+  EXPECT_LOG='这一轮没得可点' EXPECT_NOLOG='light 用 coord' \
+  run_case used-terminal 0 1 yes
+# 同一屏的第二半：「已使用」这一行只有 band 档换到 psm 6 才读得到（真机 12 帧里 psm 7 全空、
+# psm 6 12/12）。cand.tsv 里故意不放这一行，7/11 两档回空 —— OCR_PSM_BAND_done 里少了 6，
+# 这一例就会退回 rc=5 那条老路。
+reset_env; export SBX_BAND_MISS="7 11"
+  tsvfile "$W/cand.tsv" "$T_SUB$T_BAG"; countfile '' '' '' '' ''
+  tsvfile "$W/band.tsv" "$(row 已使用 560 250 120 35)"
+  EXPECT_TAPS=2 EXPECT_CLOSE=1 EXPECT_BACKS=0 EXPECT_TITLE='PDD 完成' \
+  EXPECT_LOG='这一轮没得可点' EXPECT_NOLOG='light 用 coord' \
+  run_case used-band-psm6 0 1 yes
 # 10-11 的翻车路线：进度行读不到 -> BACK 重试，第二枪只剩固定坐标可退，这一枪被
 # RECOVERY_NO_COORD 拦下来。COORD_bag 现在是线上配置（10-20 删过又恢复），这一例不用再
 # 注——它和 bag-not-found 钉的是同一条流水的两半：那一条钉"主线开火"，这一条钉"闸门关得住"。

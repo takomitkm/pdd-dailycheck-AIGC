@@ -8,7 +8,7 @@
 | 1 | uiautomator XML | 匹配节点的 `text` / `content-desc` / `resource-id` | 控件自己暴露了文字 | 最快，PDD 大多数活动页不暴露 |
 | 2 | 整页 OCR psm 11 | 稀疏文字模式，只吐散落的字块 | 按钮、散落标签 | `OCR_PSM` |
 | 3 | 整页 OCR psm 6 | 整块文稿模式 | 一行的横幅 | `OCR_PSM_PAGE`；点亮那颗只有整页模式认得出，所以两档都得跑 |
-| 4 | band 裁片 | 裁 `REGION_<key>` + autocontrast + ×3，跑 `OCR_PSM_BAND` | 低对比横条 | 10-18 之前 browse 四档全瞎，只有 band psm 6 读得出 |
+| 4 | band 裁片 | 裁 `REGION_<key>` + autocontrast + ×3，跑 `OCR_PSM_BAND`（默认 7；`browse`、`done` 两把钥匙单独跑 `7 6`） | 低对比横条 | 10-18 之前 browse 四档全瞎，只有 band psm 6 读得出；10-26 的 `done` 同罪——券用掉之后顶部那行「已使用」psm 7 全空、psm 6 12/12 |
 | 5 | pill 紧框 | 裁 `PILL_<key>`，默认反色 + 硬阈值 120 + ×1 和 ×2 + psm 7；`PILL_MODE_<key>=color` 时只裁、不做任何预处理 | 小控件：深底白字用反色，靠颜色分开的用原色彩 | light 的 band 档 0/12、这一档 9/12 全对；频道页那颗抽福袋反过来：反色档 0/3、band 那套灰度+autocontrast 0/3，只有"什么都不做、直接裁"3/3 |
 | 6 | `COORD_<key>` | 比例兜底，分数恒 0 | 无字 artwork、或前五档全空；五颗要点的控件都配了（`subsidy` / `bag` / `light` / `take` / `dialog`），只有 `exchange` 按口径永远不配 | 看到它开火就该知道是"没认到字" |
 
@@ -31,6 +31,14 @@ psm = tesseract 的 page segmentation mode（页面分割模式）：11 当稀�
 `OCR_PSM_BAND` 从 7 改成 `7 6`。原因：全局加 6 会让 band 档在 light / take 那两颗深底胶囊上
 提前出命中，把真正管用的 pill 反色档挤掉（10-10 矩阵里 light 的 band 档 0/12、胶囊档 9/12）。
 这个代价没实测过，就不担。
+
+10-26 同一把钥匙开了第二把锁：`OCR_PSM_BAND_done="7 6"`。触发点是 10-25、10-26 连续两天各推
+一条「PDD 失败 退出码 5」，而实际上什么都没坏——她把兑换到的券用掉了，活动页顶部那行进度
+整个消失，换成一张「5折 最高减15元 已使用」的卡。`ALIAS_done` 里有「已使用」，但那一档读不到：
+裁 `REGION_done` + ×3、psm 7 在 12 帧里 0 命中，同一批帧换 psm 6 是 12/12，命中点恒在
+`(622,268)`。为什么不干脆把「已使用」当成"已经点过了"——因为它的意思正好相反（券用掉了，
+不是任务做过了），所以脚本只把它当"页面进对了、这一轮没得可点"，终态算哪一种仍然交给
+`CHECK_DONE_BEFORE` 判，账目见 [states-and-exit-codes.md](states-and-exit-codes.md)。
 
 改 psm 的规矩：**只按 key 加，加完必须跑双分辨率沙箱。**
 

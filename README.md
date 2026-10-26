@@ -11,15 +11,15 @@
 
 | 路径 | 是什么 |
 | --- | --- |
-| `pdd.sh` | 现役交付物，单文件 1854 行，直接放到跑自动化的那台 Debian 的 `~/Desktop/` |
+| `pdd.sh` | 现役交付物，单文件 1904 行，直接放到跑自动化的那台 Debian 的 `~/Desktop/` |
 | `systemd/pdd.service`、`systemd/pdd.timer` | 触发用的一次性服务和日历定时器（从主机上原样抄回） |
-| `sandbox/sbx.sh` | 桩沙箱：不碰手机，把 `pdd.sh` 的分支矩阵跑一遍，37 个用例 |
+| `sandbox/sbx.sh` | 桩沙箱：不碰手机，把 `pdd.sh` 的分支矩阵跑一遍，39 个用例 |
 | `sandbox/bin/{adb,tesseract,curl}` | 三个桩，只回话不执行；所有 `input` 事件记进 `$SBX_EVENTS` |
 | `githooks/pre-commit`、`githooks/pre-push`、`githooks/patterns.sh` | 凭据门禁，两道：提交前扫暂存区、推送前扫真要传上去的 blob |
 | `scripts/deploy.sh` | 备份 → `install -m 700` → 复查语法，在主机上跑 |
 | `scripts/run-sandbox.sh` | 把沙箱推到主机 `/tmp/pddsandbox/in` 并跑全矩阵 |
-| `scripts/negative-control.sh` | 负对照三条：故意把源码改坏一处，验证对应那条用例真会挂 |
-| `tools/` | 离线标定与取证用的小脚本，都只读已存下的证据，不碰手机 |
+| `scripts/negative-control.sh` | 负对照五条：故意把源码改坏一处，验证对应那条用例真会挂 |
+| `tools/` | 离线标定与取证用的小脚本，都只读已存下的证据，不碰手机。10-26 新增 `done-fp-scan.sh`：给「读到 done 就算页面进对了」那条救法数误报面，跑出来 333 帧命中 7 帧、全在活动页/终态屏 |
 | `docs/` | 标定配方、定位通道、沙箱验收、状态与退出码、失败取证 |
 
 ## 运行环境
@@ -76,7 +76,7 @@ pdd.sh replay <目录>   拿存下来的证据离线重跑判定，不碰手机
 
 比例给 **5 位小数**：3 位在 1440 宽的屏上有约 0.7px 的系统偏差，5 位折回像素才一个不差。
 写成越界值、写成像素、或多一段，脚本启动时直接 `exit 78` 并打印原值（校验在
-[pdd.sh:275](pdd.sh#L275)），不会默默点到 `(0,0)`。标定方法见
+[pdd.sh:294](pdd.sh#L294)），不会默默点到 `(0,0)`。标定方法见
 [docs/calibration.md](docs/calibration.md)。
 
 ## 定位顺序
@@ -88,6 +88,8 @@ autocontrast + ×3）→ pill 胶囊档（裁紧框，默认反色 + 硬阈值 1
 只有 `exchange`（立即兑换）按口径永远不配，那一枪必须由她手动打。`bag` 和 `take` 这两颗
 10-20 14:31 删过、15:15 又补回来，删与改各验了一遍，账目见 [docs/calibration.md](docs/calibration.md)。
 psm 是 tesseract 的 page segmentation mode，页面分割模式，决定它把图当成一栏还是一堆散字。
+band 档的 psm 默认全局 `7`，只有两把钥匙单独开了第二档 `7 6`：`browse`（10-18，浏览页那条低对比
+横幅）和 `done`（10-26，券用掉之后顶部那行「已使用」）——都是按 key 加、不动全局值。
 每一档是怎么量出来的、为什么不能改全局值，写在 [docs/locate-channels.md](docs/locate-channels.md)。
 
 ## 验收：改任何东西之前先跑沙箱
@@ -95,7 +97,7 @@ psm 是 tesseract 的 page segmentation mode，页面分割模式，决定它把
 ```sh
 bash scripts/run-sandbox.sh                                   # 720x1280，约 5 分钟
 SBX_SIZE=1440x2560 bash scripts/run-sandbox.sh                # 同一份标定数据换一块屏
-bash scripts/negative-control.sh                              # 三条负对照，每条都应当挂
+bash scripts/negative-control.sh                              # 五条负对照，每条都应当挂
 ```
 
 沙箱靠桩 `adb` 把点击事件记进文件，用例断言的是**点了什么、点几下、退出码、标记写没写、
@@ -108,7 +110,7 @@ app 关没关**，屏幕几何全部按 `SBX_SIZE` 折算。判据是 rc=0 且 `
 
 - 真凭据只有一个：ServerChan 的推送端点。地址本身就带 send token，等于口令，
   所以它只写在主机的 `~/Desktop/pdd-push.url` 第一行（权限 600），脚本运行时读
-  （[pdd.sh:249](pdd.sh#L249)）。读不到 = 没配推送：一条都不推，流程照跑。
+  （[pdd.sh:275](pdd.sh#L275)）。读不到 = 没配推送：一条都不推，流程照跑。
 - 轮换 token 只动那个文件，不改脚本、不进 git：
   `ssh deb-h61 'umask 077; printf "%s\n" "<新端点>" > ~/Desktop/pdd-push.url'`
 - 环境变量 `PUSH_URL` 优先于文件，沙箱和临时覆盖走这条。
@@ -148,32 +150,72 @@ app 关没关**，屏幕几何全部按 `SBX_SIZE` 折算。判据是 rc=0 且 `
    所以这颗中心没有第二次实测。它只在浮层那两行字被读到之后才可能打出（`take_prize_overlay`
    的唯一调用点被 `text_present prize` 挡着），浮层改版、按钮挪走的话这一枪会打在浮层底下那一屏，
    日志会写成「按量好的中心收」而不是「认到」，出得来这条就看得到它是盲的。
+9. `proof_ok` 第三条救法（[pdd.sh:1075](pdd.sh#L1075)）是故意放宽核实的：点完点亮之后进度行和
+   pend 都读不到时，以前报 rc=5/6，现在只要 `REGION_done` 那块几何里认到 `ALIAS_done`
+   四个形状之一就算"页面进对了，这一轮没得可点"。会误报的前提是那块区域里冒出
+   「已点亮 / 明日再来 / 明天再来 / 已使用」其中之一。10-26 晚上把七天保留窗口全量扫了一遍
+   （[docs/calibration.md](docs/calibration.md) 三）：**333 帧命中 7 帧，7 帧全是活动页/终态屏，
+   另外 274 帧（`bag` 轮播另一帧 140 + `popup` 43 + `subsidy` 41 + `browse` 18 + `light` 12 +
+   `exchange` 8 + `count-before` 6 + `prize` 5 + `probe` 1）0 命中**。这条数是**上界**（整页识别文本里
+   连字都没有，带闸门的判定必然也不命中），所以非活动页那一侧现在量到的是 0。
+   剩下的风险不在这块几何里，在语义上：「已使用」是**券**的状态，不是"今天点亮过了"。证据里
+   没有一帧同时出现「已使用」和「再点亮 N 次」，但那是七天窗口的一致性、不是机制保证；
+   哪天一轮进行中券卡就写着已使用，这一枪会把"没点到"报成"今天点过了"。
+   所以日志和推送正文抄屏幕上读到的那几个字（`DONE_WORD`），不写成「已经点过」——对不上眼就是它认错了。
 
 ## 当前版本
 
-- `pdd.sh`：1884 行，md5 前缀 `c9da6422`，2026-10-20 15:15 部署到主机 `~/Desktop/pdd.sh`（700），
-  上一版 `16331810` 存为 `pdd.sh.bak-1020-1515`；本地 / `/tmp/pdd-deploy.sh` / `~/Desktop/pdd.sh`
-  三方 md5 相等（都是 `c9da642247a365cbbe9382e73606e9c1`）
-- 这一版按她的「既然胶囊有用，那你恢复一下？还有没有兜底的？你补上」做三件事：
-  **恢复** `COORD_bag`（14:31 那版删掉的），**新增** `COORD_take`（10-10 量过、10-11 按她
-  「读不到就不点」删掉的那颗中心），把 `take_prize_overlay` 的日志分成「认到字点它」和
-  「按量好的中心收（分数=0）」两条 —— 以前只要 `resolve` 返回 0 就打「认到」，兜底开火时
-  那句是假话。核实/恢复那条路的 `RECOVERY_NO_COORD=true` 一个字没动，`exchange` 照旧不配坐标
-- 沙箱（跑的就是部署那份字节）：720x1280 与 1440x2560 各 **37/37 绿，失败用例数 0**。
-  跟着改的四条用例：`bag-not-found` 现在断言 `bag 用 coord 点 100 895`（1440 屏上是 `200 1790`）
-  且 tap=2，`prize-take-unreadable` 改名 `prize-take-coord` 并断言 `按量好的中心收 359 752`
-  且 tap=4，`prize-take-ocr` 的 `EXPECT_NOLOG` 从「什么都不点」换成「中心收」（两条都是四枪，
-  不这么按就分不清是胶囊档认到的还是兜底蒙的），`recovery-coord-ban` 不用再 sed 注入坐标
-- 负对照 `scripts/negative-control.sh` 从 1 条扩到 3 条，三条全咬住：判据改恒假 →
-  `browse-reenter-venue` 挂（点击=3 应 4）；删 `COORD_bag` → `bag-not-found` 挂（点击=1 应 2、
-  日志里没有「bag 用 coord 点 100 895」）；删 `COORD_take` → `prize-take-coord` 挂（点击=3 应 4、
-  日志里没有「按量好的中心收 359 752」）
-- 比例闸门这次是白捡的：`compgen -v COORD_` 现取名单，新恢复/新增的两颗自动过检。实测把
-  `COORD_take=359,752`、`COORD_bag=100,895` 分别写成像素，两次都 `exit 78` 并点名是哪个变量
-- 今天**没有**重跑那 42 帧真图重放。14:31 那版量到的是"三条认字路线在 42 帧上全部命中"，
-  兜底只在认字全空时才开火，所以恢复它不改这些帧的判定 —— 这是从上一次实测推出来的，
-  不是今天新测的
-- 推送链路：这一版没动通知。部署后在 transient unit 里跑 `pdd.sh status`，仍报
-  `来自 file:/home/user/Desktop/pdd-push.url，长度 70`（值不打印），设备 `192.168.1.110:16132` 在线
-- `pdd.timer`（用户级）active，NEXT **Wed 2026-10-21 10:02:35 CST** —— 那是这一版第一次真机跑
-- 本机（Windows）不是运行环境，只是开发与取证的地方；真正跑的是上面那台 Debian
+- `pdd.sh`：1904 行，md5 前缀 `95c6bb74`，2026-10-26 深夜部署到主机 `~/Desktop/pdd.sh`（700），
+  本地 / `/tmp/pdd-deploy.sh` / `~/Desktop/pdd.sh` 三方 md5 相等。这一晚的备份链（旧→新）：
+  `pdd.sh.bak-1026-2131` = `c9da6422`（10-20 那版）→ `bak-1026-2251` = `ae64f7ac`（加 psm 档 + 救法）
+  → `bak-1026-2326` = `b9f07f65`（推送正文压字间空格）→ `bak-1026-2353` = `47153d41`（replay 汇总补 band 档）
+  → 现役 `95c6bb74`（只改了第 265 行那句注释）
+- 这一版修的是 **10-25、10-26 两天连续两条「PDD 失败」退出码 5 的假报警**。她那句
+  「今天的报错了，但是实际上没有错，是我已经购买了」是对的：券已经用掉了，活动页顶部那一行
+  换成「5折 最高减15元 已使用」，**进度行整行没了**，「任务已完成 / N天后可兑换 / 待兑换」
+  那三句也一个都不在——三条证据全空，`PROVE_KEY=bag` 拦不住也没得救，三枪各报一次 FAIL，
+  最后 rc=5。手机、流程、点击位置都没有问题。
+- 根因是**读不到**，不是**没点到**：`band_pass` 默认只跑 `OCR_PSM_BAND=7`，而这一行小字
+  在 psm 7 下全空。拿存下的 12 帧活动页离线量（[docs/calibration.md](docs/calibration.md) 有表）：
+  裁 `REGION_done` + ×3，psm 7 = 0/12，psm 6 = 12/12，命中点恒在 `(622,268)`，分数 3。
+- 改动两处，都只朝"读得到"的方向：加 `OCR_PSM_BAND_done="7 6"`（[pdd.sh:241](pdd.sh#L241)，
+  按 key 加、不动全局值，理由和 10-18 那次给 browse 加档同一条），
+  和给 `proof_ok` 补第三条救法「读到 done 那几个字就算页面进对了」（[pdd.sh:1075](pdd.sh#L1075)）。
+  **终态到底算哪一种仍然不由它下结论**，交给下一步 light 的 `CHECK_DONE_BEFORE` 判。
+- 第三处是措辞：lit=1 的日志和推送正文现在抄屏幕上读到的那几个字（`DONE_WORD`：
+  [pdd.sh:1406](pdd.sh#L1406) 赋值、[pdd.sh:1501](pdd.sh#L1501) 进正文），不再写成「今天已经点过」
+  ——**这一条是公开更正**：旧文案在券用掉这种情况下是假话，屏幕上写的是「已使用」，脚本从没点过任何东西。
+  推送正文另外把 OCR 塞进的中文字间空格压掉（整页那一档读出来是 `5 折 最 高 减 15 元 已 使 用`，
+  进正文变 `5折最高减15元已使用`），run.log 里留原文供取证
+- 第四处改的是读证据的工具，不是 10:00 那条流水：`replay` 的汇总行漏数 `band` 档
+  （[pdd.sh:1863](pdd.sh#L1863)）。10-20 修好了逐帧那一行（`hit|ocr|band` 一视同仁，
+  [pdd.sh:1709](pdd.sh#L1709)）但总数那半没跟上，于是同一批 15 帧明明认到 12 帧，汇总只报 4 帧——
+  把修复读成没修复。补了「走裁片 band」一档
+- 没动的东西：`RECOVERY_NO_COORD=true`、`exchange` 照旧不配坐标、`text_present` 照旧拒绝
+  `FIND_METHOD=coord`、`ALIAS_dialog` 照旧停用；也没有给 `ALIAS_done` 加"猜出来的词"
+  （已兑换/已领取/已抢完一个都没加，只加了量到的「已使用」）
+- 沙箱（跑的就是部署那份字节）：720x1280 与 1440x2560 各 **39/39 绿，失败用例数 0**。
+  新增两条用例钉这次的两处改动：`used-terminal`（整页认到「已使用」→ rc=0 / lit=1 / 写标记 /
+  只点 2 枪 / 不 BACK / 收尾关 app / 标题「PDD 完成」）和 `used-band-psm6`
+  （把整页和 band 的 psm 7 全掐空、只有 psm 6 出得来 → 同样判 lit=1）。
+  两条都带 `EXPECT_NOLOG='light 用 coord'`：桩里那颗「已使用」在 `(622,268)`、`COORD_light` 在
+  `(598,285)`，x 差 `622-598=24`、y 差 `285-268=17` —— 认不到字就会盲点到那张卡下方边缘，这一枪绝不允许开
+- 负对照 `scripts/negative-control.sh` 从 3 条扩到 5 条，五条全咬住。新加的两条分别把
+  `if text_present done; then` 改成恒假、把 `OCR_PSM_BAND_done` 改回 `7`，两次的红法**一模一样**：
+  `rc=5(应0) lit=0(应1) 标记=no(应yes) 收尾关应用=0(应1) 点击=3(应2) BACK=1(应0)、
+  日志里没有「这一轮没得可点」` —— 也就是 10-25/10-26 真机上那个行为
+- 部署后拿这 15 帧真图（10-25/26 的 12 帧「已使用」+ 10-24 的 3 帧 pend）在**旧版 `c9da6422`**
+  和**加档后的部署版**上各重放一遍：旧版认到 4/15（全走整页 `ocr 623 267`），
+  新版 **12/15**（4 帧整页 + 8 帧新 band 档 `622 268`，分数都是 3），pend 那 3 帧两边都 0/3
+  （没被 `done` 抢走，终态判断不变）。这一遍在 `47153d41` 上重跑过一次，汇总行现在报的正是
+  `走 OCR 4 / 走裁片 band 8 / 认不到 3`；现役 `95c6bb74` 与它只差第 265 行那一句注释
+  （当场验的：把那句注释改回去，md5 逐字回到 `47153d41`）
+- 误报面是全量扫的，不是抽样：**333 帧命中 7 帧，7 帧都在活动页/终态屏上，另外 274 帧 0 命中**
+  （分母 `492 张 PNG − 140 张 band/pill 裁片 − 19 张 *-done-* 帧 = 333`）。表、口径和"哪一条没测到"
+  在 [docs/calibration.md](docs/calibration.md) 三，扫描器是 [tools/done-fp-scan.sh](tools/done-fp-scan.sh)
+- `pdd.timer`（用户级）active，NEXT **Tue 2026-10-27 10:02:37 CST**；`pdd-pause` 内容仍是 1 没动；
+  端点文件可读、长度 70（值不打印）；本机（Windows）不是运行环境，真正跑的是那台 Debian
+- 上一版 `c9da6422`（10-20 15:15，1884 行，存为 `pdd.sh.bak-1026-2131`）做的是恢复 `COORD_bag`、
+  新增 `COORD_take`、把 `take_prize_overlay` 的日志分成「认到字点它」和「按量好的中心收」两条。
+  那一版的账目不在这里，在 [docs/calibration.md](docs/calibration.md) 和上面「已知残留」
+  第 1、8 条；当时的三条负对照现在还在 `scripts/negative-control.sh` 里，一条没删

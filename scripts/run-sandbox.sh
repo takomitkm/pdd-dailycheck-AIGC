@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 把桩沙箱推到主机的 /tmp/pddsandbox/in 并跑全矩阵。不碰手机：PATH 里只有桩 adb。
 #
-#   bash scripts/run-sandbox.sh                        # 720x1280，全 37 例
+#   bash scripts/run-sandbox.sh                        # 720x1280，全 39 例
 #   SBX_SIZE=1440x2560 bash scripts/run-sandbox.sh     # 同一份标定数据换一块屏
 #   ONLY=happy-ocr bash scripts/run-sandbox.sh         # 只跑一例
 #

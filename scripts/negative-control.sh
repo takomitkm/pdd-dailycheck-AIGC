@@ -2,10 +2,12 @@
 # 负对照：把某一处代码改坏，对应那条用例必须挂红。挂了就说明它真的在钉那段代码，不是白过的。
 #
 # 前置：先跑过 scripts/run-sandbox.sh（它把 /tmp/pddsandbox/in 铺好），本脚本在那份拷贝上改。
-# 每条只跑一个用例（ONLY=），三条各钉一件事：
+# 每条只跑一个用例（ONLY=），五条各钉一件事：
 #   browse-reenter-venue  「BACK 落在频道页就点胶囊回活动页」那句判据
 #   bag-not-found         COORD_bag 这颗兜底在主线真的会开火（删掉它，日志里就没那一枪）
 #   prize-take-coord      COORD_take 那颗中心同上
+#   used-terminal         proof_ok 里「读不到进度行但屏幕上写着已使用」那条救场
+#   used-band-psm6        OCR_PSM_BAND_done 里那个 6（band 档不换档就读不到这一行）
 # 判据的锚点写在下面每条里，改 pdd.sh 那句话时记得同步这里。
 set -u
 SS=(ssh -4 -o ConnectTimeout=10 deb-h61)
@@ -30,5 +32,9 @@ run_neg browse-reenter-venue 's#text_present bag; then#false; then#' 'false; the
 run_neg bag-not-found '/^COORD_bag=/d' '^COORD_bag=' no
 # 同上，钉 COORD_take
 run_neg prize-take-coord '/^COORD_take=/d' '^COORD_take=' no
+# proof_ok 那条「已使用」救场换成一个永远配不上的 key -> 三枪判完收手，used-terminal 应当挂在 rc=5
+run_neg used-terminal 's|^  if text_present done; then$|  if text_present done_x; then|' 'text_present done_x' yes
+# band 档退回只有 psm 7 -> 「已使用」这一行读不到，used-band-psm6 应当挂
+run_neg used-band-psm6 's|^OCR_PSM_BAND_done=.*|OCR_PSM_BAND_done=7|' '^OCR_PSM_BAND_done=7$' yes
 
-echo "NEGCHECK_DONE（上面三条每条都应当是 ✗ / 失败用例数: 1）"
+echo "NEGCHECK_DONE（上面五条每条都应当是 ✗ / 失败用例数: 1）"
