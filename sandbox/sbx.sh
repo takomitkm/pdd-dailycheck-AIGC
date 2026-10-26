@@ -210,7 +210,8 @@ T_PRIZE="$(row 恭喜提前锁定限时翻倍券 150 560 420 34)$NL"
 # 整份 TSV 解析失败，连 bag 那一行都跟着读不到（10-11 就这么翻过一次）。
 T_PEND="$(row 点亮任务已完成 150 250 300 34)$(row 3天后可兑换 460 250 200 34)$NL"
 # 10-25/10-26 真机：她把兑换到的券用掉了，活动页顶部那一行整行换成「5折 最高减15元 已使用」，
-# 进度行和 pend 那三句一个都不在 —— 两天各 3 枪判"停在轮播另一帧"，rc=5 报「PDD 失败」。
+# 进度行和 pend 那三句一个都不在 —— 两天各 3 枪判"停在轮播另一帧"，rc=5 报了「PDD 失败」
+# （10-27 起失败档的标题是「PDD ❌ 退出码 5」；而这一屏接住之后报的是「PDD 已使用」）。
 # 这一行的命中中心实测在 (622,268)、分数 3，桩照同一个位置摆。
 T_USED="$(row 已使用 560 250 120 35)$NL"
 # 胶囊档的坐标在裁片自己的坐标系里：×2 那档要除以 2 再叠 429,235 的原点
@@ -233,15 +234,16 @@ reset_env; tsvfile "$W/cand.tsv" "$T_SUB"
   # 这一例钉的是「兜底那一枪真的开了火，而且点错后被 PROVE_KEY=bag 拦下、当场报错」：
   # 只看 rc=5 没牙——把这颗坐标删掉它照样 rc=5，只是少一枪。删掉它这条就红在
   # 「日志里没有 bag 用 coord 点」。
-  EXPECT_TAPS=2 EXPECT_LOG="bag 用 coord 点 $(sx 100) $(sy 895)" run_case bag-not-found 5 - no
+  EXPECT_TAPS=2 EXPECT_TITLE='PDD ❌ 退出码 5' EXPECT_LOG="bag 用 coord 点 $(sx 100) $(sy 895)" \
+  run_case bag-not-found 5 - no
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_DONE"; countfile 4 4
-  run_case already-lit 0 1 yes
+  EXPECT_TITLE='PDD ✅' run_case already-lit 0 1 yes
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_EXC"; countfile 4 4
   SEED_PAUSE=1
-  EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=0 EXPECT_TITLE='PDD 需要你动手' \
+  EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=0 EXPECT_TITLE='PDD 需人工' \
   EXPECT_LOG='兑换窗口已到，倒数作废' run_case exchange-needs-human 0 2 no
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_BROWSE"; countfile 4 4 3
-  EXPECT_CLOSE=1 EXPECT_LOG="下滑 x=$(sx 540) $(sy 1200)->$(sy 700)" run_case happy-ocr 0 3 yes
+  EXPECT_CLOSE=1 EXPECT_TITLE='PDD ✅' EXPECT_LOG="下滑 x=$(sx 540) $(sy 1200)->$(sy 700)" run_case happy-ocr 0 3 yes
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG_R$T_LIGHT$T_BROWSE"; countfile 4 4 3
   EXPECT_CLOSE=1 EXPECT_LOG="bag 用 ocr 点 $(sx 435) $(sy 524)" \
   run_case bag-right-slot 0 3 yes
@@ -270,7 +272,7 @@ reset_env; export SBX_BAND_MISS="7 11"
 # 之后必须能走通，并且点完 6 变 5 才算核实过。
 reset_env; SBX_COUNT_WORD='9天内点亮%s次必得'
   tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_BROWSE"; countfile 6 6 5
-  EXPECT_CLOSE=1 EXPECT_TAPS=3 EXPECT_PAUSE=0 EXPECT_TITLE='PDD 完成' \
+  EXPECT_CLOSE=1 EXPECT_TAPS=3 EXPECT_PAUSE=0 EXPECT_TITLE='PDD ✅' \
   EXPECT_LOG='进度从 6 次变成 5 次' run_case count-new-wording 0 3 yes
 # 浮层盖住了进度行和胶囊：那两行字本身就是点着了的凭据。这一路「开心收下」读不到，
 # 10-20 傍晚起退到 COORD_take 那颗量好的中心（(359,752)，10-10 那一帧量的），
@@ -279,15 +281,15 @@ reset_env; SBX_COUNT_WORD='9天内点亮%s次必得'
 # 浮层是盖在**活动页**上的，所以这一组不放 T_BROWSE：放了就先被滑页那条路的 BACK 带走，
 # 测的就不再是原地那一枪（10-18 把 BACK 提到原地判定之前，这里得跟着分清）。
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_PRIZE"
-  countfile 4 4 '' '' ''; EXPECT_CLOSE=1 EXPECT_TAPS=4 EXPECT_TITLE='PDD 完成' \
+  countfile 4 4 '' '' ''; EXPECT_CLOSE=1 EXPECT_TAPS=4 EXPECT_TITLE='PDD ✅' \
   EXPECT_LOG="按量好的中心收 $(sx 359) $(sy 752)" EXPECT_NOLOG='浮层上认到' \
     run_case prize-take-coord 0 3 yes
 # 10-11 量过的那颗按钮：整页 psm 6/11 一个字读不到，只有裁+反色+×2+psm 7 读得清，
-# 所以「开心收下」这一路必须走胶囊档。这条和上一条都是四枪、都报 PDD 完成，光数枪分不出
+# 所以「开心收下」这一路必须走胶囊档。这条和上一条都是四枪、都报 ✅，光数枪分不出
 # 是哪条路 —— 所以这里按的是「日志里不许出现按中心那一枪」：胶囊档哪天坏了，它会红。
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_PRIZE"
   tsvfile "$W/pill2.tsv" "$P2_TAKE"
-  countfile 4 4 '' '' ''; EXPECT_CLOSE=1 EXPECT_TAPS=4 EXPECT_TITLE='PDD 完成' \
+  countfile 4 4 '' '' ''; EXPECT_CLOSE=1 EXPECT_TAPS=4 EXPECT_TITLE='PDD ✅' \
     EXPECT_LOG='浮层上认到「开心收下 ' EXPECT_NOLOG='中心收' \
     run_case prize-take-ocr 0 3 yes
 # 10-11 终态：进度行整个没了，屏幕上是「点亮任务已完成…3天后可兑换」
@@ -295,23 +297,23 @@ reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_PRIZE"
 # reset_env 会把它清成空）；脚本先把空格抹掉再按行 grep，最后拼成一句进推送。
 reset_env; export SBX_PEND_TEXT=$'点亮任务已完成 恭喜获得限时翻倍券\n3天后可兑换 券已放进口袋'
   tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_PEND"; countfile '' '' '' '' ''
-  EXPECT_TAPS=2 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=3 EXPECT_TITLE='PDD 已点亮' \
+  EXPECT_TAPS=2 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=3 EXPECT_TITLE='PDD 💡' \
     run_case pend-proof-ok 0 4 yes
 # 同一个终态，但只在点完之后才出现：把 cmd_run 里点前那次 pend 检查关掉（缩进定位，只这一处），
 # 让流程真的走到 verify_light 的 return 4 —— 不这么干的话前一次检查就把它截了。
 reset_env; export SBX_PEND_TEXT=$'点亮任务已完成 3天后可兑换'
   tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_PEND"; countfile '' '' '' '' ''
-  EXPECT_TAPS=3 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=3 EXPECT_TITLE='PDD 已点亮' \
+  EXPECT_TAPS=3 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=3 EXPECT_TITLE='PDD 💡' \
     run_case pend-verify-4 0 4 yes 's|^        if pend_hit; then$|        if false; then|'
 # 屏幕上抄到句子但句子里没有「N天后」：账本里没有能减的数，就一个字都不写
 reset_env; export SBX_PEND_TEXT=$'点亮任务已完成 待兑换'
   tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_PEND"; countfile '' '' '' '' ''
-  EXPECT_TAPS=2 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=NONE EXPECT_TITLE='PDD 已点亮' \
+  EXPECT_TAPS=2 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=NONE EXPECT_TITLE='PDD 💡' \
     run_case pend-days-unreadable 0 4 yes
 # 「1天后可兑换」：记的是屏幕上那个 1 原值（照抄，不做 N-1）
 reset_env; export SBX_PEND_TEXT=$'点亮任务已完成\n1天后可兑换'
   tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_PEND"; countfile '' '' '' '' ''
-  EXPECT_TAPS=2 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=1 EXPECT_TITLE='PDD 已点亮' \
+  EXPECT_TAPS=2 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=1 EXPECT_TITLE='PDD 💡' \
     run_case pend-days-1 0 4 yes
 # 屏幕上的天数抄不到（桩里不给 pend 文本）：账上原来 3 天，往下减一天记成 2
 reset_env; export SBX_PEND_TEXT=
@@ -329,7 +331,7 @@ reset_env; export SBX_PEND_TEXT=$'点亮任务已完成 3天后可兑换'
 # （离线拿存下的 pend 帧量过：psm 6 只 2/4 有天数，psm 11/12 各 4/4）。桩按 --psm 分档回空。
 reset_env; export SBX_PEND_TEXT=$'点亮任务已完成 3天后可兑换' SBX_PEND_MISS="6 12"
   tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_PEND"; countfile '' '' '' '' ''
-  EXPECT_TAPS=2 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=3 EXPECT_TITLE='PDD 已点亮' \
+  EXPECT_TAPS=2 EXPECT_CLOSE=0 EXPECT_BACKS=0 EXPECT_PAUSE=3 EXPECT_TITLE='PDD 💡' \
     EXPECT_LOG='天数=3（psm 11 读出的）' \
     run_case pend-days-psm-fallback 0 4 yes
 # 10-25/10-26 真机那一屏：进度行读不到、pend 词面也不在，屏幕上只有「已使用」。
@@ -337,7 +339,7 @@ reset_env; export SBX_PEND_TEXT=$'点亮任务已完成 3天后可兑换' SBX_PE
 # 桩里那颗「已使用」给的是 (622,268)，COORD_light 是 (598,285)：x 差 622-598=24、y 差 285-268=17，
 # 哪天 done 读不到，兜底那一枪就落在这张卡的下方边缘上。
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_USED"; countfile '' '' '' '' ''
-  EXPECT_TAPS=2 EXPECT_CLOSE=1 EXPECT_BACKS=0 EXPECT_TITLE='PDD 完成' \
+  EXPECT_TAPS=2 EXPECT_CLOSE=1 EXPECT_BACKS=0 EXPECT_TITLE='PDD 已使用' \
   EXPECT_LOG='这一轮没得可点' EXPECT_NOLOG='light 用 coord' \
   run_case used-terminal 0 1 yes
 # 同一屏的第二半：「已使用」这一行只有 band 档换到 psm 6 才读得到（真机 12 帧里 psm 7 全空、
@@ -346,7 +348,7 @@ reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_USED"; countfile '' '' '' '' ''
 reset_env; export SBX_BAND_MISS="7 11"
   tsvfile "$W/cand.tsv" "$T_SUB$T_BAG"; countfile '' '' '' '' ''
   tsvfile "$W/band.tsv" "$(row 已使用 560 250 120 35)"
-  EXPECT_TAPS=2 EXPECT_CLOSE=1 EXPECT_BACKS=0 EXPECT_TITLE='PDD 完成' \
+  EXPECT_TAPS=2 EXPECT_CLOSE=1 EXPECT_BACKS=0 EXPECT_TITLE='PDD 已使用' \
   EXPECT_LOG='这一轮没得可点' EXPECT_NOLOG='light 用 coord' \
   run_case used-band-psm6 0 1 yes
 # 10-11 的翻车路线：进度行读不到 -> BACK 重试，第二枪只剩固定坐标可退，这一枪被
@@ -354,7 +356,7 @@ reset_env; export SBX_BAND_MISS="7 11"
 # 注——它和 bag-not-found 钉的是同一条流水的两半：那一条钉"主线开火"，这一条钉"闸门关得住"。
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_LIGHT"; countfile
   EXPECT_TAPS=2 EXPECT_CLOSE=0 \
-  EXPECT_LOG='只认出固定坐标' run_case recovery-coord-ban 5 - no
+  EXPECT_TITLE='PDD ❌ 退出码 5' EXPECT_LOG='只认出固定坐标' run_case recovery-coord-ban 5 - no
 # 坐标兜底一共五颗：subsidy / bag / light / take / dialog。
 # 这一例钉"入口和点亮这两颗兜底还点得成"：屏上只认得到胶囊，入口和点亮都走坐标，仍然跑成 lit=3。
 reset_env; tsvfile "$W/cand.tsv" "$T_BAG"; countfile 4 4 3
@@ -362,16 +364,16 @@ reset_env; tsvfile "$W/cand.tsv" "$T_BAG"; countfile 4 4 3
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_BROWSE"
   tsvfile "$W/pill2.tsv" "$P2_LIGHT"; countfile 4 4 3; run_case happy-pill-band 0 3 yes
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_BROWSE"
-  tsvfile "$W/pill1.tsv" "$P1_DONE"; countfile 4 4; run_case already-lit-pill 0 1 yes
+  tsvfile "$W/pill1.tsv" "$P1_DONE"; countfile 4 4; EXPECT_TITLE='PDD ✅' run_case already-lit-pill 0 1 yes
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_BROWSE"; countfile 4 4 4
-  run_case count-unchanged 6 - no
+  EXPECT_TITLE='PDD ⬛ 退出码 6' run_case count-unchanged 6 - no
 reset_env; tsvfile "$W/cand.tsv" "$T_BAG"; countfile 4 4 '' '' 5 ''; EXPECT_CLOSE=0 \
-  EXPECT_LOG="light 用 coord 点 $(sx 598) $(sy 285)" \
+  EXPECT_TITLE='PDD ⬛ 退出码 6' EXPECT_LOG="light 用 coord 点 $(sx 598) $(sy 285)" \
   run_case count-unreadable-coord 6 - no
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_POP"; countfile 4 4 '' 3
   run_case popup-rescue 0 3 yes
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT"; countfile
-  run_case carousel-wrong-frame 5 - no
+  EXPECT_TITLE='PDD ❌ 退出码 5' run_case carousel-wrong-frame 5 - no
 reset_env
   X1=$(sx 60) Y1=$(sy 600) X2=$(sx 200) Y2=$(sy 660)
   X3=$(sx 60) Y3=$(sy 880) X4=$(sx 170) Y4=$(sy 920)
@@ -401,7 +403,7 @@ reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_BROWSE"; countfile 4 4 
   EXPECT_TAPS=3 EXPECT_CLOSE=1 EXPECT_PAUSE=0 run_case ledger-no-file 0 3 yes
 # 屏幕上读到「今日已点亮」那种日子：也算正常周期，账同样清 0
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_DONE"; countfile 4 4
-  SEED_PAUSE=2 EXPECT_TAPS=2 EXPECT_PAUSE=0 run_case ledger-already-lit-zero 0 1 yes
+  SEED_PAUSE=2 EXPECT_TAPS=2 EXPECT_PAUSE=0 EXPECT_TITLE='PDD ✅' run_case ledger-already-lit-zero 0 1 yes
 
 echo
 echo "失败用例数: $FAILED"

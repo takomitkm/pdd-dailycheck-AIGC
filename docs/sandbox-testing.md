@@ -42,12 +42,16 @@ bash scripts/negative-control.sh                   # 负对照
 - 今天标记写没写、账本写成什么数
 - `$SBX_EVENTS` 里 tap / swipe / keyevent 各有几条
 - app 关没关
+- **推送标题**（`EXPECT_TITLE`，现役 20 处断言）：桩 `bin/curl` 把 `title=` 原样记进 `$SBX_PUSH`，
+  断言按 `TITLE\t<整串标题>` 匹配。10-27 起七处 `notify` 的标题各有一到多条用例钉着，见
+  [states-and-exit-codes.md](states-and-exit-codes.md)「推送标题」那一节
 - 日志里**必须出现某一行具体几何**，例如：
   - `happy-ocr` → `下滑 x=540 1200->700`
   - `count-unreadable-coord` → `light 用 coord 点 598 285`
   - `bag-right-slot` → `bag 用 ocr 点 435 524`
 
-这三条位置钉是 10-18 去像素化时新加的，作用是：**光看 rc 和 lit 是测不出坐标准不准的**，
+位置钉现在一共 5 条（`bag` 的坐标枪与 ocr 枪、`light` 的两条坐标枪、「按量好的中心收」那颗），
+最早三条是 10-18 去像素化时新加的，作用是：**光看 rc 和 lit 是测不出坐标准不准的**，
 必须把"点了哪个像素"钉进断言。
 
 10-26 那两条（`used-terminal` / `used-band-psm6`）反过来用 `EXPECT_NOLOG`：断言日志里
@@ -91,17 +95,28 @@ grep -qE 'sct...|push\.ft07\.com|...'    "$SRC"          # 被测脚本本体里
 
 `scripts/negative-control.sh` 每次把源码里的一处改坏，然后只跑对应那一条用例（`ONLY=`），
 改完立刻按锚点 `grep` 确认改动真的落上了 —— 锚点找不到或还在就 `NEG_PATCH_FAILED` 退出，
-否则"没挂"会被误读成"测试没用"。现在五条（10-26 21:0x 全跑过，每条都挂）：
+否则"没挂"会被误读成"测试没用"。现在七条（10-27 00:4x 全跑过，每条都挂）：
 
 | 改坏什么 | 哪条用例该挂 | 挂在哪 |
 | --- | --- | --- |
 | `text_present bag; then` 改成恒假 | `browse-reenter-venue` | 点击=3(应 4)、日志里没有「进度行 3 次是重进活动页读到的」 |
 | 删掉 `COORD_bag` | `bag-not-found` | 点击=1(应 2)、日志里没有「bag 用 coord 点 100 895」 |
 | 删掉 `COORD_take` | `prize-take-coord` | 点击=3(应 4)、日志里没有「按量好的中心收 359 752」 |
-| `if text_present done; then` 里的 key 改成不存在的 `done_x` | `used-terminal` | rc=5(应 0)、lit=0(应 1)、标记=no(应 yes)、点击=3(应 2)、BACK=1(应 0)、收尾关应用=0(应 1)、日志里没有「这一轮没得可点」 |
+| `if text_present done; then` 里的 key 改成不存在的 `done_x` | `used-terminal` | rc=5(应 0)、lit=0(应 1)、标记=no(应 yes)、点击=3(应 2)、BACK=1(应 0)、收尾关应用=0(应 1)、标题里没有「PDD 已使用」、日志里没有「这一轮没得可点」 |
 | `OCR_PSM_BAND_done="7 6"` 改回 `7` | `used-band-psm6` | 同上，一条不差 |
+| `title="PDD 已使用"` 换成 `✅` | `used-terminal` | **只**挂在「标题里没有「PDD 已使用」」——rc、lit、标记、点枪、BACK、关 app 全对 |
+| `local title="PDD ✅"` 换成别的字 | `already-lit` | 只挂在「标题里没有「PDD ✅」」 |
 
-后两条是 10-26 加 `已使用` 终态那条路时补的，两条都要留，因为它们依赖的不是同一处：
+**最后两条钉的是标题，不是判定**，所以它们的红法只许有一项：别的维度一旦跟着变，说明标题那两行
+参与了判定，那是事故。这两条也是这条表里唯一"改坏之后行为几乎没变"的，留着的原因是她看的就是这一行字。
+
+10-27 现学的一条工具教训（写在这儿因为它会伪装成绿灯）：`run_neg` 原先把**编号**同时当 `ONLY=`
+的用例名用。新加的那条编号叫 `used-title-split`、要跑的用例却是 `used-terminal`，于是沙箱一个用例
+都没跑就报「失败用例数: 0」——负对照"过了"，实际什么都没测。现在编号和用例名是两个参数
+（第 5 个不填才沿用编号），并且强制要求沙箱输出里真有那条用例的 ✗ 行，否则打印「没咬住」。
+反证做过：拿一个不存在的用例名走这道检查，它报「没咬住」。
+
+表里第 4、5 行是 10-26 加 `已使用` 终态那条路时补的，两条都要留，因为它们依赖的不是同一处：
 `used-band-psm6` 同时吃两处改动（band 档要 psm 6 才出字 + `proof_ok` 要认 done），
 `used-terminal` 的字从 `cand.tsv` 给、整页那档先命中，按用例定义看跟 band 的 psm 无关。
 **这半句是从桩的路由推出来的，没有实测** —— 负对照每次只跑自己那一例（`ONLY=`），

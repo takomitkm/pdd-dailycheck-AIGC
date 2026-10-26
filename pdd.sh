@@ -1067,7 +1067,8 @@ proof_ok() { # 轮播位那一格点对了才会落到活动页：进度行读�
     log CHECK "$1 点完读不到进度行，但屏幕上写着「$PEND_LABEL」：任务已完成、奖励在等人兑换"
     return 0
   fi
-  # 10-25/10-26 两天各 3 枪全栽在这一档上，报的是 rc=5「PDD 失败」，而屏幕上根本没坏：
+  # 10-25/10-26 两天各 3 枪全栽在这一档上，报的是 rc=5（当时那条标题写「PDD 失败」，
+  # 10-27 起这一档是「PDD ❌ 退出码 5」），而屏幕上根本没坏：
   # 她把兑换到的券用掉了，顶部那一行换成「5折 最高减15元 已使用」，进度行整行没了、
   # 「任务已完成/待兑换」那三句也一个都不在，pend 那条救不上。认到 done 那一档
   # （已点亮/明日再来/明天再来/已使用）说明页面进对了、这一轮已经到头；到底算哪种终态，
@@ -1384,14 +1385,14 @@ cmd_run() {
   # 没有整页 OCR 就等于瞎子：进度行、已点亮、抽福袋全读不到，只剩拿坐标猜。当场停，别跑半程再报「没找到」
   if ! have tesseract; then
     log FAIL "这台机器上没有 tesseract，屏幕读不了，不猜坐标"
-    notify "PDD 失败：缺 tesseract" "整页识别的程序不在了，脚本拒绝用坐标瞎点。装上再跑：apt-get install tesseract-ocr tesseract-ocr-chi-sim"
+    notify "PDD ❌ 缺 tesseract" "整页识别的程序不在了，脚本拒绝用坐标瞎点。装上再跑：apt-get install tesseract-ocr tesseract-ocr-chi-sim"
     return 78
   fi
   log RUN "device=$DEVICE 证据=$RUN_DIR 命中门槛>=$MIN_OVERLAP OCR=开"
-  ensure_device || { log FAIL "adb 设备 $DEVICE 掉线"; notify "PDD 失败：设备掉线" "adb $DEVICE 连不上"; return 2; }
+  ensure_device || { log FAIL "adb 设备 $DEVICE 掉线"; notify "PDD ❌ 设备掉线" "adb $DEVICE 连不上"; return 2; }
   read_resolution
   log RUN "点空间 ${TAP_W}x${TAP_H}"
-  wake_screen || { log FAIL "手机锁着，不猜密码"; notify "PDD 失败：手机锁屏" "有锁屏密码，脚本不猜"; return 3; }
+  wake_screen || { log FAIL "手机锁着，不猜密码"; notify "PDD ❌ 手机锁屏" "有锁屏密码，脚本不猜"; return 3; }
   launch_app
   if require_pdd launch; then
     clear_popups
@@ -1485,29 +1486,32 @@ cmd_run() {
     "${last_act:-读不到}" "${VERIFY_WHY:-}" \
     >"$RUN_DIR/summary.txt"
   prune_evidence
+  # 标题：不写日期，五档一眼分开（她 10-27 定的口径）。日期在正文和 summary.txt 里，没丢。
   case $lit in
-    2) notify "PDD 需要你动手 $(date +%m-%d)" \
+    2) notify "PDD 需人工" \
 "走到点亮那一步，屏幕上写的是「立即兑换」，脚本不代点。
 app 和这一屏都给你留着，直接接手就行。
 $exc_msg
 证据 $RUN_DIR" ;;
-    4) notify "PDD 已点亮 $(date +%m-%d)" \
+    4) notify "PDD 💡" \
 "进度那一行（原来写着「N天内点亮X次必得」）没了，现在是：${PEND_LINE:-${PEND_LABEL:-点亮任务已完成，N天后可兑换}}
 $pend_msg
-今天的完成标记已写。这一轮没在手机上多点一个字、多按一个键，app 就停在刚读到这句话的这一屏 —— 等到屏幕上换成「立即兑换」那天，推送改成「需要你动手」，那一下同样只喊你不代点。
+今天的完成标记已写。这一轮没在手机上多点一个字、多按一个键，app 就停在刚读到这句话的这一屏 —— 等到屏幕上换成「立即兑换」那天，推送标题换成「需人工」，那一下同样只喊你不代点。
 证据 $RUN_DIR" ;;
     *) if [ "$rc" = 0 ]; then
-         notify "PDD 完成 $(date +%m-%d)" \
+         local title="PDD ✅"
+         case $DONE_WORD in *已使用*) title="PDD 已使用" ;; esac
+         notify "$title" \
 "$([ $lit -eq 1 ] && echo "屏幕上写着「${DONE_WORD:-已点亮/已使用}」，没重复点，也没往下点" || echo '三步点完，活动页那行进度核实过 + 下滑跑完')
 步骤 $STEPS
 证据 $RUN_DIR"
        elif [ "$rc" = 6 ]; then
-         notify "PDD 没点亮 $(date +%m-%d)，退出码 6" \
+         notify "PDD ⬛ 退出码 6" \
 "${VERIFY_WHY:-点完了但屏幕上进度行的次数没变小}
 当失败处理，没写今天的完成标记，明天会自己再来一遍。
 最后停在 ${last_act:-读不到} 这一屏，证据 $RUN_DIR"
        else
-         notify "PDD 失败 $(date +%m-%d)，退出码 $rc" \
+         notify "PDD ❌ 退出码 $rc" \
 "最后停在 ${last_act:-读不到} 这一屏（登录页/验证码之类也长这样，脚本不代填）。
 看 $RUN_DIR/run.log"
        fi ;;
