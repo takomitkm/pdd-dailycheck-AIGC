@@ -119,6 +119,11 @@ reset_env() {
   export SBX_OFFLINE=0 SBX_WAKE=Awake SBX_LOCK=0
   export SBX_FPKG=com.xunmeng.pinduoduo
   export SBX_FACT=com.xunmeng.pinduoduo.ui.activity.MainFrameActivity
+  # 真机上是"点一下入口，页面就走"：焦点从 HomeActivity 换成 NewPageActivity（10-23…10-27
+  # 五次成功跑，subsidy 点完前台都是 NewPageActivity，10-30 那次被弹窗吃掉才留在首页）。
+  # 桩默认照这个真实形状走，所以入口吞枪那道守卫在旧用例里不会误触发。
+  export SBX_FACT_AFTER_TAP=com.xunmeng.pinduoduo.activity.NewPageActivity
+  export SBX_FACT_AFTER_BACK=
   PATHP="$SBX/bin:$SBX/farm"
   MK=0
   # 断言开关一律在 reset_env 里清零：每个用例都是先 reset 再设自己那几个，
@@ -244,6 +249,24 @@ reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_EXC"; countfile 4 4
   EXPECT_LOG='兑换窗口已到，倒数作废' run_case exchange-needs-human 0 2 no
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_BROWSE"; countfile 4 4 3
   EXPECT_CLOSE=1 EXPECT_TITLE='PDD ✅' EXPECT_LOG="下滑 x=$(sx 540) $(sy 1200)->$(sy 700)" run_case happy-ocr 0 3 yes
+# 10-30 真机：首页盖着「你有支付补贴未使用」，入口那一枪打在遮罩上、页面没走，
+# 但首页的字在 XML 里一个不少 → 旧代码把 subsidy 记成成功，bag 在首页上找满 12 轮（134 秒）
+# 才退 COORD_bag 盲点，BACK 之后又 12 轮，10:01:41→10:08:14 共 393 秒才报 rc=5。
+# 守卫改成"点完还在不在首页"。
+# 桩这边把焦点演成"BACK 之前一直停在首页、BACK 之后才进活动页"，正是那天的形状。
+reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_BROWSE"; countfile 4 4 3
+  SBX_FACT_AFTER_TAP= SBX_FACT_AFTER_BACK=com.xunmeng.pinduoduo.activity.NewPageActivity
+  EXPECT_TAPS=4 EXPECT_BACKS=2 EXPECT_CLOSE=1 EXPECT_TITLE='PDD ✅' \
+  EXPECT_LOG='点完还在首页，多半被弹窗吃了' run_case entry-swallowed-back 0 3 yes
+# 同一副形状，但 BACK 也退不掉：守卫必须在 subsidy 这一步就地收手，
+# 不许再往下走 bag —— 下面那条 EXPECT_NOLOG 钉的就是"bag 那一枪根本没开"。
+# 退出码是 4 不是 5：基数 4、每完成一步 +1，卡在入口这一步就是 4（旧版会一路走到
+# bag 才报 5，把"页面根本没进去"写成"福袋那一格没找到"，10-30 那份日志就是这个样子）。
+reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_BROWSE"; countfile 4 4 3
+  SBX_FACT_AFTER_TAP= SBX_FACT_AFTER_BACK=
+  EXPECT_TAPS=3 EXPECT_BACKS=2 EXPECT_TITLE='PDD ❌ 退出码 4' \
+  EXPECT_NOLOG="bag 用 coord 点 $(sx 100) $(sy 895)" \
+  run_case entry-swallowed-stuck 4 - no
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG_R$T_LIGHT$T_BROWSE"; countfile 4 4 3
   EXPECT_CLOSE=1 EXPECT_LOG="bag 用 ocr 点 $(sx 435) $(sy 524)" \
   run_case bag-right-slot 0 3 yes

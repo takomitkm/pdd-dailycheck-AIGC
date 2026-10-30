@@ -2,8 +2,8 @@
 # 负对照：把某一处代码改坏，对应那条用例必须挂红。挂了就说明它真的在钉那段代码，不是白过的。
 #
 # 前置：先跑过 scripts/run-sandbox.sh（它把 /tmp/pddsandbox/in 铺好），本脚本在那份拷贝上改。
-# 每条只跑一个用例（ONLY=），七条各钉一件事。编号只是标签，真跑哪个用例写在第 5 个参数里
-# （不给就按编号当用例名）——下面两条标题档跑的就不是自己的编号：
+# 每条只跑一个用例（ONLY=），八条各钉一件事。编号只是标签，真跑哪个用例写在第 5 个参数里
+# （不给就按编号当用例名）——下面几条标题档跑的就不是自己的编号：
 #   browse-reenter-venue  「BACK 落在频道页就点胶囊回活动页」那句判据
 #   bag-not-found         COORD_bag 这颗兜底在主线真的会开火（删掉它，日志里就没那一枪）
 #   prize-take-coord      COORD_take 那颗中心同上
@@ -11,6 +11,7 @@
 #   used-band-psm6        OCR_PSM_BAND_done 里那个 6（band 档不换档就读不到这一行）
 #   used-title-split      标题分档：读到「已使用」必须报「PDD 已使用」而不是 ✅（跑 used-terminal）
 #   lit1-title            标题另一头：lit=1 而屏幕上不是「已使用」必须报 ✅（跑 already-lit）
+#   entry-retry-guard     入口那一枪被弹窗吃掉时的「还在首页吗」判据（跑 entry-swallowed-back）
 # 判据的锚点写在下面每条里，改 pdd.sh 那句话时记得同步这里。
 set -u
 SS=(ssh -4 -o ConnectTimeout=10 deb-h61)
@@ -26,6 +27,9 @@ cp -a /tmp/pddsandbox/in $NEG/in
 sed -i '$expr' $NEG/in/pdd.sh
 if grep -q '$pat' $NEG/in/pdd.sh; then got=yes; else got=no; fi
 [ \"\$got\" = '$want' ] || { echo 'NEG_PATCH_FAILED：补丁没做成（锚点找不到或还在），负对照不算'; exit 1; }
+# 补丁把脚本改出语法错，用例一样会挂红，可那种红钉的不是判据（10-30 第一条就这么假绿过一次：
+# sed 替换里的 & 是「整段命中」，那行直接被打废，rc=2 其实是 bash 的语法错退出码）。
+bash -n $NEG/in/pdd.sh || { echo 'NEG_PATCH_BROKEN_SYNTAX：补丁改完脚本读不进，这条负对照不算'; exit 1; }
 SBX_IN=$NEG/in SBX_ROOT=$NEG/run ONLY=$cs bash $NEG/in/sbx.sh >$NEG/out.txt 2>&1
 grep -E '$cs|失败用例数' $NEG/out.txt
 # 咬住 = 输出里真有这一条用例的失败行。ONLY 写了个不存在用例名时沙箱一个用例都不跑、
@@ -50,5 +54,10 @@ run_neg used-title-split 's|title="PDD 已使用"|title="PDD ✅"|' 'title="PDD 
 # 反过来钉 ✅ 那一半：lit=1 但屏幕上不是「已使用」（桩里是「今日已点亮」）必须报 ✅；
 # 把默认标题换成别的字，already-lit 就挂在「标题里没有「PDD ✅」」
 run_neg lit1-title 's|local title="PDD ✅"|local title="PDD 完"|' 'local title="PDD ✅"' no already-lit
+# 10-30 新增那条判据恒假 -> 弹窗吃掉入口那一枪后不再退、不再补点，直接走到 bag 白找：
+# entry-swallowed-back 应当挂在 rc/枪数/BACK 数和「点完还在首页」那句日志上。
+# 替换里的 & 是「整段命中」，必须写成 \&\&，否则这行会被撑成垃圾、脚本连读都读不进（上一条就栽过）。
+# 「false; then」这份仓库里只可能由这条补丁产生（改前 grep 计数 0），所以 want=yes 能当锚点。
+run_neg entry-retry-guard 's#&& is_home_page "\$now"; then#\&\& false; then#' 'false; then' yes entry-swallowed-back
 
-echo "NEGCHECK_DONE（上面七条每条都应当是 ✗ / 失败用例数: 1）"
+echo "NEGCHECK_DONE（上面八条每条都应当是 ✗ / 失败用例数: 1）"

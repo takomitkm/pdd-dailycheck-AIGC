@@ -195,6 +195,12 @@ COORD_take=0.49861,0.58750          # (359,752)
 SCROLL_TOP=2                        # 进页面先把信息流拉回顶部，那一格的相对位置才对得上
 TOP_RETRY_KEY=subsidy               # 这一步认不到字时，滑到页面最顶端再认一轮
 TOP_SWIPES=4
+# 10-30：首页盖着「你有支付补贴未使用」，入口那一枪打在遮罩上、页面没走（10:01:41 点下去，10:01:46 前台还是 HomeActivity），
+# 可首页那些字在 XML 里一个都没少 → subsidy 被记成成功 → bag 在首页上跑满 12 轮（10:01:46→10:04:00，134 秒）才退 COORD_bag，
+# BACK 之后又 12 轮，10:08:14 才报 5（整轮 10:01:41→10:08:14 = 393 秒）。判据换成"点完还在不在首页"（焦点还是首页就是没走），
+# 不去读弹窗上写什么字：改版换词都不影响这一条。BACK 是当天实测退得掉那张弹窗的按键（10:04:21 按，10:04:25 那帧首页已经干净、但仍是首页）。
+ENTRY_RETRY=2                       # 入口点完还在首页，最多退几次、再点几次
+ENTRY_RETRY_WAIT=3
 
 RESTART_APP=true                    # 每次先 force-stop，避免停在旧页面
 LAUNCH_WAIT=8 STEP_WAIT=4 FIND_RETRY=3 FIND_INTERVAL=2 POPUP_MAX=3 POPUP_WAIT=2
@@ -939,7 +945,7 @@ back_on_page() { # 被 BACK 退出活动页了就重走一遍入口；$1 = 当�
 }
 
 do_step() { # $1 = key
-  local key=$1 topped=0 dialog=0 proved=0 now
+  local key=$1 topped=0 dialog=0 proved=0 entered=0 now
   while :; do
     if resolve "$key"; then
       # 首页那个入口只认字不认坐标，认不到字多半是页面没在顶端：滑回最顶端再认一轮
@@ -960,6 +966,21 @@ do_step() { # $1 = key
       sleep "$STEP_WAIT"
       now=$(focused_act)
       log STEP "$key 点完，前台 $now"
+      # 点完还在首页 = 这一枪被盖在上面的东西吃了。见配置区 ENTRY_RETRY 那段（10-30 那张弹窗）。
+      if [ "$key" = "$TOP_RETRY_KEY" ] && is_home_page "$now"; then
+        if [ "$entered" -lt "$ENTRY_RETRY" ]; then
+          entered=$((entered + 1))
+          log STEP "点完还在首页，多半被弹窗吃了；按 BACK 退掉再点一次入口（第 $entered/$ENTRY_RETRY 次）"
+          # 重试这一路只认字：BACK 有可能顺手把人退出拼多多，那时候拿 COORD_subsidy
+          # 在来历不明的屏上补一枪，就是 10-11 那条「读不到就不点」要挡的东西。
+          IN_RECOVERY=1
+          adb_shell input keyevent KEYCODE_BACK >/dev/null 2>&1
+          sleep "$ENTRY_RETRY_WAIT"
+          continue
+        fi
+        log FAIL "入口连着 $((entered + 1)) 枪都还在首页，盖着的东西 BACK 也退不掉，收手"
+        return 1
+      fi
       # 记下活动页那个 activity 叫什么，后面万一被 BACK 退走就好判断
       [ "$key" = "$TOP_RETRY_KEY" ] && PAGE_ACT=$now
       if [ "$key" = "$PROVE_KEY" ] && ! proof_ok "$key"; then
@@ -1303,8 +1324,9 @@ focused_act() { # 焦点窗口的 activity 全名
 }
 
 is_home_page() { # 焦点窗口是不是 PDD 的首页（MainFrameActivity / HomeActivity）
-  local act
-  act=$(focused_act)
+  # $1 可以传一个现成的 activity 名（do_step 刚查过焦点，没必要再问一次手机）
+  local act=${1:-}
+  [ -n "$act" ] || act=$(focused_act)
   case "$act" in
     *"$HOME_ACT"*|*"$HOME_ACT_ALT"*) return 0 ;;
   esac

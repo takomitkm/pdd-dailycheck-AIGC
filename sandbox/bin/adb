@@ -31,8 +31,20 @@ case "$sub" in
   "shell dumpsys power"*) printf 'mWakefulness=%s\n' "${SBX_WAKE:-Awake}" ;;
   "shell dumpsys window"*)
     if [ "${SBX_LOCK:-0}" = 1 ]; then printf 'mShowingLockscreen=true\n'; fi
-    printf 'mCurrentFocus=Window{ab12cd3 u0 %s/%s}\n' \
-      "${SBX_FPKG:-com.xunmeng.pinduoduo}" "${SBX_FACT:-com.xunmeng.pinduoduo.ui.activity.HomeActivity}"
+    # 焦点默认是首页；$SBX_FACT_AFTER_TAP / $SBX_FACT_AFTER_BACK 一旦配上，
+    # 就从"事件日志里出现过 tap / KEYCODE_BACK"那一刻起换成它 —— 用来演
+    # 「点一下页面就走」和「BACK 把弹窗退掉」这两种真机行为（10-30 那条入口吞枪用例）。
+    fact="${SBX_FACT:-com.xunmeng.pinduoduo.ui.activity.HomeActivity}"
+    fpkg="${SBX_FPKG:-com.xunmeng.pinduoduo}"
+    if [ -n "${SBX_EVENTS:-}" ] && [ -f "$SBX_EVENTS" ]; then
+      if [ -n "${SBX_FACT_AFTER_TAP:-}" ] && grep -q '^tap ' "$SBX_EVENTS"; then
+        fact="$SBX_FACT_AFTER_TAP"
+      fi
+      if [ -n "${SBX_FACT_AFTER_BACK:-}" ] && grep -q '^key KEYCODE_BACK$' "$SBX_EVENTS"; then
+        fact="$SBX_FACT_AFTER_BACK"
+      fi
+    fi
+    printf 'mCurrentFocus=Window{ab12cd3 u0 %s/%s}\n' "$fpkg" "$fact"
     ;;
   "shell wm size"*) printf 'Physical size: %s\nOverride size: %s\n' \
       "${SBX_SIZE:-720x1280}" "${SBX_SIZE:-720x1280}" ;;
