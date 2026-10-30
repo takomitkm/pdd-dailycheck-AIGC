@@ -201,6 +201,8 @@ TOP_SWIPES=4
 # 不去读弹窗上写什么字：改版换词都不影响这一条。BACK 是当天实测退得掉那张弹窗的按键（10:04:21 按，10:04:25 那帧首页已经干净、但仍是首页）。
 ENTRY_RETRY=2                       # 入口点完还在首页，最多退几次、再点几次
 ENTRY_RETRY_WAIT=3
+# 焦点窗口一行都读不出来时重试几次（真读不到 = 不点，10-30 起不再放行；重试只为躲过场动画那一瞬）
+FOCUS_RETRY=3 FOCUS_RETRY_WAIT=1
 
 RESTART_APP=true                    # 每次先 force-stop，避免停在旧页面
 LAUNCH_WAIT=8 STEP_WAIT=4 FIND_RETRY=3 FIND_INTERVAL=2 POPUP_MAX=3 POPUP_WAIT=2
@@ -566,19 +568,23 @@ keyguard_up() {
 }
 
 foreground_pkg() { # 此刻真正占据屏幕的包名
+  # 正常一行是 Window{id u0 包名/活动名}。10-30 19:20 那次通知栏盖着桌面，这行变成
+  # Window{c485e35 u0 StatusBar} —— 没有斜杠，旧写法返回空串，require_pdd 就把"读不到"
+  # 当成"可以点"放行了。认不出包名时退回窗口标签，让调用方拿到一个明确不是 $PKG 的值。
   adb_shell dumpsys window 2>/dev/null | tr -d '\r' \
-    | awk '/mCurrentFocus/ {for (i=1; i<=NF; i++) if ($i ~ /\//) {split($i, a, "/"); print a[1]; exit}}'
+    | awk '/mCurrentFocus/ {for (i=1; i<=NF; i++) if ($i ~ /\//) {split($i, a, "/"); print a[1]; exit}
+                             lbl=$NF; sub(/\}$/,"",lbl); print lbl; exit}'
 }
 
 require_pdd() { # $1 = 即将点击的步骤名；不是拼多多在前台就绝不点
-  local pkg
-  pkg=$(foreground_pkg)
-  if [ -z "$pkg" ]; then
-    log WARN "读不到当前焦点窗口，继续"
-    return 0
-  fi
+  local pkg i
+  for i in $(seq 1 "$FOCUS_RETRY"); do
+    pkg=$(foreground_pkg)
+    [ -n "$pkg" ] && break
+    [ "$i" -lt "$FOCUS_RETRY" ] && { sleep "$FOCUS_RETRY_WAIT"; log WARN "焦点窗口读不到，再读一次（$i/$FOCUS_RETRY）"; }
+  done
   [ "$pkg" = "$PKG" ] && return 0
-  log FAIL "$1: 前台是 $pkg 而不是 $PKG，点下去没有意义"
+  log FAIL "$1: 前台是 ${pkg:-读不到} 而不是 $PKG，点下去没有意义"
   grab_shot "$RUN_DIR/lost-$1.png" 2>/dev/null
   return 1
 }

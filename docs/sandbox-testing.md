@@ -7,7 +7,7 @@
 ## 跑
 
 ```sh
-bash scripts/run-sandbox.sh                        # 默认 720x1280，全 41 例，约 5 分钟
+bash scripts/run-sandbox.sh                        # 默认 720x1280，全 42 例，约 5 分钟
 SBX_SIZE=1440x2560 bash scripts/run-sandbox.sh     # 同一份标定数据换一块屏
 ONLY=happy-ocr bash scripts/run-sandbox.sh         # 只跑一例（sbx.sh 直接接受 ONLY）
 bash scripts/negative-control.sh                   # 负对照
@@ -15,8 +15,8 @@ bash scripts/negative-control.sh                   # 负对照
 
 验收口径：末行 `失败用例数: 0`，并且头行打印的 `屏=` 是你指定的那块。
 
-用例数怎么自己数：`grep -c "run_case " sandbox/sbx.sh` 现在给 **42**，其中 1 行是
-`run_case() {` 那条函数定义（[sbx.sh:135](../sandbox/sbx.sh#L135)），42-1=**41 例**。
+用例数怎么自己数：`grep -c "run_case " sandbox/sbx.sh` 现在给 **43**，其中 1 行是
+`run_case() {` 那条函数定义（[sbx.sh:138](../sandbox/sbx.sh#L138)），43-1=**42 例**。
 每次加用例都要把 README 和这里两处数字一起改，改漏一次就有一份文档在说过期的数。
 
 **不能并发跑。** 两跑共用 `/tmp/pddsandbox/run` 和 `$SBX_EVENTS`，会撞出一堆假失败。
@@ -30,7 +30,7 @@ bash scripts/negative-control.sh                   # 负对照
 
 | 桩 | 行为 | 由什么控制 |
 | --- | --- | --- |
-| `bin/adb` | `devices` / `connect` 回在线状态；`input tap|swipe|keyevent` 一律只往 `$SBX_EVENTS` 追加一行；`uiautomator dump` 回成功；`exec-out screencap` 吐出 `$SBX_SHOT`；`exec-out cat` 吐出 `$SBX_XML`；`dumpsys window` 回可控的前台 activity；`wm size` 回 `$SBX_SIZE` | `SBX_OFFLINE` `SBX_WAKE` `SBX_LOCK` `SBX_FPKG` `SBX_FACT` `SBX_SIZE` `SBX_SHOT` `SBX_XML` `SBX_DEV` `SBX_FACT_AFTER_TAP` `SBX_FACT_AFTER_BACK` |
+| `bin/adb` | `devices` / `connect` 回在线状态；`input tap|swipe|keyevent` 一律只往 `$SBX_EVENTS` 追加一行；`uiautomator dump` 回成功；`exec-out screencap` 吐出 `$SBX_SHOT`；`exec-out cat` 吐出 `$SBX_XML`；`dumpsys window` 回可控的前台 activity；`wm size` 回 `$SBX_SIZE` | `SBX_OFFLINE` `SBX_WAKE` `SBX_LOCK` `SBX_FPKG` `SBX_FACT` `SBX_SIZE` `SBX_SHOT` `SBX_XML` `SBX_DEV` `SBX_FACT_AFTER_TAP` `SBX_FACT_AFTER_BACK` `SBX_FOCUS_RAW` |
 | `bin/tesseract` | 按**输入文件名**路由：`*cand.png` 给整页 TSV，`*band.png` 给 band 档，`*pill-1/2.png` 给胶囊两档，`*count.png` / `*pend.png` 按序号给进度行和天数行 | `tsvfile` / `countfile` 两个 helper 写内容 |
 | `bin/curl` | 只把推送正文落到文件，不出网 | `SBX_PUSH` |
 
@@ -45,6 +45,13 @@ subsidy 点完前台都是 `NewPageActivity`，只有 10-30 那次被弹窗吃�
 还在首页"的话，入口吞枪那道守卫会在旧用例里误触发；把形状反过来，守卫就永远测不到。
 要演"点了没走"，用例自己覆盖成 `SBX_FACT_AFTER_TAP=`。
 
+**焦点行也能整行照抄**（10-30 晚加的）。`SBX_FOCUS_RAW` 非空时桩 `dumpsys window` 不再套
+`Window{id u0 包名/活动名}` 那个形状，直接打印给的那一行。加它是因为真机 19:20 那一帧焦点行是
+`Window{c485e35 u0 StatusBar}`（通知栏盖着桌面）—— **没有斜杠**，而 `foreground_pkg` 和
+`focused_act` 两个 awk 都是"取第一个带斜杠的字段"，读到的是空串。只有 `SBX_FPKG`/`SBX_FACT`
+这一对旋钮时造不出这种形状，所以那个缺陷在当时的 41 例里演不出来。`reset_env` 把它清成空串，
+旧用例一条不受影响。
+
 ## 断言的是行为，不是文本
 
 每个用例给 `run_case 名称 期望退出码 期望lit 期望标记`，再加可选的 `EXPECT_*`：
@@ -53,7 +60,7 @@ subsidy 点完前台都是 `NewPageActivity`，只有 10-30 那次被弹窗吃�
 - 今天标记写没写、账本写成什么数
 - `$SBX_EVENTS` 里 tap / swipe / keyevent 各有几条
 - app 关没关
-- **推送标题**（`EXPECT_TITLE`，现役 22 处断言）：桩 `bin/curl` 把 `title=` 原样记进 `$SBX_PUSH`，
+- **推送标题**（`EXPECT_TITLE`，现役 23 处断言）：桩 `bin/curl` 把 `title=` 原样记进 `$SBX_PUSH`，
   断言按 `TITLE\t<整串标题>` 匹配。10-27 起七处 `notify` 的标题各有一到多条用例钉着，见
   [states-and-exit-codes.md](states-and-exit-codes.md)「推送标题」那一节
 - 日志里**必须出现某一行具体几何**，例如：
@@ -96,7 +103,7 @@ RSX=$(awk -v w="$SBX_W" 'BEGIN{printf "%.6f", w/720}')
 改沙箱之前先看这五条，它们全是 `exit 1` 级的：
 
 ```sh
-grep -q 'PUSH_URL=http://stub.push/send' "$dir/pdd.sh"   # 没换掉 → 41 例往真实 ServerChan 推 41 条
+grep -q 'PUSH_URL=http://stub.push/send' "$dir/pdd.sh"   # 没换掉 → 42 例往真实 ServerChan 推 42 条
 grep -q "^PUSH_URL_FILE=$dir/push.url\$" "$dir/pdd.sh"   # 没换掉 → PUSH_URL 为空时去读桌面上那个真端点
 grep -q "^PAUSE_FILE=$dir/pause$"        "$dir/pdd.sh"   # 没换掉 → 读写真实兑换账本
 grep -q 'SWIPE_COUNT=2 '                 "$dir/pdd.sh"   # sed 没锚上 → 按真实时长跑，一遍十几分钟
@@ -104,7 +111,7 @@ grep -qE 'sct...|push\.ft07\.com|...'    "$SRC"          # 被测脚本本体里
 ```
 
 第一条 sed 的锚点很脆（靠 `SWIPE_DUR=300 SWIPE_COUNT=20 SWIPE_WAIT=1` 这一串字面匹配）。
-10-18 把 `SWIPE_*` 改成比例后那串一度变了，锚点差点断掉——断了的后果是 41 条真推送和
+10-18 把 `SWIPE_*` 改成比例后那串一度变了，锚点差点断掉——断了的后果是 42 条真推送和
 真实账本被改。所以自检不是洁癖，是门禁。**动了配置区那一片文字，先确认锚点还在。**
 
 第五条和第二条是 10-18 转公开之后加的。端点从"写在 `pdd.sh` 里"改成"运行时读
@@ -116,8 +123,8 @@ grep -qE 'sct...|push\.ft07\.com|...'    "$SRC"          # 被测脚本本体里
 `scripts/negative-control.sh` 每次把源码里的一处改坏，然后只跑对应那一条用例（`ONLY=`），
 改完立刻按锚点 `grep` 确认改动真的落上了 —— 锚点找不到或还在就 `NEG_PATCH_FAILED` 退出，
 否则"没挂"会被误读成"测试没用"。锚点过了之后还有一道 `bash -n`：补丁把脚本改出语法错，
-用例一样挂红，可那种红钉的不是判据（这道门是 10-30 现学的，见本节末）。现在八条，
-最后一次在现役 `82d9f9ef` 那 1930 行上跑（10-30 19:05 落盘），每条都挂：
+用例一样挂红，可那种红钉的不是判据（这道门是 10-30 现学的，见本节末）。现在九条，
+最后一次在现役 `38a85917` 那 1936 行上跑（10-30 20:09:06 落盘，比 20:27 那次部署早 18 分钟），每条都挂：
 
 | 改坏什么 | 哪条用例该挂 | 挂在哪 |
 | --- | --- | --- |
@@ -129,9 +136,20 @@ grep -qE 'sct...|push\.ft07\.com|...'    "$SRC"          # 被测脚本本体里
 | `title="PDD 已使用"` 换成 `✅` | `used-terminal` | **只**挂在「标题里没有「PDD 已使用」」——rc、lit、标记、点枪、BACK、关 app 全对 |
 | `local title="PDD ✅"` 换成别的字 | `already-lit` | 只挂在「标题里没有「PDD ✅」」 |
 | 入口守卫 `[ "$key" = "$TOP_RETRY_KEY" ] && is_home_page "$now"` 的后半改成恒假 | `entry-swallowed-back` | 点击=3(应 4)、BACK=1(应 2)、日志里没有「点完还在首页，多半被弹窗吃了」；rc/lit/标记/标题/关 app **全不跟着变** |
+| 焦点闸门两处**一起**改坏：awk 的窗口标签退回换成 `print ""`，加上「读到空串就当可以点」 | `shade-slashless-focus` | rc=5(应 7)、点击=3(应 0)、BACK=2(应 1)、标题里没有「PDD ❌ 退出码 7」、日志里没有「前台是 StatusBar 而不是」 |
 
-**最后两条钉的是标题，不是判定**，所以它们的红法只许有一项：别的维度一旦跟着变，说明标题那两行
+**第 6、7 两行钉的是标题，不是判定**，所以它们的红法只许有一项：别的维度一旦跟着变，说明标题那两行
 参与了判定，那是事故。这两条也是这条表里唯一"改坏之后行为几乎没变"的，留着的原因是她看的就是这一行字。
+
+第九条是 10-30 晚间那条焦点缺陷的牙，**必须一次破两处**，两处各只破一半的行为是实测过的
+（各跑一遍 `ONLY=shade-slashless-focus`，桩和源码都是现役那份）：
+
+- 只把「读到空串就放行」加回来（保留 awk 的窗口标签退回）→ 用例**全绿**：pkg 读到 `StatusBar`
+  而 ≠ `$PKG`，闸门照样拒绝，rc=7 / 0 枪 / 1 BACK，一条断言都抓不到。
+- 只破 awk 那一半（保留 fail-closed）→ 用例红，但**只红在**「日志里没有『前台是 StatusBar 而不是』」
+  这一项，rc=7 / 0 枪 / 1 BACK 全对 —— 那种红钉的是措辞，不是"会不会盲点"这个行为。
+
+两条一起破才回到 10-30 之前的样子：3 枪、rc=5、多一次 BACK、拒绝那行字整个消失。
 
 10-27 现学的一条工具教训（写在这儿因为它会伪装成绿灯）：`run_neg` 原先把**编号**同时当 `ONLY=`
 的用例名用。新加的那条编号叫 `used-title-split`、要跑的用例却是 `used-terminal`，于是沙箱一个用例

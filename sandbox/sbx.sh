@@ -124,6 +124,9 @@ reset_env() {
   # 桩默认照这个真实形状走，所以入口吞枪那道守卫在旧用例里不会误触发。
   export SBX_FACT_AFTER_TAP=com.xunmeng.pinduoduo.activity.NewPageActivity
   export SBX_FACT_AFTER_BACK=
+  # 焦点行整行照抄的口子（空 = 还是按 包名/活动名 那个形状拼）；10-30 那条通知栏用例
+  # 要的就是没有斜杠的一行，用 SBX_FPKG/SBX_FACT 拼不出来。
+  export SBX_FOCUS_RAW=
   PATHP="$SBX/bin:$SBX/farm"
   MK=0
   # 断言开关一律在 reset_env 里清零：每个用例都是先 reset 再设自己那几个，
@@ -234,6 +237,15 @@ reset_env; SBX_OFFLINE=1; run_case device-offline 2 - no
 reset_env; SBX_WAKE=Asleep; SBX_LOCK=1; run_case locked 3 - no
 reset_env; SBX_FPKG=com.miHoYo.YYS; SBX_FACT=com.miHoYo.YYS.UnityPlayerActivity
   tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT"; run_case wrong-foreground 7 - no
+# 10-30 19:20 真机那一帧：通知栏盖在桌面上，焦点行是「Window{c485e35 u0 StatusBar}」，
+# 没有斜杠 → 旧写法读出空串 → require_pdd 当成"可以点"放行。那一轮实际放出去的是
+# 两枪兜底坐标（subsidy 90 600 / bag 100 895，都是分数=0 的配置兜底）+ 一次滑到顶 + 一次 BACK，
+# 全打在通知栏和桌面上（run.log 19:20:54→19:25:42，逐条数出来的）。
+# 这一例钉的是"读不出包名也照样收手"：旧代码在这一例上会往下点，rc 不是 7。
+reset_env; SBX_FOCUS_RAW='Window{c485e35 u0 StatusBar}'
+  tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT"
+  EXPECT_TAPS=0 EXPECT_BACKS=1 EXPECT_TITLE='PDD ❌ 退出码 7' \
+  EXPECT_LOG='前台是 StatusBar 而不是' run_case shade-slashless-focus 7 - no
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB"
   # 认不到字就退 COORD_bag（10-20 删过又恢复，这颗现在是线上配置的一部分）。
   # 这一例钉的是「兜底那一枪真的开了火，而且点错后被 PROVE_KEY=bag 拦下、当场报错」：

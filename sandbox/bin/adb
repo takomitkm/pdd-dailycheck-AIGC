@@ -44,7 +44,12 @@ case "$sub" in
         fact="$SBX_FACT_AFTER_BACK"
       fi
     fi
-    printf 'mCurrentFocus=Window{ab12cd3 u0 %s/%s}\n' "$fpkg" "$fact"
+    if [ -n "${SBX_FOCUS_RAW:-}" ]; then
+      # 整行照抄，不套 包名/活动名 那个形状 —— 用来演通知栏那种没有斜杠的焦点行
+      printf 'mCurrentFocus=%s\n' "$SBX_FOCUS_RAW"
+    else
+      printf 'mCurrentFocus=Window{ab12cd3 u0 %s/%s}\n' "$fpkg" "$fact"
+    fi
     ;;
   "shell wm size"*) printf 'Physical size: %s\nOverride size: %s\n' \
       "${SBX_SIZE:-720x1280}" "${SBX_SIZE:-720x1280}" ;;
