@@ -19,8 +19,9 @@
 | `scripts/deploy.sh` | 备份 → `install -m 700` → 复查语法，在主机上跑 |
 | `scripts/run-sandbox.sh` | 把沙箱推到主机 `/tmp/pddsandbox/in` 并跑全矩阵 |
 | `scripts/negative-control.sh` | 负对照九条：故意把源码改坏一处，验证对应那条用例真会挂 |
-| `tools/` | 离线标定与取证用的小脚本，都只读已存下的证据，不碰手机。10-26 新增 `done-fp-scan.sh`：给「读到 done 就算页面进对了」那条救法数误报面，跑出来 333 帧命中 7 帧、全在活动页/终态屏 |
-| `docs/` | 标定配方、定位通道、沙箱验收、状态与退出码、失败取证 |
+| `scripts/selftest-vlm-attribute.sh` | 离线归因那个工具的验收轮（A–K）：出站闸门、请求体完整性、响应解析、并排报告。不需要端点，桩响应验的是管线不是识别质量 |
+| `tools/` | 离线标定与取证用的小脚本，都只读已存下的证据，不碰手机。10-26 新增 `done-fp-scan.sh`：给「读到 done 就算页面进对了」那条救法数误报面，跑出来 333 帧命中 7 帧、全在活动页/终态屏。11-01 新增 `vlm-attribute.sh`：把失败帧拿去过一遍外部视觉接口，和本地六档并排打，只出 `PILL_`/`REGION_` 建议；**没有 `--send` 就一字节都不出站**，端点现在留空（见 `docs/api-attribution.md`） |
+| `docs/` | 标定配方、定位通道、沙箱验收、状态与退出码、失败取证、离线归因 |
 
 ## 运行环境
 
@@ -115,6 +116,11 @@ app 关没关**，屏幕几何全部按 `SBX_SIZE` 折算。判据是 rc=0 且 `
 - 轮换 token 只动那个文件，不改脚本、不进 git：
   `ssh deb-h61 'umask 077; printf "%s\n" "<新端点>" > ~/Desktop/pdd-push.url'`
 - 环境变量 `PUSH_URL` 优先于文件，沙箱和临时覆盖走这条。
+- 离线归因那条线（[tools/vlm-attribute.sh](tools/vlm-attribute.sh)，[docs/api-attribution.md](docs/api-attribution.md)）
+  用同一个规矩管它的端点：只读主机的 `~/Desktop/pdd-vlm.url`（第 1 行 URL、第 2 行可选 key，权限 600），
+  只报来源和长度，请求体里不写 URL 也不写 key。**这个文件现在不存在**，工具也就发不出去（`--send` 直接
+  `rc=78`）。注意 `githooks/patterns.sh` 那份表是 5 类形态（ServerChan / 私钥 / GitHub PAT / Slack / AKIA），
+  通用 API key 的形态挡不住 —— 那个值进仓库只能靠人别贴。
 - 两道提交门禁，启用一次 `git config core.hooksPath githooks` 就都生效：
   `pre-commit` 扫暂存区，`pre-push` 扫这次真要传上去的每个 blob。命中凭据形态就拒绝；
   **扫不动也拒绝**（`git grep` 用法错、`cat-file` 挂了，都当失败处理，不当"没扫到"）。

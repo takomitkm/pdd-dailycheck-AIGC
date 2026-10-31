@@ -39,6 +39,7 @@ ssh deb-h61 'tail -60 ~/Desktop/pdd-runs/<日期>/<场次>/run.log'
 | `tools/bagpos.sh` | `bagpos.sh <帧1.png> <帧2.png> …` | 跨帧比对「抽福袋」这类字都出现在哪些坐标（版面跳位就靠它量） |
 | `tools/pend_tune.sh` | `pend_tune.sh <pend帧.png> …` | 离线调 pend 那档的天数读数，每个变体输出「变名 \| 整句 \| 抠出的 N \| 是否命中」 |
 | `tools/cal_pend.sh` | 见文件头 | 把当天福袋页截图改名成 replay 认得的证据名，再拿新配置重打分 |
+| `tools/vlm-attribute.sh` | `vlm-attribute.sh <证据目录> --key bag [--max N] [--send]` | 拿**外部视觉接口**问一遍这屏写着什么、写在哪，和 `replay` 的本地六档并排打，只出 `PILL_`/`REGION_` 建议。不加 `--send` 一字节都不出站；端点现在留空。口径和实测见 [api-attribution.md](api-attribution.md) |
 
 `tools/` 里这些要在**装了 tesseract 和 Pillow 的那台 Debian 上跑**，本机 Windows 没有 chi_sim。
 把帧从 `pdd-runs` 里 scp 出来，或者直接在主机上跑都行。
