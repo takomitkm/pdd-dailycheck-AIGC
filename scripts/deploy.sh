@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # 部署 sandbox 全绿的 pdd.sh 到 debian Desktop：先备份，再装，再验。
-# 用法：bash deploy.sh <远端上的待部署文件路径>   （默认 /tmp/pdd-deploy.sh）
+# 用法：bash deploy.sh <远端上的待部署文件路径> [<远端上的待部署配置路径>]
+#       （默认 /tmp/pdd-deploy.sh 和 /tmp/pdd-ocr.conf）
+# 配置文件这份跟 pdd.sh 不一样：它是平时调参的地方，主机上那一份可能比仓库里的新，
+# 所以只在「主机上还没有」的时候才装；已有就一个字不动，只把差异报出来。
 set -e
 REMOTE=${1:-/tmp/pdd-deploy.sh}
+CONF=${2:-/tmp/pdd-ocr.conf}
 D=/home/user/Desktop
 TS=$(date +%m%d-%H%M)
 
@@ -16,6 +20,27 @@ if [ -f "$D/pdd.sh" ]; then
 fi
 install -m 700 "$REMOTE" "$D/pdd.sh"
 echo "新版 md5=$(md5sum <"$D/pdd.sh" | cut -c1-8)  行数=$(wc -l <"$D/pdd.sh")  权限=$(stat -c '%a %U:%G' "$D/pdd.sh")"
+
+# OCR 调用配置：仓库里这份是「当前线上那套」的抄本，主机上那一份是她平时改参数的地方、可能更新。
+# 所以只在主机上还没有的时候装；已经有了就一个字不动，只把跟仓库那份的差异念出来。
+if [ -s "$CONF" ]; then
+  tr -d '\015' <"$CONF" >"$CONF.lf" && mv "$CONF.lf" "$CONF"
+  if [ -f "$D/pdd-ocr.conf" ]; then
+    echo "OCR 配置：$D/pdd-ocr.conf 已存在（md5=$(md5sum <"$D/pdd-ocr.conf" | cut -c1-8)），这次不动它。"
+    if ! diff -q "$CONF" "$D/pdd-ocr.conf" >/dev/null; then
+      echo "  和这次带来的 /tmp 那份不一样，不一样的行（< 带来的 / > 主机在用的）："
+      diff "$CONF" "$D/pdd-ocr.conf" | grep -E '^[<>][[:space:]]*[A-Za-z_][A-Za-z0-9_]*=' || true
+      echo "  想换成带来的这份：先在主机上 cp -a $D/pdd-ocr.conf $D/pdd-ocr.conf.bak-$TS，再 install -m 600 $CONF $D/pdd-ocr.conf"
+    else
+      echo "  内容和带来的这份一致。"
+    fi
+  else
+    install -m 600 "$CONF" "$D/pdd-ocr.conf"
+    echo "OCR 配置：已装 $D/pdd-ocr.conf 权限=$(stat -c '%a' "$D/pdd-ocr.conf") 键数=$(grep -cE '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=' "$D/pdd-ocr.conf")"
+  fi
+else
+  echo "OCR 配置：没给到可读的 $CONF，跳过安装（pdd.sh 读不到文件就退回内建默认）。"
+fi
 
 # 暂停天数文件：不存在就建一个 0，让行为确定（0 = 正常跑）
 if [ -f "$D/pdd-pause" ]; then
@@ -32,6 +57,19 @@ if [ -r "$D/pdd-push.url" ]; then
 else
   echo "推送端点：读不到 $D/pdd-push.url —— 流程照跑，但一条都不会推。"
   echo '  要推：主机上 umask 077 后把端点写成这个文件的第一行'
+fi
+
+# 装了 pdd.sh 就得确认它能把这份配置读进那两条闸：拿一个不存在的子命令走一遍——
+# 「读不动」和「值不成形」这两道 exit 78 挡在任何子命令之前，走得通就说明这套值全在校验范围内。
+# 这条也不碰手机：adb 那一层只问 adb 在不在 PATH，不连设备。
+echo "--- 配置自检（不存在的子命令，只走装载与校验这两步）---"
+if conf_out=$(bash "$D/pdd.sh" __confcheck 2>&1); then
+  echo "OK：装载与校验都过了（文件不存在时按内建默认过）"
+else
+  echo "配置自检失败 rc=$?："
+  echo "$conf_out"
+  echo "  —— 现在这份 $D/pdd.sh 明早 10:00 会原地停在 78，一枪都不开。先把上面那行改对再收工。"
+  exit 1
 fi
 
 systemctl --user list-timers --all 2>/dev/null | grep -E 'pdd|NEXT' | head -3

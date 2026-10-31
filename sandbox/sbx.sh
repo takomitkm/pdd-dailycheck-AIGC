@@ -76,16 +76,21 @@ base() {
       -e "s#^PUSH_URL_FILE=.*#PUSH_URL_FILE=$dir/push.url#" \
       -e 's#^PUSH_URL=.*#PUSH_URL=http://stub.push/send#' \
       -e "s#^PAUSE_FILE=.*#PAUSE_FILE=$dir/pause#" \
+      -e "s#^OCR_CONF_FILE=.*#OCR_CONF_FILE=$dir/ocr.conf#" \
       "$SRC" >"$dir/pdd.sh"
   # 上面每条 sed 都是靠行首锚点匹配的。锚点一旦失配，最坏的不是"跑得慢"，
-  # 是推送端点 / 账本路径没被换掉 —— 39 个用例往真实 ServerChan 端点推 39 条，
-  # 还会读写桌面上那个真账本。所以这里当场验一遍，不通过就直接停整个沙箱。
+  # 是推送端点 / 账本路径 / OCR 配置路径没被换掉 —— 全部用例各往真实 ServerChan 端点推一条、
+  # 读写桌面上那个真账本、或集体改用桌面上那份真配置。所以这里当场验一遍，不通过就直接停整个沙箱。
   grep -q 'PUSH_URL=http://stub.push/send' "$dir/pdd.sh" \
     || { echo "沙箱自检失败：PUSH_URL 没被替换，停（绝不往外推）"; exit 1; }
   grep -q "^PUSH_URL_FILE=$dir/push.url\$" "$dir/pdd.sh" \
     || { echo "沙箱自检失败：PUSH_URL_FILE 没被替换，停（万一 PUSH_URL 是空的就会去读桌面上那个真端点）"; exit 1; }
   grep -q "^PAUSE_FILE=$dir/pause\$" "$dir/pdd.sh" \
     || { echo "沙箱自检失败：PAUSE_FILE 没被替换，停（绝不碰桌面账本）"; exit 1; }
+  # 外置那份 OCR 配置同理：主机桌面上要是有 ~/Desktop/pdd-ocr.conf，所有用例会集体读它，
+  # base() 上面那串改内建默认的 sed 就被它盖掉了 —— 跑出来的绿是"配置文件的绿"，不是这份字节的绿。
+  grep -q "^OCR_CONF_FILE=$dir/ocr.conf\$" "$dir/pdd.sh" \
+    || { echo "沙箱自检失败：OCR_CONF_FILE 没被替换，停（用例不许读桌面上那份真配置）"; exit 1; }
   grep -q 'SWIPE_COUNT=2 ' "$dir/pdd.sh" \
     || { echo "沙箱自检失败：SWIPE_* 那条 sed 没锚上（会按真实时长跑），停"; exit 1; }
   # 仓库是公开的，所以被测脚本本体里不许出现任何真凭据形态。这条和 githooks/pre-commit
@@ -132,7 +137,7 @@ reset_env() {
   # 断言开关一律在 reset_env 里清零：每个用例都是先 reset 再设自己那几个，
   # 漏了 unset 也不会把上一个用例的期望带过来
   unset EXPECT_TAPS EXPECT_CLOSE EXPECT_PAUSE EXPECT_TITLE EXPECT_LOG EXPECT_NOLOG \
-        EXPECT_BACKS SEED_PAUSE SBX_PEND_MISS SBX_COUNT_WORD SBX_BAND_MISS 2>/dev/null
+        EXPECT_BACKS SEED_PAUSE SEED_CONF SBX_PEND_MISS SBX_COUNT_WORD SBX_BAND_MISS 2>/dev/null
 }
 
 run_case() { # run_case 名字 期望rc 期望lit(-不查) 期望标记(-不查) [额外sed...]
@@ -143,6 +148,9 @@ run_case() { # run_case 名字 期望rc 期望lit(-不查) 期望标记(-不查)
   [ "$MK" = 1 ] && touch "$dir/runs/.done-$(date +%F)"
   # 预置桌面那个账本文件：里面只有一个天数，脚本读写它，但任何数字都不挡路
   [ -z "${SEED_PAUSE:-}" ] || printf '%s\n' "$SEED_PAUSE" >"$dir/pause"
+  # 预置外置那份 OCR 配置（base() 把 OCR_CONF_FILE 指到用例目录里的 ocr.conf）：
+  # 不给文件 = 测的是内建默认，其余用例一直在走的就是这条路。
+  [ -z "${SEED_CONF:-}" ] || printf '%s\n' "$SEED_CONF" >"$dir/ocr.conf"
   while [ $# -gt 0 ]; do sed -i "$1" "$dir/pdd.sh"; shift; done
   local logs rc lit marker taps backs bad=
   logs=$(cd "$dir" && PATH="$PATHP" timeout 240 bash "$dir/pdd.sh" run 2>&1); rc=$?
@@ -439,6 +447,30 @@ reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_BROWSE"; countfile 4 4 
 # 屏幕上读到「今日已点亮」那种日子：也算正常周期，账同样清 0
 reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_DONE"; countfile 4 4
   SEED_PAUSE=2 EXPECT_TAPS=2 EXPECT_PAUSE=0 EXPECT_TITLE='PDD ✅' run_case ledger-already-lit-zero 0 1 yes
+
+# -------------------------------------------- 外置那份 OCR 配置：真被引用，读不动就停
+# 这一组钉的不是版面，是"调用照配置引用"这件事本身。
+# ① 把内建默认里 browse 那档的 psm 阶梯削成只剩 7（最后那个 sed 干的），配置文件里再写回 "7 6"，
+#    桩只让 psm 6 读出横幅（SBX_BAND_MISS="7 11"）。配置真被读 → 横幅认到 → 走「滑满」那条路。
+#    装载那一步被摘掉（negative-control 第十条）红的**只有**「日志里没有『这一屏要滑满』」一项：
+#    rc=0 / lit=3 / 标记=yes / 收尾关=1 全照旧 —— lit=3 是 countfile 给的进度读数，不靠这条横幅。
+reset_env; export SBX_BAND_MISS="7 11" SEED_CONF='OCR_PSM_BAND_browse=7 6'
+  tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT"; countfile 4 4 3
+  tsvfile "$W/band.tsv" "$(row 浏览当前页面 900 300 300 60)"
+  EXPECT_CLOSE=1 EXPECT_LOG='这一屏要滑满' \
+  run_case conf-band-psm6 0 3 yes 's#^OCR_PSM_BAND_browse="7 6"#OCR_PSM_BAND_browse=7#'
+# ② 名单之外的键（这条塞的是 DEVICE）：当场停、退出码 78，绝不"看见了但没读"。
+#    她改了配置、跑的却还是老值 —— 这种静默比不写更坏，所以闸门放在装载里。
+reset_env; export SEED_CONF=$'OCR_LANG=chi_sim+eng\nDEVICE=192.168.1.9:5555\n'
+  EXPECT_LOG='不在名单里' run_case conf-unknown-key-stops 78 - no
+# ③ 名单里但值不成形（BAND_SCALE=0）：这个数同时是裁片坐标回算的除数，写 0 不会报错、
+#    只会把命中点全算飞，所以形状闸门也放在装载里，同样是 78。
+reset_env; export SEED_CONF='BAND_SCALE=0'
+  EXPECT_LOG='BAND_SCALE=0' run_case conf-bad-value-stops 78 - no
+# ④ 按前缀放行时漏的那一类：PILL_light 是标定框（不是 PILL_TH 那种可调参数），名单是逐个列的，
+#    它必须停在 78 —— 否则配置文件能把标定数据改掉，而那条路径上一道校验都没有。
+reset_env; export SEED_CONF='PILL_light=0.5,0.1,1,0.3'
+  EXPECT_LOG='不在名单里' run_case conf-calibration-key-stops 78 - no
 
 echo
 echo "失败用例数: $FAILED"

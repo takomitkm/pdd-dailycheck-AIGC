@@ -25,10 +25,10 @@
 # app 都不关（NO_CLOSE_LIT）：2 停在能直接接手的那一屏，4 停在刚读到「任务已完成」的那一屏，
 # 两种都只发推送、一个按键都不多放。
 #
-# 退出码：0 成功 / 2 设备连不上 / 3 手机锁屏 / 5 卡在某一步没找到（4 起步，每完成一步 +1）
-#         / 6 点完了但进度行那个次数没变小或读不到，当失败，不写今天标记
-#         / 7 前台不是拼多多 / 69 没有 adb / 78 配置缺或没有 tesseract。
-# 每种情况都会推一条通知，正文里带上最后停在哪个 activity。
+# 退出码：0 成功 / 2 设备连不上 / 3 手机锁屏 / 4 卡在入口那一枪 / 5 卡在某一步没找到（4 起步，每完成一步 +1）
+#         / 6 点完了但进度行那个次数没变小或读不到（当失败，不写今天标记）/ 7 前台不是拼多多 / 69 没有 adb
+#         / 78 配置读不动、值不成形、或没有 tesseract —— 配置文件**不在**不算读不动，那种是整体退回内建默认。
+# 除 78 和 69 之外每种情况都会推一条通知，带上最后停在哪个 activity；那两档停在派发之前，一次 adb 都没发过。
 #
 # 每次运行的证据（截图、XML、run.log、summary.txt）落在 $EVIDENCE_DIR，留 KEEP_DAYS 天。
 
@@ -37,6 +37,10 @@ export PYTHONIOENCODING=utf-8
 export LC_ALL=${LC_ALL:-C.UTF-8}
 
 # ---------------------------------------------------------------- 配置区
+# 这一段是内建默认。其中"OCR 调用"那一族（OCR_* / BAND_* / PILL_TH / PILL_SCALES /
+# PILL_MODE_* / PEND_PSM）可以被 ~/Desktop/pdd-ocr.conf 里的同名键覆盖，规则写在下面
+# 「OCR 调用配置（外置那一份）」那段；词表 ALIAS_、区域 REGION_、胶囊框 PILL_<key>、
+# 坐标 COORD_、设备这些不走配置文件，只能改这里。
 DEVICE=192.168.1.110:16132          # 手机的无线 adb 地址
 PKG=com.xunmeng.pinduoduo
 MIN_OVERLAP=3                       # 至少几个字对得上算命中；3=宽松，5=近乎精确
@@ -231,6 +235,10 @@ OCR_LANG=chi_sim+eng OCR_PSM=11 OCR_MINCONF=40 OCR_PSM_PAGE=6
 # 裁切放大那条通道专用：psm 7（单行）优先，psm 11（稀疏）兜底。
 # 整页 OCR 会跳过低对比度横条，裁出来放大 3 倍 + autocontrast 就能读到。
 OCR_PSM_BAND=7
+# band 档那两个数：10-18 之前它们硬写在内嵌 python 里（放大 3 倍、autocontrast 裁边 1），
+# 现在提到配置区，因为它俩同时进裁片和坐标回算 —— 改一个就必须是同一个数。
+BAND_SCALE=3
+BAND_CUTOFF=1
 # 只给 browse 这一个键加 psm 6（整块）。10-18 真机：点亮跳到「消费券」页，横幅
 # 「滑动浏览当前页面10秒即可点亮」明明在 y=457，四档全瞎 —— 整页 psm11 一个字没吐、
 # 整页 psm6 只吐商品行、band 档 psm7 空、band 档 psm11 空，于是 browse_page 直接返回 1，
@@ -289,6 +297,111 @@ if [ -z "$PUSH_URL" ] && [ -r "$PUSH_URL_FILE" ]; then
 fi
 # 完成标记：$EVIDENCE_DIR/.done-<日期>。三步点完、或屏幕上读到 ALIAS_done 都会写，
 # 当天再跑直接 exit 0，完全不碰手机。「立即兑换」只推送、不写标记，下次还会来看。
+
+# ---------------------------------------------------------------- OCR 调用配置（外置那一份）
+# 上面那一整段配置区现在是"内建默认"：这份文件不在时，行为和没做过这次改动之前一字不差。
+# 装了 pdd-ocr.conf 之后，里面同名的键以文件为准；环境变量又比文件优先（桩沙箱和一次性试验走那条）。
+#   优先级：脚本内建默认 < $OCR_CONF_FILE < 环境变量
+# 这份文件是两处 OCR 调用共用的（这边是 tesseract 六档，另一处是 tools/vlm-attribute.sh 的视觉接口），
+# 所以 VLM_ 开头那批和 PDD_SH 这边认识但不应用 —— 那是离线工具在读的键。
+# 名单之外的键当场停（78）：ALIAS_/REGION_/PILL_<key>/COORD_ 那些是标定数据，不在这份文件的口径里，
+# 写进来了一个字都不会生效。"她以为改了、其实跑的是老配置"比不写更坏，所以宁可停。
+OCR_CONF_FILE=${OCR_CONF_FILE:-$HOME/Desktop/pdd-ocr.conf}
+OCR_CONF_STATE=absent        # absent 没这个文件 / unreadable 在但读不了 / loaded 读成了
+OCR_CONF_APPLIED=0           # 从文件里真的取用了几个键
+OCR_CONF_FOREIGN=0           # VLM_ 那批：认得，归离线工具
+OCR_CONF_ENVHOLD=0           # 环境变量已经占了，文件里同名的键被跳过
+OCR_CONF_ERR=
+
+load_ocr_conf() {            # 0 = 文件不在或用成了；1 = 有一行看不懂（OCR_CONF_ERR 里带着行号）
+  [ -e "$OCR_CONF_FILE" ] || { OCR_CONF_STATE=absent; return 0; }
+  [ -r "$OCR_CONF_FILE" ] || { OCR_CONF_STATE=unreadable; return 0; }
+  OCR_CONF_STATE=loaded
+  local envn line s k v ln=0
+  envn=" $(compgen -e | tr '\n' ' ') "     # 环境变量名单：这一层压过文件
+  while IFS= read -r line || [ -n "$line" ]; do
+    ln=$((ln + 1))
+    line=${line%$'\r'}
+    s=${line#"${line%%[![:space:]]*}"}     # 抹掉行首空白
+    [ -n "$s" ] || continue
+    case $s in '#'*) continue ;; esac
+    case $s in
+      '='*) OCR_CONF_ERR="第 $ln 行「$s」的键名是空的（格式是一行一个 KEY=VALUE）"; return 1 ;;
+      *=*) ;;
+      *)    OCR_CONF_ERR="第 $ln 行「$s」不是 KEY=VALUE"; return 1 ;;
+    esac
+    k=${s%%=*}; v=${s#*=}
+    case $k in [A-Za-z_][A-Za-z0-9_]*) ;; *) OCR_CONF_ERR="第 $ln 行的键名「$k」不合法（只许字母、数字、下划线，`=` 两边不要留空格）"; return 1 ;; esac
+    v=${v%"${v##*[![:space:]]}"}           # 抹掉行尾空白
+    case $k in
+      # 离线工具那批键：认得，但这边一个都不应用（应用它的是 tools/vlm-attribute.sh）。
+      VLM_API_URL_FILE|VLM_MODEL|VLM_TIMEOUT|VLM_PROMPT|VLM_PROMPT_FILE|\
+      VLM_MAX|VLM_LOCAL_MAX_PNG|PDD_SH)
+        OCR_CONF_FOREIGN=$((OCR_CONF_FOREIGN + 1)); continue ;;
+      VLM_API_URL|VLM_API_KEY|VLM_STUB)
+        OCR_CONF_ERR="第 $ln 行的键「$k」不许写在这份文件里：它是凭据或离线工具不走网络的后门。端点 URL 和 key 只写进 \$HOME/Desktop/pdd-vlm.url（权限 600），这份配置里只许出现它的路径 VLM_API_URL_FILE。"; return 1 ;;
+      # 这边能用的键是一个个列出来的，不是按前缀放的：按前缀（PILL_* / OCR_*）会把标定框
+      # PILL_light / PILL_bag 和 OCR_CONF_STATE 这几个记账变量一起放进来 —— 那几个既不校验、
+      # 又真的会被赋值，等于给标定数据开了一条没闸门的后门。
+      OCR_LANG|OCR_PSM|OCR_PSM_PAGE|OCR_MINCONF|OCR_PSM_BAND|OCR_PSM_BAND_*|\
+      PEND_PSM|BAND_SCALE|BAND_CUTOFF|PILL_TH|PILL_SCALES|PILL_MODE_*) ;;
+      *) OCR_CONF_ERR="第 $ln 行的键「$k」不在名单里。这份文件只管两处 OCR 调用（认哪几档、怎么预处理、接口怎么问）：这边认 OCR_LANG OCR_PSM OCR_PSM_PAGE OCR_MINCONF OCR_PSM_BAND[_<key>] PEND_PSM BAND_SCALE BAND_CUTOFF PILL_TH PILL_SCALES PILL_MODE_<key>，再加上离线工具的 VLM_ 那批和 PDD_SH。词表 ALIAS_、区域 REGION_、胶囊框 PILL_<key>（PILL_light 那种）、坐标 COORD_、设备都在 pdd.sh 自己的配置区，写在这里一个字都不会生效。"; return 1 ;;
+    esac
+    case " $envn " in *" $k "*) OCR_CONF_ENVHOLD=$((OCR_CONF_ENVHOLD + 1)); continue ;; esac
+    case $v in '~/'*) v=$HOME/${v#\~/} ;; esac
+    v=${v//\$HOME/$HOME}
+    printf -v "$k" '%s' "$v" || { OCR_CONF_ERR="第 $ln 行赋不进「$k」"; return 1; }
+    OCR_CONF_APPLIED=$((OCR_CONF_APPLIED + 1))
+  done <"$OCR_CONF_FILE"
+  return 0
+}
+
+in_range() {   # 整数 下界 上界 -> 0 在范围内
+  case ${1:-} in ''|*[!0-9]*) return 1 ;; esac
+  [ "$1" -ge "$2" ] && [ "$1" -le "$3" ]
+}
+num_list() {   # "7 6" 这种空格分开的整数表 -> 0；空表或混进非数字 -> 1
+  local t
+  [ -n "${1// /}" ] || return 1
+  for t in $1; do case $t in ''|*[!0-9]*) return 1 ;; esac; done
+  return 0
+}
+
+ocr_conf_check() {   # 值的形状闸门：这几个数飞了不会报错，只会静默给错答案
+  local k v
+  OCR_CONF_BAD=
+  in_range "${OCR_PSM:-}" 0 32       || OCR_CONF_BAD="${OCR_CONF_BAD}  OCR_PSM=${OCR_PSM:-（空）}  要 0..32 的整数（tesseract 的页面分割模式）"$'\n'
+  in_range "${OCR_PSM_PAGE:-}" 0 32  || OCR_CONF_BAD="${OCR_CONF_BAD}  OCR_PSM_PAGE=${OCR_PSM_PAGE:-（空）}  要 0..32 的整数"$'\n'
+  num_list "${OCR_PSM_BAND:-}"       || OCR_CONF_BAD="${OCR_CONF_BAD}  OCR_PSM_BAND=${OCR_PSM_BAND:-（空）}  要空格分开的 psm 整数表"$'\n'
+  num_list "${OCR_MINCONF:-}"        || OCR_CONF_BAD="${OCR_CONF_BAD}  OCR_MINCONF=${OCR_MINCONF:-（空）}  要一个整数（置信度门槛，0..100）"$'\n'
+  in_range "${OCR_MINCONF:-}" 0 100  || OCR_CONF_BAD="${OCR_CONF_BAD}  OCR_MINCONF=${OCR_MINCONF:-（空）}  要在 0..100 里"$'\n'
+  num_list "${PEND_PSM:-}"           || OCR_CONF_BAD="${OCR_CONF_BAD}  PEND_PSM=${PEND_PSM:-（空）}  要空格分开的 psm 整数表"$'\n'
+  for k in $(compgen -v OCR_PSM_BAND_); do
+    v=${!k:-}
+    num_list "$v" || OCR_CONF_BAD="${OCR_CONF_BAD}  $k=$v  要空格分开的 psm 整数表"$'\n'
+  done
+  in_range "${BAND_SCALE:-}" 1 8     || OCR_CONF_BAD="${OCR_CONF_BAD}  BAND_SCALE=${BAND_SCALE:-（空）}  要 1..8 的整数（这个数同时是裁片坐标回算的除数，写 0 会把命中点算成除零）"$'\n'
+  in_range "${BAND_CUTOFF:-}" 0 49   || OCR_CONF_BAD="${OCR_CONF_BAD}  BAND_CUTOFF=${BAND_CUTOFF:-（空）}  要 0..49 的整数（autocontrast 的直方图裁边百分比）"$'\n'
+  in_range "${PILL_TH:-}" 0 255      || OCR_CONF_BAD="${OCR_CONF_BAD}  PILL_TH=${PILL_TH:-（空）}  要 0..255 的整数（反色后那个硬阈值）"$'\n'
+  case "${PILL_SCALES:-}" in
+    ''|*[!0-9\ ]*) OCR_CONF_BAD="${OCR_CONF_BAD}  PILL_SCALES=${PILL_SCALES:-（空）}  要空格分开的整数表"$'\n' ;;
+    *) for v in $PILL_SCALES; do in_range "$v" 1 8 || OCR_CONF_BAD="${OCR_CONF_BAD}  PILL_SCALES 里那个「$v」不在 1..8"$'\n'; done ;;
+  esac
+  for k in $(compgen -v PILL_MODE_); do
+    case ${!k:-} in inv|color) ;; *) OCR_CONF_BAD="${OCR_CONF_BAD}  $k=${!k:-（空）}  只认 inv（反色+硬阈值）或 color（原色）"$'\n' ;; esac
+  done
+  [ -n "$OCR_CONF_BAD" ] && return 1
+  return 0
+}
+
+load_ocr_conf || {
+  printf 'OCR 配置读不动，不带着半套配置开跑。\n  文件：%s\n  %s\n' "$OCR_CONF_FILE" "$OCR_CONF_ERR" >&2
+  exit 78
+}
+ocr_conf_check || {
+  printf 'OCR 配置里的值不成形，改对了再跑：\n%s  文件：%s\n' "$OCR_CONF_BAD" "$OCR_CONF_FILE" >&2
+  exit 78
+}
 
 # 配置缺了就当场停，别默默把流程跑歪
 [ -n "${STEPS// /}" ] || { printf 'STEPS 是空的，不知道要点哪几步\n' >&2; exit 78; }
@@ -782,14 +895,16 @@ GEOM
   [ "${cw:-0}" -gt 8 ] 2>/dev/null || return 1
   [ "${ch:-0}" -gt 8 ] 2>/dev/null || return 1
   for psm in $bp $OCR_PSM; do
-    BAND_PNG="$png" BAND_OUT="$TMP/band.png" BAND_BOX="$x0 $y0 $cw $ch" python3 - <<'CROP'
+    BAND_PNG="$png" BAND_OUT="$TMP/band.png" BAND_BOX="$x0 $y0 $cw $ch" \
+    BAND_SCALE="$BAND_SCALE" BAND_CUTOFF="$BAND_CUTOFF" python3 - <<'CROP'
 from PIL import Image, ImageOps
 import os
 im = Image.open(os.environ["BAND_PNG"])
 x, y, w, h = (int(v) for v in os.environ["BAND_BOX"].split())
 im = im.crop((x, y, x + w, y + h)).convert("L")
-im = ImageOps.autocontrast(im, cutoff=1)
-im.resize((im.width * 3, im.height * 3), Image.LANCZOS).save(os.environ["BAND_OUT"])
+im = ImageOps.autocontrast(im, cutoff=int(os.environ["BAND_CUTOFF"]))
+sc = int(os.environ["BAND_SCALE"])
+im.resize((im.width * sc, im.height * sc), Image.LANCZOS).save(os.environ["BAND_OUT"])
 CROP
     tesseract "$TMP/band.png" stdout -l "$OCR_LANG" --psm "$psm" tsv \
       >"$TMP/band-$psm.tsv" 2>/dev/null \
@@ -799,9 +914,10 @@ CROP
   # 缩放按「整图」尺寸算，不是裁片尺寸：裁片里第 k 像素在屏幕上的位置是
   # x0 + k * (TAP_W / 整图宽)。用裁片宽高会把裁片拉回全屏，命中点全部飞到
   # REGION 外面去，pick() 会把它们全丢掉（这个坑踩过一次）。
-  # /3 是因为裁片放大过 3 倍，tsv 坐标是放大后的。
-  bsx=$(awk -v a="$TAP_W" -v b="$iw" 'BEGIN{printf "%.5f", a/b/3}')
-  bsy=$(awk -v a="$TAP_H" -v b="$ih" 'BEGIN{printf "%.5f", a/b/3}')
+  # /BAND_SCALE 是因为裁片放大过 BAND_SCALE 倍，tsv 里的坐标是放大后的。这个除数必须和
+  # 上面那次 resize 用同一个配置键：只改一处，命中点会按错倍数折算，全飞出 REGION 被 pick 丢光。
+  bsx=$(awk -v a="$TAP_W" -v b="$iw" -v s="$BAND_SCALE" 'BEGIN{printf "%.5f", a/b/s}')
+  bsy=$(awk -v a="$TAP_H" -v b="$ih" -v s="$BAND_SCALE" 'BEGIN{printf "%.5f", a/b/s}')
   boxx=$(awk -v a="$x0" -v b="$iw" -v w="$TAP_W" 'BEGIN{printf "%.1f", a/b*w}')
   boyy=$(awk -v a="$y0" -v b="$ih" -v h="$TAP_H" 'BEGIN{printf "%.1f", a/b*h}')
   local av="ALIAS_$key"
@@ -1904,6 +2020,17 @@ cmd_replay() {
 cmd_status() {
   printf '设备      %s (%s)\n' "$DEVICE" "$(device_online && echo 在线 || echo 离线)"
   printf 'OCR       %s\n' "$(have tesseract && tesseract --version 2>&1 | head -1 || echo 没装：只剩 XML 和固定坐标)"
+  case $OCR_CONF_STATE in
+    loaded)     cs="在用：从文件取了 $OCR_CONF_APPLIED 个键（另外 $OCR_CONF_FOREIGN 个是离线工具那批（VLM_ 和 PDD_SH），这边只认不用；环境变量占了 $OCR_CONF_ENVHOLD 个，那几个的文件值没生效）" ;;
+    absent)     cs="没有这份文件 —— 用的是 pdd.sh 配置区里的内建默认" ;;
+    unreadable) cs="文件在但读不了（看权限），用的是内建默认" ;;
+  esac
+  printf 'OCR 配置  %s\n          %s\n' "$OCR_CONF_FILE" "$cs"
+  local _k _bk=
+  for _k in $(compgen -v OCR_PSM_BAND_); do _bk="$_bk${_k#OCR_PSM_BAND_}=${!_k} "; done
+  printf 'OCR 档位  lang=%s｜整页 %s / %s 门槛 %s｜band %s（按键：%s）×%s 裁边 %s｜胶囊 阈 %s 倍数 %s｜pend %s\n' \
+    "$OCR_LANG" "$OCR_PSM" "$OCR_PSM_PAGE" "$OCR_MINCONF" "$OCR_PSM_BAND" \
+    "${_bk:-（没有）}" "$BAND_SCALE" "$BAND_CUTOFF" "$PILL_TH" "$PILL_SCALES" "$PEND_PSM"
   printf '步骤      %s\n' "$STEPS"
   printf '今天      %s (%s)\n' "$(marker_path)" "$([ -f "$(marker_path)" ] && echo 已完成 || echo 未完成)"
   printf '兑换倒数  %s\n' "$(

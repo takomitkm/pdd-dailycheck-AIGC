@@ -42,6 +42,11 @@ psm = tesseract 的 page segmentation mode（页面分割模式）：11 当稀�
 
 改 psm 的规矩：**只按 key 加，加完必须跑双分辨率沙箱。**
 
+表里那三个数（band 的 `×3` = `BAND_SCALE`、autocontrast 的裁边 = `BAND_CUTOFF`、pill 的硬阈值
+`120` = `PILL_TH`）11-01 起是配置文件里的键，改它们不动脚本字节，走
+[calibration.md](calibration.md)「调参和改标定走两个地方」那一条；判据面跟着变的，所以改完
+同样要过双分辨率沙箱和 [../scripts/ab-replay.sh](../scripts/ab-replay.sh) 那两路重放。
+
 ## 三、深底白字（pill 档）的配方
 
 来自 [measurements/measured-RESULTS.txt](measurements/measured-RESULTS.txt)，40 帧真图跑的矩阵：

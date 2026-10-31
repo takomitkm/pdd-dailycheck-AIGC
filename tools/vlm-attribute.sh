@@ -18,7 +18,9 @@
 #   scp tools/vlm-attribute.sh deb-h61:/tmp/
 #   ssh deb-h61 'bash /tmp/vlm-attribute.sh ~/Desktop/pdd-runs/2026-10-30/191958 --key bag --max 3'
 #   bash vlm-attribute.sh <证据目录> [--key bag] [--glob "*-bag-*.png"] [--send] [--max N]
-#                         [--out DIR] [--no-local]
+#                         [--out DIR] [--no-local] [--conf <pdd-ocr.conf 的路径>]
+#   提示词、模型名、超时、端点文件路径、默认取几帧这些都读 ~/Desktop/pdd-ocr.conf
+#   （和 pdd.sh 共用那一份，见文件里「OCR 调用配置」那段）；`--conf` 换位置，命令行参数压过文件。
 #   目录给到"日期"或"日期/时间"那一层都行；帧的 key 默认取自文件名 `秒-key-轮.png`。
 #   `--key bag` 顺手把选帧收到 `*-bag-*.png`（否则它只改标签，会拿别的屏的框出建议）；
 #   要跨帧就用 `--glob` 显式覆盖。
@@ -36,6 +38,8 @@ VLM_API_URL=${VLM_API_URL:-}
 VLM_API_KEY=${VLM_API_KEY:-}
 VLM_MODEL=${VLM_MODEL:-}
 VLM_TIMEOUT=${VLM_TIMEOUT:-90}
+VLM_MAX=${VLM_MAX:-0}
+VLM_LOCAL_MAX_PNG=${VLM_LOCAL_MAX_PNG:-12}
 PDD_SH=${PDD_SH:-$HOME/Desktop/pdd.sh}
 VLM_STUB=${VLM_STUB:-}
 VLM_PROMPT=${VLM_PROMPT:-'这是一张手机屏幕截图（拼多多的活动页或首页）。把你能看清的中文文本逐行列出来，每行给两个字段：
@@ -43,19 +47,111 @@ VLM_PROMPT=${VLM_PROMPT:-'这是一张手机屏幕截图（拼多多的活动页
 "box"：这一行在图中的位置，写成 [x0,y0,x1,y1]，归一化到 0..1（原点在左上角，x 向右、y 向下，分别除以图片的宽高）。
 只输出一个 JSON 数组，不要解释、不要 markdown 代码块。看不清的行整行省略 —— 宁可少给几行，也不要为了凑格式猜字。'}
 
-dir= glob='*.png' glob_set=0 key_override= want_send=0 maxn=0 out= want_local=1
+# ---------------------------------------------------------------- OCR 调用配置（和 pdd.sh 共用那一份）
+# 上面那一整排是内建默认：这份文件不在时，行为和没做过这次改动之前一字不差。
+# 装了 pdd-ocr.conf 之后里面的同名键盖掉默认，环境变量又盖过文件：
+#   优先级 内建默认 < $OCR_CONF_FILE（`--conf` 给的就是它）< 环境变量 < 命令行参数
+# 一处改两处生效：这边读的是 VLM_ 那批（问接口怎么问），pdd.sh 读的是 OCR_/BAND_/PILL_/PEND_PSM
+# （六档 tesseract 怎么读）。两边读的都是命令行给的那个路径 —— 下面跑本地 replay 时会把
+# OCR_CONF_FILE 原样传给子进程，免得"本地那一栏"和"接口那一栏"用的不是同一份配置。
+# 名单之外的键当场停（78）：写了却不生效的配置比没写更坏。
+OCR_CONF_FILE=${OCR_CONF_FILE:-$HOME/Desktop/pdd-ocr.conf}
+VLM_CONF_STATE=absent        # absent 没这个文件 / unreadable 在但读不了 / loaded 读成了
+VLM_CONF_APPLIED=0           # 从文件里真的取用了几个键
+VLM_CONF_FOREIGN=0           # OCR_ 那批：认得，归 pdd.sh
+VLM_CONF_ENVHOLD=0           # 环境变量已经占了，文件里同名的键被跳过
+VLM_CONF_ERR=
+
+load_vlm_conf() {            # 0 = 文件不在或用成了；1 = 有一行看不懂（VLM_CONF_ERR 里带着行号）
+  [ -e "$OCR_CONF_FILE" ] || { VLM_CONF_STATE=absent; return 0; }
+  [ -r "$OCR_CONF_FILE" ] || { VLM_CONF_STATE=unreadable; return 0; }
+  VLM_CONF_STATE=loaded
+  local envn line s k v ln=0
+  envn=" $(compgen -e | tr '\n' ' ') "     # 环境变量名单：这一层压过文件
+  while IFS= read -r line || [ -n "$line" ]; do
+    ln=$((ln + 1))
+    line=${line%$'\r'}
+    s=${line#"${line%%[![:space:]]*}"}     # 抹掉行首空白
+    [ -n "$s" ] || continue
+    case $s in '#'*) continue ;; esac
+    case $s in
+      '='*) VLM_CONF_ERR="第 $ln 行「$s」的键名是空的（格式是一行一个 KEY=VALUE）"; return 1 ;;
+      *=*) ;;
+      *)    VLM_CONF_ERR="第 $ln 行「$s」不是 KEY=VALUE"; return 1 ;;
+    esac
+    k=${s%%=*}; v=${s#*=}
+    case $k in [A-Za-z_][A-Za-z0-9_]*) ;; *) VLM_CONF_ERR="第 $ln 行的键名「$k」不合法（只许字母、数字、下划线，`=` 两边不要留空格）"; return 1 ;; esac
+    v=${v%"${v##*[![:space:]]}"}           # 抹掉行尾空白
+    case $k in
+      # 这边能用的键也是逐个列出来的，不走 VLM_* 前缀：按前缀放行就等于允许
+      # VLM_API_URL= / VLM_API_KEY= / VLM_STUB= 写进这份文件 —— 那两个是凭据、第三个是不走网络的
+      # 后门，端点值只放 $HOME/Desktop/pdd-vlm.url（600，不进 git），名单只留真正该调的参数。
+      VLM_API_URL_FILE|VLM_MODEL|VLM_TIMEOUT|VLM_PROMPT|VLM_PROMPT_FILE|\
+      VLM_MAX|VLM_LOCAL_MAX_PNG|PDD_SH) ;;
+      VLM_API_URL|VLM_API_KEY|VLM_STUB)
+        VLM_CONF_ERR="第 $ln 行的键「$k」不许写在这份文件里：它是凭据或本地后门，不是可调参数。端点 URL 和 key 只写进 $HOME/Desktop/pdd-vlm.url（第 1 行 URL、第 2 行可选 key，权限 600），这份配置里只许出现它的路径 VLM_API_URL_FILE。"; return 1 ;;
+      OCR_LANG|OCR_PSM|OCR_PSM_PAGE|OCR_MINCONF|OCR_PSM_BAND|OCR_PSM_BAND_*|\
+      PEND_PSM|BAND_SCALE|BAND_CUTOFF|PILL_TH|PILL_SCALES|PILL_MODE_*)
+        VLM_CONF_FOREIGN=$((VLM_CONF_FOREIGN + 1)); continue ;;
+      *) VLM_CONF_ERR="第 $ln 行的键「$k」不在这份配置的名单里。这份只管两处 OCR 调用：这边认 VLM_API_URL_FILE VLM_MODEL VLM_TIMEOUT VLM_PROMPT VLM_PROMPT_FILE VLM_MAX VLM_LOCAL_MAX_PNG PDD_SH，pdd.sh 认 OCR_/BAND_/PILL_/PEND_PSM 那批（见文件头）。端点的值、词表、区域、坐标都不许写进来。"; return 1 ;;
+    esac
+    case " $envn " in *" $k "*) VLM_CONF_ENVHOLD=$((VLM_CONF_ENVHOLD + 1)); continue ;; esac
+    case $v in '~/'*) v=$HOME/${v#\~/} ;; esac
+    v=${v//\$HOME/$HOME}
+    printf -v "$k" '%s' "$v" || { VLM_CONF_ERR="第 $ln 行赋不进「$k」"; return 1; }
+    VLM_CONF_APPLIED=$((VLM_CONF_APPLIED + 1))
+  done <"$OCR_CONF_FILE"
+  return 0
+}
+
+vlm_conf_check() {   # 值的形状闸门：这几个数飞了不会报错，只会静默给错答案
+  VLM_CONF_BAD=
+  case ${VLM_TIMEOUT:-} in ''|*[!0-9]*) VLM_CONF_BAD="${VLM_CONF_BAD}  VLM_TIMEOUT=${VLM_TIMEOUT:-（空）}  要一个整数秒"$'\n' ;;
+    *) [ "$VLM_TIMEOUT" -ge 1 ] && [ "$VLM_TIMEOUT" -le 600 ] \
+         || VLM_CONF_BAD="${VLM_CONF_BAD}  VLM_TIMEOUT=$VLM_TIMEOUT  要在 1..600 秒里（curl -m）"$'\n' ;;
+  esac
+  case ${VLM_MAX:-} in ''|*[!0-9]*) VLM_CONF_BAD="${VLM_CONF_BAD}  VLM_MAX=${VLM_MAX:-（空）}  要一个非负整数（0 = 不限）"$'\n' ;; esac
+  case ${VLM_LOCAL_MAX_PNG:-} in ''|*[!0-9]*) VLM_CONF_BAD="${VLM_CONF_BAD}  VLM_LOCAL_MAX_PNG=${VLM_LOCAL_MAX_PNG:-（空）}  要一个正整数（超过这个张数就不跑本地 replay）"$'\n' ;;
+    *) [ "$VLM_LOCAL_MAX_PNG" -ge 1 ] || VLM_CONF_BAD="${VLM_CONF_BAD}  VLM_LOCAL_MAX_PNG=$VLM_LOCAL_MAX_PNG  至少得是 1"$'\n' ;;
+  esac
+  [ -z "$VLM_CONF_BAD" ]
+}
+
+dir= glob='*.png' glob_set=0 key_override= want_send=0 maxn= maxn_set=0 out= want_local=1
 while [ $# -gt 0 ]; do
   case $1 in
     --key)      shift; key_override=${1:-}; shift ;;
     --glob)     shift; glob=${1:-}; glob_set=1; shift ;;
+    --conf)     shift; OCR_CONF_FILE=${1:-}; shift ;;
     --send)     shift; want_send=1 ;;
     --no-local) shift; want_local=0 ;;
-    --max)      shift; maxn=${1:-0}; shift ;;
+    --max)      shift; maxn=${1:-0}; maxn_set=1; shift ;;
     --out)      shift; out=${1:-}; shift ;;
     -*)         printf '不认得参数 %s\n' "$1" >&2; exit 2 ;;
     *)          dir=$1; shift ;;
   esac
 done
+load_vlm_conf || {
+  printf 'OCR 配置读不动，不带半套配置开跑。\n  文件：%s\n  %s\n' "$OCR_CONF_FILE" "$VLM_CONF_ERR" >&2
+  exit 78
+}
+vlm_conf_check || {
+  printf 'OCR 配置里的值不成形，改对了再跑：\n%s' "$VLM_CONF_BAD" >&2
+  printf '  文件：%s\n' "$OCR_CONF_FILE" >&2
+  exit 78
+}
+[ -n "$maxn" ] || maxn=0
+[ "$maxn_set" = 1 ] || maxn=${VLM_MAX:-0}
+# 提示词文件优先：整份读进来当提示词（配置文件的值不能跨行，长提示词只能这么给）。
+VLM_PROMPT_SRC=内建默认
+if [ "$VLM_CONF_STATE" = loaded ] && grep -qE '^[[:space:]]*VLM_PROMPT=' "$OCR_CONF_FILE"; then
+  VLM_PROMPT_SRC="conf:$OCR_CONF_FILE"
+fi
+if [ -n "${VLM_PROMPT_FILE:-}" ]; then
+  [ -r "$VLM_PROMPT_FILE" ] || { printf 'VLM_PROMPT_FILE 指到了 %s，但它不存在或读不了。\n' "$VLM_PROMPT_FILE" >&2; exit 78; }
+  VLM_PROMPT=$(cat "$VLM_PROMPT_FILE")
+  VLM_PROMPT_SRC="file:$VLM_PROMPT_FILE"
+fi
 # --key 得同时负责选帧：只管改标签的话 `--key bag --max 3` 会挑到 popup 帧再按 bag 的词表判，
 # 建议配置里就会出现"从别的屏量出来的框"。没显式给 --glob 就按 `*-<key>-*.png` 收。
 if [ -n "$key_override" ] && [ "$glob_set" != 1 ]; then
@@ -100,10 +196,12 @@ fi
 # 拆字段会把带空格的标签切碎）。两件事决定了这里的写法：
 #   ① `pdd.sh replay` 只认 <时间>/ 和 <日期>/<时间>/ 这两级目录，而本工具的 --dir 可以给到更上
 #      一层（帧用 find 递归挑），所以得按**帧自己的父目录**分组去跑，不能直接传 $dir。
-#   ② 一次 replay 扫的是整个运行目录，按帧各跑一遍等于把整目录 OCR 重做 N 遍。11-01 00:0x
-#      在这台上实测过：整页 psm 6 单帧三次 1.4 / 2.3 / 3.2 秒上下（三帧分别测，字数越多越慢），
-#      band 裁片 psm 7 含 ×3 放大和存盘 0.4 秒，`replay --ocr` 两帧的一场 20 秒 —— 每帧约 10 秒，
-#      86 帧的一场十五分钟上下。所以按运行目录的 png 张数决定跑不跑，`--max` 限不住 replay 的范围。
+#   ② 一次 replay 扫的是整个运行目录，按帧各跑一遍等于把整目录 OCR 重做 N 遍。单帧的分量 11-01 量过：
+#      整页 psm 6 单帧三次 1.4 / 2.3 / 3.2 秒上下（三帧分别测，字数越多越慢），band 裁片 psm 7 含 ×3
+#      放大和存盘 0.4 秒。整场按帧数摊：空闲主机上 32 帧那一跑 2 分 11 秒、17 帧那一跑 1 分 25 秒，
+#      也就是 4~5 秒一帧，86 帧的一场六到七分钟 —— 这里原先写的是"每帧约 10 秒、86 帧十五分钟"，
+#      那个数是拿一个两帧的目录（20 秒）量的，进程启动占大头，样本太小，作废。
+#      所以按运行目录的 png 张数决定跑不跑，`--max` 限不住 replay 的范围。
 : >"$locfile"
 if [ "$want_local" = 1 ] && [ -f "$PDD_SH" ]; then
   parents=$(for f in "${frames[@]}"; do dirname "$f"; done | sort -u)
@@ -111,12 +209,15 @@ if [ "$want_local" = 1 ] && [ -f "$PDD_SH" ]; then
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     n=$(find "$p" -maxdepth 1 -type f -name '*.png' 2>/dev/null | grep -c .)
-    if [ "$n" -le 12 ]; then
-      say "本地六档（$p：$n 张 png，按每帧 10 秒估 $((n * 10)) 秒上下）"
-      bash "$PDD_SH" replay "$p" --ocr >>"$locfile" 2>&1 \
+    if [ "$n" -le "$VLM_LOCAL_MAX_PNG" ]; then
+      # 每帧 5 秒不是拍脑袋：11-01 主机空闲时两个数摊出来的 —— 32 帧那跑 2 分 11 秒、17 帧那跑 1 分 25 秒。
+      say "本地六档（$p：$n 张 png，按每帧 5 秒估 $((n * 5)) 秒上下；闸门是配置里的 VLM_LOCAL_MAX_PNG=$VLM_LOCAL_MAX_PNG）"
+      # OCR_CONF_FILE 原样传给子进程：本地那一栏是 pdd.sh 的 replay 跑的，它读同一份配置，
+      # 不然"并排"的两栏用的是两套参数，比较就没意义了。
+      OCR_CONF_FILE="$OCR_CONF_FILE" bash "$PDD_SH" replay "$p" --ocr >>"$locfile" 2>&1 \
         || say "  replay 没跑成，$p 的本地那一栏会是空（原文在 $locfile）"
     else
-      say "本地六档跳过：$p 有 $n 张 png，replay 要扫整个目录（--max 限不住它）。"
+      say "本地六档跳过：$p 有 $n 张 png，超过配置里的 VLM_LOCAL_MAX_PNG=$VLM_LOCAL_MAX_PNG（replay 要扫整个目录，--max 限不住它）。"
       say "  要这一栏就把目录指到单个运行目录，或先按 --glob 缩到某一步。"
     fi
   done <<<"$parents"
@@ -239,6 +340,13 @@ alias_of() { [ -f "$PDD_SH" ] && grep -m1 "^ALIAS_$1=" "$PDD_SH" 2>/dev/null | c
 
 say "帧 ${#frames[@]} 张 · 输出目录 $out"
 say "端点 ${VLM_URL_SRC}（长度 ${#VLM_API_URL} 字符）· send=$([ "$want_send" = 1 ] && echo 是 || echo '否 —— 只落请求体，一个字节都不出站')"
+case $VLM_CONF_STATE in
+  loaded)     _cs="在用：从文件取了 $VLM_CONF_APPLIED 个键（另外 $VLM_CONF_FOREIGN 个是 pdd.sh 那批，这边只认不用；环境变量占了 $VLM_CONF_ENVHOLD 个，那几个的文件值没生效）" ;;
+  absent)     _cs="没有这份文件 —— 用的是工具里的内建默认" ;;
+  unreadable) _cs="文件在但读不了（看权限），用的是内建默认" ;;
+esac
+say "配置 $OCR_CONF_FILE · $_cs"
+say "  提示词来自 $VLM_PROMPT_SRC（${#VLM_PROMPT} 字符）· model=${VLM_MODEL:-（不发）}· 超时 ${VLM_TIMEOUT}s · 本地栏闸门 $VLM_LOCAL_MAX_PNG 张"
 [ "$want_send" = 1 ] || say '确认要出站就加 --send 重跑。'
 say ''
 

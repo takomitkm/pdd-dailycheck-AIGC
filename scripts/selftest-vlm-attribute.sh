@@ -5,11 +5,14 @@
 #   1. 桩响应（`VLM_STUB`）证明不了识别质量，只证明"读回来能解析、命中能对上词表、建议落得下来"。
 #      识别质量要等真端点，见 docs/api-attribution.md「还没测的」。
 #   2. 全程不需要端点：端点文件不存在时，`--send` 那一项（H）要的就是 rc=78，不是失败。
-#   3. C/D/E/F/G/H/I/J 都要证据帧，用的是 `~/Desktop/pdd-runs/` 里现成的场次。证据只留
+#   3. C/D/E/F/G/H/I/J 和 L/M/N/O/P 都要证据帧，用的是 `~/Desktop/pdd-runs/` 里现成的场次。证据只留
 #      `KEEP_DAYS=7` 天，过期后这些项会打印「跳过」并整体判过 —— 别把"跳过"读成"通过"。
+#   4. L..P 测的是外置那份 `pdd-ocr.conf`（两处 OCR 调用共用）：装载、优先级、名单闸门、
+#      提示词文件优先。这组要 `CFG=<配置路径>`（默认 `/tmp/pdd-ocr.conf`）和 `PD=<pdd.sh 路径>`
+#      （默认桌面上那份），两个文件缺一个就整组跳过。
 #
 # 用法（在主机上跑，证据本来就在主机上）：
-#   scp tools/vlm-attribute.sh scripts/selftest-vlm-attribute.sh deb-h61:/tmp/
+#   scp tools/vlm-attribute.sh scripts/selftest-vlm-attribute.sh pdd-ocr.conf deb-h61:/tmp/
 #   ssh deb-h61 'bash /tmp/selftest-vlm-attribute.sh'
 # 两个目录可以用第 1、2 个参数改：selftest.sh <大场次目录> <小场次目录>
 set -u
@@ -122,6 +125,61 @@ if [ "$skip" = 0 ]; then
   echo
   echo "=== J 大目录（>12 张）不启动 replay，只报为什么"
   VLM_STUB=/tmp/va-stub-openai.json bash "$S" "$D" --key bag --max 1 --send --out /tmp/va-big 2>&1 | sed -n '1,2p'
+fi
+
+# ---------------------------------------------- L..P 外置那份 OCR 配置（和 pdd.sh 共用）
+# 这一组测的是"参数从哪儿来"，不是识别质量。CFG 指到仓库 pdd-ocr.conf 抄到主机上的那份；
+# 没带上来就整组跳过，别把跳过读成通过。
+CFG=${CFG:-/tmp/pdd-ocr.conf}
+PD=${PD:-$HOME/Desktop/pdd.sh}
+if [ ! -f "$CFG" ]; then
+  skip=$((skip + 5))
+  echo
+  echo "=== L/M/N/O/P 跳过：没有 $CFG（scp pdd-ocr.conf 过来再跑）"
+elif [ ! -f "$PD" ]; then
+  skip=$((skip + 5))
+  echo
+  echo "=== L/M/N/O/P 跳过：没有 $PD（O 那半段要拿 pdd.sh 本身走一遍装载闸门）"
+elif [ ! -d "$D" ]; then
+  skip=$((skip + 5))
+  echo
+  echo "=== L/M/N/O/P 跳过：没有证据目录 $D（这些项要挑帧才能走到装载与报告那一段）"
+else
+  echo
+  echo "=== L 带着配置文件跑：报告里那两行要写清取了几个键、提示词来自哪儿"
+  bash "$S" "$D" --conf "$CFG" --no-local --max 1 2>&1 | grep -E '^配置|^  提示词'
+
+  echo
+  echo "=== M 命令行压过文件：同一批帧，文件里 VLM_MAX=1 就只建 1 帧，--max 3 就建 3 帧"
+  printf 'VLM_MAX=1\n' >/tmp/va-conf-max1
+  echo "    只给文件（VLM_MAX=1）：$(bash "$S" "$D" --conf /tmp/va-conf-max1 --no-local 2>&1 | grep -E '^帧')"
+  echo "    文件 1 + --max 3：    $(bash "$S" "$D" --conf /tmp/va-conf-max1 --no-local --max 3 2>&1 | grep -E '^帧')"
+
+  echo
+  echo "=== N 没有配置文件 = 内建默认（这条同时钉 VLM_MAX 那条内建默认在不在：少了它这里会是 78）"
+  bash "$S" "$D" --conf /nonexistent-ocr.conf --no-local --max 1 2>&1 | grep -E '^配置|^  提示词'
+
+  echo
+  echo "=== O 名单要停下来：名单外的键 / 凭据形状的键，工具和 pdd.sh 两边都得 78"
+  printf 'OCR_LANG=chi_sim+eng\nDEVICE=192.168.1.9:5555\n' >/tmp/va-conf-badkey
+  bash "$S" "$D" --conf /tmp/va-conf-badkey --no-local >/tmp/va-o1 2>&1
+  echo "  工具 + 名单外键 rc=$?（应 78）：$(grep -o '不在这份配置的名单里' /tmp/va-o1 | head -1)"
+  printf 'VLM_API_KEY=see-pdd-vlm-dot-url\n' >/tmp/va-conf-cred     # 值是假的，测的是名单不是值
+  bash "$S" "$D" --conf /tmp/va-conf-cred --no-local >/tmp/va-o2 2>&1
+  echo "  工具 + 凭据键 rc=$?（应 78）：$(grep -o '不许写在这份文件里' /tmp/va-o2 | head -1)"
+  OCR_CONF_FILE=/tmp/va-conf-cred bash "$PD" __confcheck >/tmp/va-o3 2>&1
+  echo "  pdd.sh + 凭据键 rc=$?（应 78）：$(grep -o '不许写在这份文件里' /tmp/va-o3 | head -1)"
+  OCR_CONF_FILE=/tmp/va-conf-badkey bash "$PD" __confcheck >/tmp/va-o4 2>&1
+  echo "  pdd.sh + 名单外键 rc=$?（应 78）：$(grep -o '不在名单里' /tmp/va-o4 | head -1)"
+  OCR_CONF_FILE="$CFG" bash "$PD" __confcheck >/tmp/va-o5 2>&1
+  echo "  pdd.sh + 仓库那份配置 rc=$?（应 0，21 个键两边名单合起来全覆盖）"
+
+  echo
+  echo "=== P VLM_PROMPT_FILE 优先于文件里那行提示词（值非空就整份顶掉）"
+  printf '只看屏幕上正中间那一行字，给 JSON 数组。\n' >/tmp/va-prompt.txt
+  bash "$S" "$D" --conf "$CFG" --no-local --max 1 2>&1 | grep -E '^  提示词'
+  VLM_PROMPT_FILE=/tmp/va-prompt.txt bash "$S" "$D" --conf "$CFG" --no-local --max 1 2>&1 | grep -E '^  提示词'
+  echo "  指到读不到的文件就停：rc=$(VLM_PROMPT_FILE=/nonexistent-prompt.txt bash "$S" "$D" --conf "$CFG" --no-local --max 1 >/dev/null 2>&1; echo $?)"
 fi
 
 echo
