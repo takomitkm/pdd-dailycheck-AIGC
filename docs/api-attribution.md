@@ -238,7 +238,7 @@ ssh deb-h61 'bash /tmp/selftest-vlm-attribute.sh'
 | 配置里动了什么 | 只有 `VLM_MODEL=deepseek-ai/DeepSeek-OCR`（第 72 行）和抬头那三行说明；`~/Desktop/pdd-ocr.conf` 7295 字节、600、md5 `553e1dec…`；改前的那份存成 `~/Desktop/pdd-ocr.conf.bak-1101-1759`（md5 `ff7dccba…`） |
 | 端点值有没有进配置 | 没有。配置里只有 `VLM_API_URL_FILE`（指向那个文件的**路径**）；`VLM_API_URL` / `VLM_API_KEY` / `VLM_STUB` 三个键一出现就 78（O 项） |
 | 点击链有没有受影响 | 没有。`bash pdd.sh __confcheck` rc=0；`status` 仍是「从文件取了 13 个键」，OCR 档位那一行一个字没变（lang=chi_sim+eng｜整页 11 / 6 门槛 40｜band 7（按键：browse=7 6 done=7 6）×3 裁边 1｜胶囊 阈 120 倍数 1 2｜pend 6 11 12）—— 这次动的是工具那 8 个键里的 1 个 |
-| 鉴权 | `GET …/v1/models` 带 `Authorization: Bearer` → http=200、正文 7551 字节、`"id":"…"` 98 个；逐字串 `"id":"deepseek-ai/DeepSeek-OCR"` 命中 1 次（`PaddleOCR-VL` 也命中 1 次，那家确实还挂着 1.5） |
+| 鉴权 | `GET …/v1/models` 带 `Authorization: Bearer` → http=200、正文 7551 字节。**计数用 `grep -o '模式' \| wc -l`，不是 `grep -c`** —— 这份正文 `wc -l` = 0（整个 JSON 在一行、无换行符），`grep -c` 只能答"有没有"、给不出次数。按次数：`"id":"…"` 98 次、`"deepseek-ai/DeepSeek-OCR"` 1 次、`PaddleOCR-VL` 去重后只有 `PaddleOCR-VL-1.5` 一个（18:14:47 第一次读，18:43:20 换成按次数复查，两个数一致） |
 | 工具干跑（`--max 1`，不带 `--send`） | 报告头 `端点 file:/home/user/Desktop/pdd-vlm.url（长度 46 字符）· send=否 —— 只落请求体，一个字节都不出站`；`model=deepseek-ai/DeepSeek-OCR· 超时 90s · 本地栏闸门 12 张` |
 | 那一帧的请求体 | `100315-light-1`（key=light）756,572 字节，其中图 base64 755,820 |
 

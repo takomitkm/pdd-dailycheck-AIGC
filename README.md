@@ -42,8 +42,9 @@
   （值不进仓库、不进文档、不进提交）。11-01 18:01 配上：`ls` 出来 99 字节、两行，第 1 行长度 46
   = `https://api.siliconflow.cn/v1/chat/completions`（工具把这一整行原样 POST，不再拼路径），
   第 2 行长度 51（key，只报长度不报值）。模型名走配置里的
-  `VLM_MODEL=deepseek-ai/DeepSeek-OCR`；鉴权实测 `GET …/v1/models` → http=200、正文 7551 字节、
-  98 个 `"id":"…"`，其中 `"id":"deepseek-ai/DeepSeek-OCR"` 逐字命中 1 次。
+  `VLM_MODEL=deepseek-ai/DeepSeek-OCR`；鉴权实测 `GET …/v1/models` → http=200、正文 7551 字节，
+  按次数（`grep -o | wc -l`，那份 JSON 全在一行上，`grep -c` 给不出次数）98 个 `"id":"…"`，
+  其中 `"deepseek-ai/DeepSeek-OCR"` 出现 1 次。
 - 证据目录：`~/Desktop/pdd-runs/<日期>/<时分秒>/`，保留 7 天
 
 部署（在主机上执行）：
