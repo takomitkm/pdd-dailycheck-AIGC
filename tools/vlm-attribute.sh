@@ -18,12 +18,22 @@
 #   scp tools/vlm-attribute.sh deb-h61:/tmp/
 #   ssh deb-h61 'bash /tmp/vlm-attribute.sh ~/Desktop/pdd-runs/2026-10-30/191958 --key bag --max 3'
 #   bash vlm-attribute.sh <证据目录> [--key bag] [--glob "*-bag-*.png"] [--send] [--max N]
-#                         [--out DIR] [--no-local] [--conf <pdd-ocr.conf 的路径>]
+#                         [--out DIR] [--no-local] [--backend local|api] [--conf <pdd-ocr.conf 的路径>]
 #   提示词、模型名、超时、端点文件路径、默认取几帧这些都读 ~/Desktop/pdd-ocr.conf
 #   （和 pdd.sh 共用那一份，见文件里「OCR 调用配置」那段）；`--conf` 换位置，命令行参数压过文件。
 #   目录给到"日期"或"日期/时间"那一层都行；帧的 key 默认取自文件名 `秒-key-轮.png`。
 #   `--key bag` 顺手把选帧收到 `*-bag-*.png`（否则它只改标签，会拿别的屏的框出建议）；
 #   要跨帧就用 `--glob` 显式覆盖。
+#
+# 识图后端二选一（`VLM_BACKEND`，内建默认 local）：
+#   local = 只用原来的：本地六档 replay，不读端点文件、不建请求体、一个字节都不出站。
+#   api   = 问外部视觉接口，`--send` 才有意义（不给 --send 就只落请求体）。
+#   换后端不用改代码：配置文件里写 `VLM_BACKEND=api`，或命令行 `--backend api`（命令行压过文件）。
+#   11-01 定的是 local —— 现有那批模型在这份提示词下一律不回 0..1 的框，归因还是得靠 tesseract
+#   六档，实测见 docs/api-attribution.md。接口留着不删，是因为哪天换上真能回框的，
+#   要动的只有 `~/Desktop/pdd-vlm.url` 里那两行和配置里的 `VLM_MODEL`，代码一行不用碰。
+#   两栏对不上的口径：local 后端下 `建议配置.txt` / `候选词.txt` 按设计为空 —— replay 给的是
+#   「哪一档认到、点在哪个像素」，不给比例框（0..1），而那两个文件里的框是给 PILL_ 标定用的。
 #
 # 请求按 OpenAI 兼容的 chat/completions 写（`messages` + base64 data URL，读
 # `choices[0].message.content`）。**不是这个形状就只改 `vlm_post` 这一个函数** —— URL、头、
@@ -33,6 +43,8 @@
 # 和报告是通的，**证明不了识别质量**（识别质量要等真接口，见 docs/api-attribution.md）。
 set -u
 
+VLM_BACKEND_ENV=${VLM_BACKEND:-}       # 有值 = 环境变量占了这一层（压过配置文件，见文件头那段）
+VLM_BACKEND=${VLM_BACKEND:-local}      # local = 只用原来的六档；api = 问视觉接口
 VLM_API_URL_FILE=${VLM_API_URL_FILE:-$HOME/Desktop/pdd-vlm.url}
 VLM_API_URL=${VLM_API_URL:-}
 VLM_API_KEY=${VLM_API_KEY:-}
@@ -86,14 +98,14 @@ load_vlm_conf() {            # 0 = 文件不在或用成了；1 = 有一行看�
       # 这边能用的键也是逐个列出来的，不走 VLM_* 前缀：按前缀放行就等于允许
       # VLM_API_URL= / VLM_API_KEY= / VLM_STUB= 写进这份文件 —— 那两个是凭据、第三个是不走网络的
       # 后门，端点值只放 $HOME/Desktop/pdd-vlm.url（600，不进 git），名单只留真正该调的参数。
-      VLM_API_URL_FILE|VLM_MODEL|VLM_TIMEOUT|VLM_PROMPT|VLM_PROMPT_FILE|\
+      VLM_BACKEND|VLM_API_URL_FILE|VLM_MODEL|VLM_TIMEOUT|VLM_PROMPT|VLM_PROMPT_FILE|\
       VLM_MAX|VLM_LOCAL_MAX_PNG|PDD_SH) ;;
       VLM_API_URL|VLM_API_KEY|VLM_STUB)
         VLM_CONF_ERR="第 $ln 行的键「$k」不许写在这份文件里：它是凭据或本地后门，不是可调参数。端点 URL 和 key 只写进 $HOME/Desktop/pdd-vlm.url（第 1 行 URL、第 2 行可选 key，权限 600），这份配置里只许出现它的路径 VLM_API_URL_FILE。"; return 1 ;;
       OCR_LANG|OCR_PSM|OCR_PSM_PAGE|OCR_MINCONF|OCR_PSM_BAND|OCR_PSM_BAND_*|\
       PEND_PSM|BAND_SCALE|BAND_CUTOFF|PILL_TH|PILL_SCALES|PILL_MODE_*)
         VLM_CONF_FOREIGN=$((VLM_CONF_FOREIGN + 1)); continue ;;
-      *) VLM_CONF_ERR="第 $ln 行的键「$k」不在这份配置的名单里。这份只管两处 OCR 调用：这边认 VLM_API_URL_FILE VLM_MODEL VLM_TIMEOUT VLM_PROMPT VLM_PROMPT_FILE VLM_MAX VLM_LOCAL_MAX_PNG PDD_SH，pdd.sh 认 OCR_/BAND_/PILL_/PEND_PSM 那批（见文件头）。端点的值、词表、区域、坐标都不许写进来。"; return 1 ;;
+      *) VLM_CONF_ERR="第 $ln 行的键「$k」不在这份配置的名单里。这份只管两处 OCR 调用：这边认 VLM_BACKEND VLM_API_URL_FILE VLM_MODEL VLM_TIMEOUT VLM_PROMPT VLM_PROMPT_FILE VLM_MAX VLM_LOCAL_MAX_PNG PDD_SH，pdd.sh 认 OCR_/BAND_/PILL_/PEND_PSM 那批（见文件头）。端点的值、词表、区域、坐标都不许写进来。"; return 1 ;;
     esac
     case " $envn " in *" $k "*) VLM_CONF_ENVHOLD=$((VLM_CONF_ENVHOLD + 1)); continue ;; esac
     case $v in '~/'*) v=$HOME/${v#\~/} ;; esac
@@ -106,6 +118,10 @@ load_vlm_conf() {            # 0 = 文件不在或用成了；1 = 有一行看�
 
 vlm_conf_check() {   # 值的形状闸门：这几个数飞了不会报错，只会静默给错答案
   VLM_CONF_BAD=
+  case ${VLM_BACKEND:-} in
+    local|api) ;;
+    *) VLM_CONF_BAD="${VLM_CONF_BAD}  VLM_BACKEND=${VLM_BACKEND:-（空）}  只许两个值：local（只用原来的六档，一个字节都不出站）/ api（问视觉接口）"$'\n' ;;
+  esac
   case ${VLM_TIMEOUT:-} in ''|*[!0-9]*) VLM_CONF_BAD="${VLM_CONF_BAD}  VLM_TIMEOUT=${VLM_TIMEOUT:-（空）}  要一个整数秒"$'\n' ;;
     *) [ "$VLM_TIMEOUT" -ge 1 ] && [ "$VLM_TIMEOUT" -le 600 ] \
          || VLM_CONF_BAD="${VLM_CONF_BAD}  VLM_TIMEOUT=$VLM_TIMEOUT  要在 1..600 秒里（curl -m）"$'\n' ;;
@@ -118,6 +134,7 @@ vlm_conf_check() {   # 值的形状闸门：这几个数飞了不会报错，只
 }
 
 dir= glob='*.png' glob_set=0 key_override= want_send=0 maxn= maxn_set=0 out= want_local=1
+backend= backend_set=0
 while [ $# -gt 0 ]; do
   case $1 in
     --key)      shift; key_override=${1:-}; shift ;;
@@ -125,6 +142,7 @@ while [ $# -gt 0 ]; do
     --conf)     shift; OCR_CONF_FILE=${1:-}; shift ;;
     --send)     shift; want_send=1 ;;
     --no-local) shift; want_local=0 ;;
+    --backend)  shift; backend=${1:-}; backend_set=1; shift ;;
     --max)      shift; maxn=${1:-0}; maxn_set=1; shift ;;
     --out)      shift; out=${1:-}; shift ;;
     -*)         printf '不认得参数 %s\n' "$1" >&2; exit 2 ;;
@@ -142,6 +160,28 @@ vlm_conf_check || {
 }
 [ -n "$maxn" ] || maxn=0
 [ "$maxn_set" = 1 ] || maxn=${VLM_MAX:-0}
+# 后端是谁定的：内建默认 < 配置文件 < 环境变量 < 命令行（和装载那层的口径一致，报出来好核）。
+VLM_BACKEND_SRC=内建默认
+[ "$VLM_CONF_STATE" = loaded ] && grep -qE '^[[:space:]]*VLM_BACKEND=' "$OCR_CONF_FILE" && VLM_BACKEND_SRC="conf:$OCR_CONF_FILE"
+[ -n "$VLM_BACKEND_ENV" ] && VLM_BACKEND_SRC=环境变量
+if [ "$backend_set" = 1 ]; then
+  case $backend in
+    local|api) VLM_BACKEND=$backend; VLM_BACKEND_SRC=命令行 ;;
+    *) printf '不认得 --backend 的值「%s」：只许 local（只用原来的六档）或 api（问视觉接口）\n' "$backend" >&2; exit 2 ;;
+  esac
+fi
+# local 后端下这两个参数都是自相矛盾，当场停 —— 别等本地 replay 跑完好几分钟才说白跑了。
+if [ "$VLM_BACKEND" != api ]; then
+  if [ "$want_send" = 1 ]; then
+    printf '后端是 %s（来源：%s），--send 不予执行：一个请求体都不建、一个字节都不出站。\n' "$VLM_BACKEND" "$VLM_BACKEND_SRC" >&2
+    printf '  真要出站就把配置里的 VLM_BACKEND 改成 api（或加 --backend api），端点文件不动、代码一行不用改。\n' >&2
+    exit 78
+  fi
+  if [ "$want_local" != 1 ]; then
+    printf '后端是 %s，又给了 --no-local：本地这一栏就是全部内容，关掉之后报告里不会有任何判定。\n' "$VLM_BACKEND" >&2
+    exit 2
+  fi
+fi
 # 提示词文件优先：整份读进来当提示词（配置文件的值不能跨行，长提示词只能这么给）。
 VLM_PROMPT_SRC=内建默认
 if [ "$VLM_CONF_STATE" = loaded ] && grep -qE '^[[:space:]]*VLM_PROMPT=' "$OCR_CONF_FILE"; then
@@ -161,8 +201,11 @@ fi
 command -v python3 >/dev/null 2>&1 || { printf '没有 python3，请求体和响应解析都靠它\n' >&2; exit 78; }
 
 # 端点解析：env 优先，其次文件第 1 行（URL）、第 2 行（可选 key）。只统计长度，值不外泄。
+# 后端是 local 时连那个文件都不打开 —— 凭据文件只在真要用接口时才碰。
 VLM_URL_SRC=env
-if [ -z "$VLM_API_URL" ] && [ -r "$VLM_API_URL_FILE" ]; then
+if [ "$VLM_BACKEND" != api ]; then
+  VLM_URL_SRC='没读（后端 local）'
+elif [ -z "$VLM_API_URL" ] && [ -r "$VLM_API_URL_FILE" ]; then
   VLM_API_URL=$(sed -n '1p' "$VLM_API_URL_FILE" | tr -d ' \t\r\n')
   [ -z "$VLM_API_KEY" ] && VLM_API_KEY=$(sed -n '2p' "$VLM_API_URL_FILE" | tr -d ' \t\r\n')
   [ -n "$VLM_API_URL" ] && VLM_URL_SRC="file:$VLM_API_URL_FILE"
@@ -339,7 +382,12 @@ PY
 alias_of() { [ -f "$PDD_SH" ] && grep -m1 "^ALIAS_$1=" "$PDD_SH" 2>/dev/null | cut -d= -f2- | sed "s/[\"']//g"; }
 
 say "帧 ${#frames[@]} 张 · 输出目录 $out"
-say "端点 ${VLM_URL_SRC}（长度 ${#VLM_API_URL} 字符）· send=$([ "$want_send" = 1 ] && echo 是 || echo '否 —— 只落请求体，一个字节都不出站')"
+say "识图后端 $VLM_BACKEND（来源：$VLM_BACKEND_SRC）"
+if [ "$VLM_BACKEND" = api ]; then
+  say "端点 ${VLM_URL_SRC}（长度 ${#VLM_API_URL} 字符）· send=$([ "$want_send" = 1 ] && echo 是 || echo '否 —— 只落请求体，一个字节都不出站')"
+else
+  say "端点：后端是 local，不打开 $VLM_API_URL_FILE、不建请求体（send=否，一个字节都不出站）"
+fi
 case $VLM_CONF_STATE in
   loaded)     _cs="在用：从文件取了 $VLM_CONF_APPLIED 个键（另外 $VLM_CONF_FOREIGN 个是 pdd.sh 那批，这边只认不用；环境变量占了 $VLM_CONF_ENVHOLD 个，那几个的文件值没生效）" ;;
   absent)     _cs="没有这份文件 —— 用的是工具里的内建默认" ;;
@@ -347,13 +395,30 @@ case $VLM_CONF_STATE in
 esac
 say "配置 $OCR_CONF_FILE · $_cs"
 say "  提示词来自 $VLM_PROMPT_SRC（${#VLM_PROMPT} 字符）· model=${VLM_MODEL:-（不发）}· 超时 ${VLM_TIMEOUT}s · 本地栏闸门 $VLM_LOCAL_MAX_PNG 张"
-[ "$want_send" = 1 ] || say '确认要出站就加 --send 重跑。'
+if [ "$VLM_BACKEND" = api ]; then
+  [ "$want_send" = 1 ] || say '确认要出站就加 --send 重跑。'
+else
+  say '  这一栏只有本地六档：接口那半开着要把配置里的 VLM_BACKEND 改成 api（或加 --backend api）。'
+fi
 say ''
 
 for f in "${frames[@]}"; do
   stem=$(basename "$f"); stem=${stem%.*}
   key=$key_override
   [ -n "$key" ] || key=$(printf '%s' "$stem" | awk -F'-' '{print $(NF-1)}')
+  if [ "$VLM_BACKEND" != api ]; then
+    # 后端 local：一帧一个标题，把 replay 里属于这一帧的行原样贴出来。
+    # 不建请求体、不解析、不写 建议配置.txt / 候选词.txt —— replay 给的是像素点不是比例框。
+    say "### $stem（key=$key）本地六档："
+    _rows=$(grep -F -- "$stem" "$locfile" 2>/dev/null)
+    if [ -n "$_rows" ]; then
+      while IFS= read -r _l; do [ -n "$_l" ] && say "  $_l"; done <<<"$_rows"
+    else
+      say "  （本地这一栏没跑成或没有这帧的行，原文在 $locfile）"
+    fi
+    say ''
+    continue
+  fi
   req=$out/$stem.req.json
   # 建不出来必须把 python 那行的原因带出来，不然只能看见"没建出来"四个字。
   bytes=$(build_req "$f" "$req" 2>"$out/$stem.err") \
@@ -412,7 +477,13 @@ ncand=$(grep -c . "$cand" 2>/dev/null); ncand=${ncand:-0}
 nprop=$(grep -c '^PILL_' "$props" 2>/dev/null); nprop=${nprop:-0}
 say "汇总：帧 ${#frames[@]} / 请求体 $nreq / 响应 $nresp / 接口带框的行 $ncand / 能对上现有词表 $nprop"
 say ''
-say '抄进配置之前做两件事：'
-say "  ① 拿同一帧跑 pdd.sh replay <目录> --ocr --label <key> <那个词>，看本地 band/pill 档认不认得到 —— 接口给的框只是位置线索，不等于本地读得出；"
-say "  ② 改完跑 scripts/run-sandbox.sh（两个分辨率）和 scripts/negative-control.sh，测试还得有牙。"
-say '这一版只出建议，不改 pdd.sh，也不出 COORD_*。'
+if [ "$VLM_BACKEND" = api ]; then
+  say '抄进配置之前做两件事：'
+  say "  ① 拿同一帧跑 pdd.sh replay <目录> --ocr --label <key> <那个词>，看本地 band/pill 档认不认得到 —— 接口给的框只是位置线索，不等于本地读得出；"
+  say "  ② 改完跑 scripts/run-sandbox.sh（两个分辨率）和 scripts/negative-control.sh，测试还得有牙。"
+  say '这一版只出建议，不改 pdd.sh，也不出 COORD_*。'
+else
+  say "后端 local：上面那四个数按设计全是 0 —— 这一栏的内容都在「### <帧> 本地六档」那些行里（replay 原文 $locfile），"
+  say '  给的是「哪一档认到、点在哪个像素」，不给 0..1 的框，所以没有要抄进配置的东西，也不出 COORD_*。'
+  say '  要接口那一栏就把配置里的 VLM_BACKEND 改成 api（或加 --backend api）。'
+fi

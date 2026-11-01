@@ -335,7 +335,7 @@ load_ocr_conf() {            # 0 = 文件不在或用成了；1 = 有一行看�
     v=${v%"${v##*[![:space:]]}"}           # 抹掉行尾空白
     case $k in
       # 离线工具那批键：认得，但这边一个都不应用（应用它的是 tools/vlm-attribute.sh）。
-      VLM_API_URL_FILE|VLM_MODEL|VLM_TIMEOUT|VLM_PROMPT|VLM_PROMPT_FILE|\
+      VLM_BACKEND|VLM_API_URL_FILE|VLM_MODEL|VLM_TIMEOUT|VLM_PROMPT|VLM_PROMPT_FILE|\
       VLM_MAX|VLM_LOCAL_MAX_PNG|PDD_SH)
         OCR_CONF_FOREIGN=$((OCR_CONF_FOREIGN + 1)); continue ;;
       VLM_API_URL|VLM_API_KEY|VLM_STUB)
@@ -1469,12 +1469,22 @@ scroll_phase() {
 notify() { # $1 = 推送标题, $2 = 正文
   [ -n "$PUSH_URL" ] || return 0
   have curl || { log WARN "没有 curl，跳过推送"; return 0; }
-  local out
-  out=$(curl -sk -m 15 -G --data-urlencode "title=$1" --data-urlencode "desp=$2" "$PUSH_URL" 2>&1)
+  # 诊断三件（http 码 / curl 退出码 / 耗时）落成一行，是因为 11-01 10:05:18 那条 `[WARN] 推送失败: `
+  # 详情为空：原先正文走 stdout、错误走 2>&1 混在一起抓，curl 一个字节都没回时只剩空串，
+  # 三个数一个都没落，归不了因（README「已知残留」第 12 条）。现在正文进 -o 的文件、错误进 --stderr
+  # 的文件、指标走 -w，成功行也带 http 和耗时 —— 下次再出现"整点前后卡一下"就有数可比。
+  local body=$TMP/push-body errf=$TMP/push-err metric hcode ecode etime out err rc
+  : >"$body" 2>/dev/null; : >"$errf" 2>/dev/null
+  metric=$(curl -sk -m 15 -G --data-urlencode "title=$1" --data-urlencode "desp=$2" \
+             -o "$body" --stderr "$errf" -w "%{http_code} %{exitcode} %{time_total}" "$PUSH_URL" 2>/dev/null)
+  rc=$?
+  read -r hcode ecode etime <<<"$metric"
+  out=$(head -c 240 "$body" 2>/dev/null | tr '\n\r' '  ')
+  err=$(head -c 200 "$errf" 2>/dev/null | tr '\n\r' '  ')
   if printf '%s' "$out" | grep -q '"code":0'; then
-    log PUSH "已推送: $1"
+    log PUSH "已推送: $1（http=${hcode:-?} 耗时=${etime:-?}s）"
   else
-    log WARN "推送失败: $out"
+    log WARN "推送失败: http=${hcode:-?} curl退出=${ecode:-${rc:-?}} 耗时=${etime:-?}s 端点来源=$PUSH_URL_SRC 正文=${out:-（空）} 错误=${err:-（无）}"
   fi
 }
 

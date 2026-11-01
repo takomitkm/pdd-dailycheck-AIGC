@@ -2,7 +2,7 @@
 # 负对照：把某一处代码改坏，对应那条用例必须挂红。挂了就说明它真的在钉那段代码，不是白过的。
 #
 # 前置：先跑过 scripts/run-sandbox.sh（它把 /tmp/pddsandbox/in 铺好），本脚本在那份拷贝上改。
-# 每条只跑一个用例（ONLY=），十条各钉一件事。编号只是标签，真跑哪个用例写在第 5 个参数里
+# 每条只跑一个用例（ONLY=），十一条各钉一件事。编号只是标签，真跑哪个用例写在第 5 个参数里
 # （不给就按编号当用例名）——下面几条标题档跑的就不是自己的编号：
 #   browse-reenter-venue  「BACK 落在频道页就点胶囊回活动页」那句判据
 #   bag-not-found         COORD_bag 这颗兜底在主线真的会开火（删掉它，日志里就没那一枪）
@@ -14,6 +14,7 @@
 #   entry-retry-guard     入口那一枪被弹窗吃掉时的「还在首页吗」判据（跑 entry-swallowed-back）
 #   focus-fail-closed     焦点行没有斜杠时的两道新闸：awk 退到窗口标签 + 读不到就判失败（跑 shade-slashless-focus）
 #   conf-not-loaded       「OCR 调用照配置文件引用」这一步真的在起作用：跳过装载就退回内建默认那一档 psm（跑 conf-band-psm6）
+#   push-metrics          推送行里的 http 码/耗时真的来自 curl 的 -w：换了格式串就取不到数（跑 push-metrics-in-log）
 # 判据的锚点写在下面每条里，改 pdd.sh 那句话时记得同步这里。
 set -u
 SS=(ssh -4 -o ConnectTimeout=10 deb-h61)
@@ -80,4 +81,15 @@ run_neg focus-fail-closed 's|print lbl;|print "";|; s|^  \[ "\$pkg" = "\$PKG" \]
 # 锚点用 true || {：改前全库 0 命中，只有这条补丁能造出来，所以 want=yes 能当证据。
 run_neg conf-not-loaded 's#^load_ocr_conf || {#true || {#' 'true || {' yes conf-band-psm6
 
-echo "NEGCHECK_DONE（上面十条每条都应当是 ✗ / 失败用例数: 1）"
+# 11-01 补的推送诊断：成功行里那两个数（http 码、耗时）是从 curl 的 -w 格式串里 read 出来的。
+# 把格式串后半截换成一个不可能自然出现的词，桩就取不到 %{exitcode}/%{time_total}。实测那轮
+# （11-01 21:00:05，日志 /tmp/pddsandbox-neg/run/cases/push-metrics-in-log/runs/2026-11-01/210005/run.log）
+# 那一行落成 `已推送: PDD ✅（http=200 耗时=?s）`——`%{http_code}` 没动所以 200 还在，耗时取不到字段变成 `?`。
+# 所以 push-metrics-in-log 红在「日志里没有『已推送: PDD ✅（http=200 耗时=0.050000s）』」
+# 这一项，rc / lit / 标记 / 推送数全照旧（推送成不成从来不动退出码，这条钉的是"数字有没有真的拿到"）。
+# 锚点用 negctl-blank：改前全库 0 命中（11-01 数过 `grep -c "negctl-blank" pdd.sh` = 0），
+# 只有这条补丁能造出来。别用「x y」这种短串当锚点 —— 11-01 数过它在 pdd.sh 里本来就有 10 处，
+# want=yes 那种锚点要是本来就命中，补丁没做成也会被判成"做成了"，负对照就假绿。
+run_neg push-metrics 's|%{exitcode} %{time_total}|negctl-blank|' 'negctl-blank' yes push-metrics-in-log
+
+echo "NEGCHECK_DONE（上面十一条每条都应当是 ✗ / 失败用例数: 1）"

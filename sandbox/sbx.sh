@@ -472,6 +472,15 @@ reset_env; export SEED_CONF='BAND_SCALE=0'
 reset_env; export SEED_CONF='PILL_light=0.5,0.1,1,0.3'
   EXPECT_LOG='不在名单里' run_case conf-calibration-key-stops 78 - no
 
+# -------------------------------------------- 推送诊断：指标真的从 curl 手里拿到了
+# 11-01 10:05:18 那条 `[WARN] 推送失败: ` 详情为空、归不了因（README「已知残留」第 12 条）。
+# 桩 curl 现在把 -o / --stderr / -w 三个开关演成真 curl 的样子（200 / 0 / 0.050000），
+# 这一例钉成功那一行也带着 http 码和耗时 —— -w 那串被摘掉、或者 -o 的文件没人读，它就红。
+# 红在"数字没拿到"，不红在 rc：推送成不成从来不改退出码，所以 rc/lit/标记全照旧。
+reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_BROWSE"; countfile 4 4 3
+  EXPECT_TITLE='PDD ✅' EXPECT_LOG='已推送: PDD ✅（http=200 耗时=0.050000s）' \
+    EXPECT_NOLOG='推送失败' run_case push-metrics-in-log 0 3 yes
+
 echo
 echo "失败用例数: $FAILED"
 echo SBX_DONE

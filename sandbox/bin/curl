@@ -1,9 +1,26 @@
 #!/usr/bin/env bash
 # 桩 curl：不联网，把推送的标题/正文记到 $SBX_PUSH，回一个成功响应。
+# 真 curl 那三个输出开关也照着演，缺一个沙箱就会假红：
+#   -o FILE      响应体写进 FILE，不再打到 stdout
+#   -w FMT       把 %{http_code}/%{exitcode}/%{time_total} 换成固定值打到 stdout
+#   --stderr F   错误文本写进 F（桩一律成功，所以只留一个空文件）
+# notify() 判成功读的是 -o 那个文件里的 "code":0，指标读的是 -w；这两个开关不演，
+# 六档跑得再对也会报「推送失败」，那种红钉的不是判据。
 t=
 d=
+out=
+fmt=
+errf=
+prev=
 for a in "$@"; do
+  case "$prev" in
+    -o)       out=$a;  prev=; continue ;;
+    -w)       fmt=$a;  prev=; continue ;;
+    --stderr) errf=$a; prev=; continue ;;
+  esac
   case "$a" in
+    -o|--stderr) prev=$a; continue ;;
+    -w)          prev=-w; continue ;;
     title=*) t=${a#title=} ;;
     desp=*)  d=${a#desp=} ;;
   esac
@@ -11,4 +28,15 @@ done
 if [ -n "${SBX_PUSH:-}" ]; then
   { printf 'TITLE\t%s\n' "$t"; printf 'DESPI\t%s\n' "$d"; printf '.\n'; } >>"$SBX_PUSH"
 fi
-printf '{"code":0,"message":"ok"}\n'
+body='{"code":0,"message":"ok"}'
+[ -n "$errf" ] && : >"$errf"
+if [ -n "$out" ]; then
+  printf '%s\n' "$body" >"$out"
+fi
+if [ -n "$fmt" ]; then
+  m=${fmt//\%\{http_code\}/200}
+  m=${m//\%\{exitcode\}/0}
+  m=${m//\%\{time_total\}/0.050000}
+  printf '%s' "$m"
+fi
+[ -n "$out" ] || printf '%s\n' "$body"
