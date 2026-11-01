@@ -2,8 +2,10 @@
 
 现役工具：`tools/vlm-attribute.sh`（418 行，md5 前缀 `47c07374`，全串 `47c073740f7b5203f1237f06eb045a51`）。
 11-01 起它的参数和 `pdd.sh` 那六档 tesseract 调用**共用同一份配置文件**，见下面「参数走配置文件」。
-**端点留空**：`~/Desktop/pdd-vlm.url` 现在不存在，工具里也没有任何 URL —— 这是当前要的状态（等接口给定），
-不是没做完。
+**端点已配上**：11-01 18:01 落了 `~/Desktop/pdd-vlm.url`（600，第 1 行 URL、第 2 行 key，值不进任何文档），
+配置里 `VLM_MODEL=deepseek-ai/DeepSeek-OCR`；这一条更正本文早前写的「端点留空……现在不存在，
+不是没做完」——那句话在 18:01 之前是对的，现在作废。**但 `--send` 一次没带过，出站帧数 0**（实测见
+下面「11-01 18:01 接线」那一节）。
 **识别质量未测** —— 下面所有"通过"都只证明管线，不证明接口读得准。
 
 ## 一句话
@@ -25,7 +27,7 @@ tesseract 的识别率再怎么被嫌弃，它的失败模式是"不给"，而 V
 - 不改任何配置：只往 `建议配置.txt` 里写建议，抄不抄由人决定；包括 11-01 那份 `pdd-ocr.conf` 在内，
   工具一个字都不写。抄完要照旧跑沙箱和负对照，
   并且先拿同一帧验本地档认不认得到（见下面「抄进配置之前」那两件事，工具自己会把这两句打在汇总后面）。
-- 不重试、不落凭据、不把 `raw` 往任何地方发。端点留空期间它的用途就是"把要发的东西算给你看"。
+- 不重试、不落凭据、不把 `raw` 往任何地方发。不带 `--send` 时它的用途就是"把要发的东西算给你看"。
 
 ## 用法（都在主机上，证据本来就在主机）
 
@@ -49,7 +51,8 @@ ssh deb-h61 'bash /tmp/vlm-attribute.sh ~/Desktop/pdd-runs/2026-10-30/191958 --k
 ## 参数走配置文件（11-01 起）
 
 工具原来那十几个值硬写在文件头，现在它们和 `pdd.sh` 的 OCR 档位读**同一份** `pdd-ocr.conf`
-（仓库抄本 [../pdd-ocr.conf](../pdd-ocr.conf)，主机现役 `~/Desktop/pdd-ocr.conf`，600）：
+（主机现役 `~/Desktop/pdd-ocr.conf`，600。**这份文件 11-01 起在 `.gitignore` 里，仓库不带它**，
+主机那一份就是唯一一份）：
 
 | 键 | 内建默认 | 管什么 |
 | --- | --- | --- |
@@ -68,7 +71,7 @@ ssh deb-h61 'bash /tmp/vlm-attribute.sh ~/Desktop/pdd-runs/2026-10-30/191958 --k
 `PEND_PSM` 那 13 个；两边看到对方那批都不报错（工具那边数进「另外 13 个是 pdd.sh 那批」），
 但**名单外的键、以及 `VLM_API_URL` / `VLM_API_KEY` / `VLM_STUB` 这三个键一出现就 78**（实测 O 项：
 工具 + 名单外键 78、工具 + 凭据键 78、`pdd.sh` + 凭据键 78、`pdd.sh` + 名单外键 78，
-同一份仓库配置两边都过 = rc=0）。闸门代码在
+同一份现役配置两边都过 = rc=0）。闸门代码在
 [tools/vlm-attribute.sh:65](../tools/vlm-attribute.sh#L65)（装载）和
 [tools/vlm-attribute.sh:107](../tools/vlm-attribute.sh#L107)（值形状）。
 
@@ -88,8 +91,10 @@ ssh deb-h61 'bash /tmp/vlm-attribute.sh ~/Desktop/pdd-runs/2026-10-30/191958 --k
 - 请求体 `*.req.json` 里没有 URL 也没有 key（实测见下面 D 项），所以可以直接贴给人看。
 - 没有端点又要 `--send` = 退出码 78，且在**建任何请求体之前**就退（实测 `*.req.json` 数 0）。
 - `githooks/patterns.sh` 那份正则表认的是 ServerChan / 私钥 / GitHub PAT / Slack / AKIA 五类**形态**，
-  通用 API key 不在里面 —— 门禁挡不住它，所以「值不进仓库」这条只能靠人：别把端点或 key 写进
-  脚本、文档、提交信息。另外 `report.txt` 里是接口读回来的屏上文字（可能含昵称、券面额这类），
+  通用 API key 不在里面 —— 门禁挡不住它，所以"值不进仓库"这条只能靠人：别把 **key**、也别把
+  **本身带 token 的端点**（ServerChan 那种，URL 里就嵌着 SendKey）写进脚本、文档、提交信息。
+  视觉接口这条线里那个 URL 本身不含凭据（`…/v1/chat/completions`，写在 README 里可以），
+  **key 那 51 个字符一个字都不行**；两个值都只活在主机 `~/Desktop/pdd-vlm.url` 里。另外 `report.txt` 里是接口读回来的屏上文字（可能含昵称、券面额这类），
   `<帧>.raw` 更是接口的原始响应 —— 这两个别往公开地方贴；要贴就贴 `*.req.json`，里面只有图和提示词。
 
 ## 输出目录里有什么
@@ -174,12 +179,16 @@ ssh deb-h61 'bash /tmp/vlm-attribute.sh ~/Desktop/pdd-runs/2026-10-30/191958 --k
 弹窗帧比频道页帧大 3.5 倍（780,817 ÷ 224,113 ≈ 3.48），因为 PNG 体积取决于画面内容。
 按 bag 帧那两个数当量，10-30 19:19 那场 `191958` 的 24 张 bag 帧（`192217-bag-1..12` +
 `192545-bag-1..12`，`ls` 数出来的）全跑一遍是 24 × 224,113 = 5,378,712 字节 ≈ **5.4 MB**。
-这是**上行图片体积**，不是接口的计费量 —— token 怎么算、一帧多少钱，要等真端点。
+这是**上行图片体积**，不是接口的计费量 —— token 怎么算、一帧多少钱，要等第一次 `--send`（端点 11-01
+18:01 就配好了，缺的是授权出站，不是配置）。
 
 ## 验收轮：`scripts/selftest-vlm-attribute.sh`（11-01 跑过的一轮）
 
 ```sh
-scp tools/vlm-attribute.sh scripts/selftest-vlm-attribute.sh pdd-ocr.conf deb-h61:/tmp/
+scp tools/vlm-attribute.sh scripts/selftest-vlm-attribute.sh deb-h61:/tmp/
+# L 到 P 那组还要一份配置给 CFG：仓库不带 pdd-ocr.conf（11-01 起进 .gitignore），
+# 所以要么不指（默认 /tmp/pdd-ocr.conf 不在 → 那组自己报「跳过」），要么从主机桌面上那份拷一份到 /tmp：
+#   ssh deb-h61 'install -m 600 ~/Desktop/pdd-ocr.conf /tmp/pdd-ocr.conf'
 ssh deb-h61 'bash /tmp/selftest-vlm-attribute.sh'
 ```
 
@@ -206,7 +215,7 @@ ssh deb-h61 'bash /tmp/selftest-vlm-attribute.sh'
 | L | 装了配置，看报告头上那两行 | `配置 /home/user/Desktop/pdd-ocr.conf · 在用：从文件取了 8 个键（另外 13 个是 pdd.sh 那批，这边只认不用；环境变量占了 0 个，那几个的文件值没生效）`，第二行 `提示词来自 conf:/home/user/Desktop/pdd-ocr.conf（565 字符）· model=（不发）· 超时 90s · 本地栏闸门 12 张` |
 | M | 命令行压过文件 | 同一批帧：只给文件里 `VLM_MAX=1` → 帧 1 张；文件 1 + `--max 3` → 帧 3 张 |
 | N | `OCR_CONF_FILE=/nonexistent-ocr.conf` | 打印 `没有这份文件 —— 用的是工具里的内建默认`，提示词那一行变成 `内建默认（568 字符）`。**这条同时钉 `VLM_MAX` 那条内建默认在不在**：默认行漏了，这里 `${VLM_MAX:-}` 是空串，形状闸门直接 78（不是退回 0） |
-| O | 名单闸门，两边四个方向 | 工具 + 名单外键 `rc=78`（「不在这份配置的名单里」）；工具 + 凭据键 `rc=78`（「不许写在这份文件里」）；`pdd.sh` + 凭据键 `rc=78`（同一句）；`pdd.sh` + 名单外键 `rc=78`（「不在名单里」）；**仓库那份 `pdd-ocr.conf` 两边都过**（`pdd.sh` 侧 rc=0，21 个键 = 这边 8 个 + 那边 13 个，合起来正好全覆盖） |
+| O | 名单闸门，两边四个方向 | 工具 + 名单外键 `rc=78`（「不在这份配置的名单里」）；工具 + 凭据键 `rc=78`（「不许写在这份文件里」）；`pdd.sh` + 凭据键 `rc=78`（同一句）；`pdd.sh` + 名单外键 `rc=78`（「不在名单里」）；**这份配置两边都过**（`pdd.sh` 侧 rc=0，21 个键 = 这边 8 个 + 那边 13 个，合起来正好全覆盖） |
 | P | `VLM_PROMPT_FILE` 优先 | 同一份配置：不指文件时 `提示词来自 conf:…（565 字符）`，指了文件就 `提示词来自 file:/tmp/va-prompt.txt（57 字符）` —— 非空整份顶掉；指到读不到的文件 `rc=78` |
 
 这轮验收第一次跑 E 项时就暴露了一个真 bug：桩响应 3 行，报告每帧只打出 1 行，而汇总那行老老实实写
@@ -219,12 +228,30 @@ ssh deb-h61 'bash /tmp/selftest-vlm-attribute.sh'
 `grep -c . … || echo 0` 在空文件上会打两个 `0`，把汇总行撑成三行。
 三条都是**看报告才发现的**，`bash -n` 一个都抓不到。
 
+## 11-01 18:01 接线：端点配上、鉴权过了、出站帧数 0
+
+上面 A–P 那 19 项全程不需要端点（H 项要的就是 78）。11-01 18:01 第一次把真端点落到主机，测到的：
+
+| 测的 | 数 |
+| --- | --- |
+| `~/Desktop/pdd-vlm.url` | 99 字节、`-rw-------`（600）、`ls` 时间 11-01 18:01；2 行，第 1 行长 46 字符、第 2 行长 51 字符 —— **值不打印，只报长度**（46 = `https://` 8 + 域名 18 + `/v1` 3 + `/chat/completions` 17，正好是完整路径，工具把 `$VLM_API_URL` 原样 POST，不能再拼） |
+| 配置里动了什么 | 只有 `VLM_MODEL=deepseek-ai/DeepSeek-OCR`（第 72 行）和抬头那三行说明；`~/Desktop/pdd-ocr.conf` 7295 字节、600、md5 `553e1dec…`；改前的那份存成 `~/Desktop/pdd-ocr.conf.bak-1101-1759`（md5 `ff7dccba…`） |
+| 端点值有没有进配置 | 没有。配置里只有 `VLM_API_URL_FILE`（指向那个文件的**路径**）；`VLM_API_URL` / `VLM_API_KEY` / `VLM_STUB` 三个键一出现就 78（O 项） |
+| 点击链有没有受影响 | 没有。`bash pdd.sh __confcheck` rc=0；`status` 仍是「从文件取了 13 个键」，OCR 档位那一行一个字没变（lang=chi_sim+eng｜整页 11 / 6 门槛 40｜band 7（按键：browse=7 6 done=7 6）×3 裁边 1｜胶囊 阈 120 倍数 1 2｜pend 6 11 12）—— 这次动的是工具那 8 个键里的 1 个 |
+| 鉴权 | `GET …/v1/models` 带 `Authorization: Bearer` → http=200、正文 7551 字节、`"id":"…"` 98 个；逐字串 `"id":"deepseek-ai/DeepSeek-OCR"` 命中 1 次（`PaddleOCR-VL` 也命中 1 次，那家确实还挂着 1.5） |
+| 工具干跑（`--max 1`，不带 `--send`） | 报告头 `端点 file:/home/user/Desktop/pdd-vlm.url（长度 46 字符）· send=否 —— 只落请求体，一个字节都不出站`；`model=deepseek-ai/DeepSeek-OCR· 超时 90s · 本地栏闸门 12 张` |
+| 那一帧的请求体 | `100315-light-1`（key=light）756,572 字节，其中图 base64 755,820 |
+
+**`--send` 一次没带过，所以接口返回什么、框准不准、一帧多少钱，全是空。** 18:14 复查鉴权那六行的时候
+主机时间就是 18:14:47（`date` 直接读的），端点文件、配置 md5 与 18:01 那次一致。
+
 ## 还没测的
 
 - **负对照**：`scripts/negative-control.sh` 那十条测的全是 `pdd.sh` 的分支（连 11-01 新加的第十条也是
   `pdd.sh` 侧的配置装载），`tools/` 下的脚本一条都没有，这个新工具也没补。上面 A–P 是验收用例（跑通就算过），
   不是负对照 —— 它们不会"故意改坏一处看会不会挂"。
-- **接口识别质量**：没接真端点，一个字都没测过。哪个接口、每帧多少钱、返回的框准不准，全空。
+- **接口识别质量**：端点 11-01 18:01 配上了、鉴权也过了（上面那一节），但**一个字节都没出站过**，
+  所以「哪个接口、每帧多少钱、返回的框准不准」仍然是空 —— 现在缺的不是配置，是一次 `--send`。
 - **提示词有没有效**：那段提示词（内建默认 226 个字符 / 568 字节，配置里那一行 223 个字符 / 565 字节，
   差的是 3 个换行；实测长度按 D 项那一行报的是字节，见上面「参数走配置文件」末尾那句）要求
   「逐行 JSON + 归一化框 + 看不清整行省略」，它对真模型能不能压住幻觉、能不能返 0..1，未测。

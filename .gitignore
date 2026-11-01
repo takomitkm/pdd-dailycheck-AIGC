@@ -16,6 +16,16 @@ pdd-push.url
 *.push.url
 push.url
 
+# 离线归因的接口端点 + key，同理只活在主机 ~/Desktop/pdd-vlm.url 里（第 1 行 URL、第 2 行 key）
+pdd-vlm.url
+*.vlm.url
+vlm.url
+
+# OCR 调用配置：11-01 起不进仓库、不跟云端同步。唯一一份现役文件在主机
+# ~/Desktop/pdd-ocr.conf（600），调参数就在那里改；仓库里留下的任何副本都不作数、也别 scp 上去覆盖它。
+pdd-ocr.conf
+*-ocr.conf
+
 # 标定过程中的大图矩阵（140MB 量级，用 tools/ 从证据帧现生成）
 bench*/
 frames*/

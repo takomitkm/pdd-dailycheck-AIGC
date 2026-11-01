@@ -2,8 +2,9 @@
 # 部署 sandbox 全绿的 pdd.sh 到 debian Desktop：先备份，再装，再验。
 # 用法：bash deploy.sh <远端上的待部署文件路径> [<远端上的待部署配置路径>]
 #       （默认 /tmp/pdd-deploy.sh 和 /tmp/pdd-ocr.conf）
-# 配置文件这份跟 pdd.sh 不一样：它是平时调参的地方，主机上那一份可能比仓库里的新，
-# 所以只在「主机上还没有」的时候才装；已有就一个字不动，只把差异报出来。
+# 配置文件这份跟 pdd.sh 不一样：11-01 起它在 .gitignore 里，仓库不带它，
+# 主机 ~/Desktop/pdd-ocr.conf 就是唯一一份、调参在那里改。
+# 所以这个脚本只处理「主机上还没有」这一种兜底情况（从 /tmp 拷一份过去）；已有就一个字不动。
 set -e
 REMOTE=${1:-/tmp/pdd-deploy.sh}
 CONF=${2:-/tmp/pdd-ocr.conf}
@@ -21,8 +22,8 @@ fi
 install -m 700 "$REMOTE" "$D/pdd.sh"
 echo "新版 md5=$(md5sum <"$D/pdd.sh" | cut -c1-8)  行数=$(wc -l <"$D/pdd.sh")  权限=$(stat -c '%a %U:%G' "$D/pdd.sh")"
 
-# OCR 调用配置：仓库里这份是「当前线上那套」的抄本，主机上那一份是她平时改参数的地方、可能更新。
-# 所以只在主机上还没有的时候装；已经有了就一个字不动，只把跟仓库那份的差异念出来。
+# OCR 调用配置：仓库不带这份（11-01 进 .gitignore），主机那一份是唯一现役。
+# 带来了且主机上还没有才装；主机已有就一个字不动，只把跟带来那一份的差异念出来。
 if [ -s "$CONF" ]; then
   tr -d '\015' <"$CONF" >"$CONF.lf" && mv "$CONF.lf" "$CONF"
   if [ -f "$D/pdd-ocr.conf" ]; then

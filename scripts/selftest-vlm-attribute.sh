@@ -3,7 +3,7 @@
 #
 # 读结果前先看这三句：
 #   1. 桩响应（`VLM_STUB`）证明不了识别质量，只证明"读回来能解析、命中能对上词表、建议落得下来"。
-#      识别质量要等真端点，见 docs/api-attribution.md「还没测的」。
+#      识别质量要等第一次真出站（带 `--send`），见 docs/api-attribution.md「还没测的」。
 #   2. 全程不需要端点：端点文件不存在时，`--send` 那一项（H）要的就是 rc=78，不是失败。
 #   3. C/D/E/F/G/H/I/J 和 L/M/N/O/P 都要证据帧，用的是 `~/Desktop/pdd-runs/` 里现成的场次。证据只留
 #      `KEEP_DAYS=7` 天，过期后这些项会打印「跳过」并整体判过 —— 别把"跳过"读成"通过"。
@@ -12,7 +12,9 @@
 #      （默认桌面上那份），两个文件缺一个就整组跳过。
 #
 # 用法（在主机上跑，证据本来就在主机上）：
-#   scp tools/vlm-attribute.sh scripts/selftest-vlm-attribute.sh pdd-ocr.conf deb-h61:/tmp/
+#   scp tools/vlm-attribute.sh scripts/selftest-vlm-attribute.sh deb-h61:/tmp/
+#   配置文件不进仓库（11-01 起在 .gitignore 里），L..P 那组要从主机桌面上拷一份到 /tmp：
+#   ssh deb-h61 'install -m 600 ~/Desktop/pdd-ocr.conf /tmp/pdd-ocr.conf'
 #   ssh deb-h61 'bash /tmp/selftest-vlm-attribute.sh'
 # 两个目录可以用第 1、2 个参数改：selftest.sh <大场次目录> <小场次目录>
 set -u
@@ -128,14 +130,15 @@ if [ "$skip" = 0 ]; then
 fi
 
 # ---------------------------------------------- L..P 外置那份 OCR 配置（和 pdd.sh 共用）
-# 这一组测的是"参数从哪儿来"，不是识别质量。CFG 指到仓库 pdd-ocr.conf 抄到主机上的那份；
+# 这一组测的是"参数从哪儿来"，不是识别质量。CFG 默认指 /tmp/pdd-ocr.conf —— 仓库不带这份配置，
+# 所以要么自己 `install -m 600 ~/Desktop/pdd-ocr.conf /tmp/pdd-ocr.conf`，要么 `CFG=` 直接指桌面上那份；
 # 没带上来就整组跳过，别把跳过读成通过。
 CFG=${CFG:-/tmp/pdd-ocr.conf}
 PD=${PD:-$HOME/Desktop/pdd.sh}
 if [ ! -f "$CFG" ]; then
   skip=$((skip + 5))
   echo
-  echo "=== L/M/N/O/P 跳过：没有 $CFG（scp pdd-ocr.conf 过来再跑）"
+  echo "=== L/M/N/O/P 跳过：没有 $CFG（仓库不带这份配置；从主机桌面拷：install -m 600 ~/Desktop/pdd-ocr.conf /tmp/pdd-ocr.conf，或直接 CFG= 指桌面上那份）"
 elif [ ! -f "$PD" ]; then
   skip=$((skip + 5))
   echo
