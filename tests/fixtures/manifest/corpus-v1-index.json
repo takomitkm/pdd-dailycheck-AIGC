@@ -1,0 +1,3845 @@
+{
+ "schema_version": 1,
+ "kind": "corpus-index",
+ "privacy": "索引只含路径/哈希/尺寸/类别；原图含昵称与券面额，只存于仓库外私有目录",
+ "corpus_root": "S:\\apps\\llm\\agentwork\\pdd-corpus-private\\pdd-runs",
+ "source": "deb-h61 ~/Desktop/pdd-runs 7 天窗（2026-11-06 07:45 回收）+ 真机只读截图 ×2",
+ "total_files": 544,
+ "sessions": [
+  "2026-10-29/214026",
+  "2026-10-30/100100",
+  "2026-10-30/191958",
+  "2026-10-30/202825",
+  "2026-10-31/100203",
+  "2026-11-01/100102",
+  "2026-11-02/100303",
+  "2026-11-03/100303",
+  "2026-11-04/100203",
+  "2026-11-05/100221",
+  "2026-11-06/074350",
+  "2026-11-06/074354"
+ ],
+ "class_counts": {
+  "bag": 60,
+  "browse": 6,
+  "done": 13,
+  "hierarchy-xml": 150,
+  "light": 3,
+  "other": 16,
+  "pend": 15,
+  "png-other": 231,
+  "popup": 30,
+  "run-log": 10,
+  "summary": 10
+ },
+ "files": [
+  {
+   "path": ".done-2026-10-09",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-10-12",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-10-13",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-10-18",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-10-19",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-10-21",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-10-23",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-10-24",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-10-27",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-10-30",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-10-31",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-11-01",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-11-02",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-11-03",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-11-04",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": ".done-2026-11-05",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "session": "",
+   "class": "other"
+  },
+  {
+   "path": "2026-10-29/214026/214037-popup-1.png",
+   "sha256": "527f19e0c37f93a2060574f4162d7eafc016fafb91db4b3b7a1fbbf8fa6669a6",
+   "bytes": 5336,
+   "session": "2026-10-29/214026",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-29/214026/214037-popup-1.xml",
+   "sha256": "1225596844596420dc6f23884ed73e1baf18842c336b216635617e64e655f289",
+   "bytes": 1770,
+   "session": "2026-10-29/214026",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-29/214026/214037-popup-2.png",
+   "sha256": "2b84530683ad76cefb77670f7aaf7e6f2ac988c3eb07d527713c49cbe3b07564",
+   "bytes": 12026,
+   "session": "2026-10-29/214026",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-29/214026/214037-popup-2.xml",
+   "sha256": "1225596844596420dc6f23884ed73e1baf18842c336b216635617e64e655f289",
+   "bytes": 1770,
+   "session": "2026-10-29/214026",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-29/214026/214037-popup-3.png",
+   "sha256": "8f5ac174908fad9951fb5d96021184a092b8e4498b29bd6a99a6e8d83e468e1e",
+   "bytes": 1130424,
+   "session": "2026-10-29/214026",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-29/214026/214037-popup-3.xml",
+   "sha256": "1225596844596420dc6f23884ed73e1baf18842c336b216635617e64e655f289",
+   "bytes": 1770,
+   "session": "2026-10-29/214026",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-29/214026/lost-subsidy.png",
+   "sha256": "9b87f6f4776065b8b593cfc8976ac19fb4c6d54a72d2c894f47ed6c507fa8500",
+   "bytes": 1122553,
+   "session": "2026-10-29/214026",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-29/214026/run.log",
+   "sha256": "c27b3dc7b9d990ce8d3e084ef8ca01d72a07d203d230c7a1ac949745ffeb9d6a",
+   "bytes": 571,
+   "session": "2026-10-29/214026",
+   "class": "run-log"
+  },
+  {
+   "path": "2026-10-29/214026/summary.txt",
+   "sha256": "93476492a441645d7e1e546108d34e938e7f6e7377c6829d8be1556c4cf8de5a",
+   "bytes": 167,
+   "session": "2026-10-29/214026",
+   "class": "summary"
+  },
+  {
+   "path": "2026-10-30/100100/100112-popup-1.png",
+   "sha256": "8af78a8a288ecee0d1f4d0c5189b329768ad0a7753e74edefb2d4a09a07ab629",
+   "bytes": 219505,
+   "session": "2026-10-30/100100",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-30/100100/100112-popup-1.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100112-popup-2.png",
+   "sha256": "41638ad89ff19e1c554a84654941c850b2b08b42495d99134242a2088442b16e",
+   "bytes": 219545,
+   "session": "2026-10-30/100100",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-30/100100/100112-popup-2.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100112-popup-3.png",
+   "sha256": "151eef434719e0bb806ca2af2402d64f24d941da520a4c1100382d04456128d9",
+   "bytes": 221238,
+   "session": "2026-10-30/100100",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-30/100100/100112-popup-3.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100137-subsidy-1.png",
+   "sha256": "11ffc95e3dc93fa9eea1cf863e0f7b1ac86cfb029871f98a88d6c52225d90ecc",
+   "bytes": 222733,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100137-subsidy-1.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-1.png",
+   "sha256": "60565e1f6f508734bdbced28068826b6c53224bff2a067a525bfe2e7909f608f",
+   "bytes": 221323,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-1.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-10.png",
+   "sha256": "e595775202e24a11813c7401460563ec20a6476f854d10851841ecf794af7ea8",
+   "bytes": 220258,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-10.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-11.png",
+   "sha256": "ba822db03c559e505a72be495581240da5f2502041fc5e8177685af2ca1e513f",
+   "bytes": 223125,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-11.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-12.png",
+   "sha256": "96af055b13af619cfaecdbc7979f380839897191124c942cbf642f5b8b13eb3b",
+   "bytes": 219676,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-12.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-2.png",
+   "sha256": "79958374435104e1d23534c0c748ab59c9e4cfd84d65e6deb5e06e44eab4caee",
+   "bytes": 223656,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-2.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-3.png",
+   "sha256": "aef80e4b7933e4914f6ac3676b2c170e0b75ece6afda92136e8fca236d4d4da8",
+   "bytes": 222958,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-3.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-4.png",
+   "sha256": "f840d413ff161666776d6c4449a2fd2e3f4d517fea3c35df7a3c2de10adceead",
+   "bytes": 219768,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-4.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-5.png",
+   "sha256": "19203bd8f1bb2cf747a9aa9af0b78090aa2b882ef8f60c4a7b89b17d1af830d9",
+   "bytes": 219777,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-5.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-6.png",
+   "sha256": "571b7cae33ca48e815cd0bd5b73e4d1b535fc34ff9c9ca07c7acf73359122e57",
+   "bytes": 219817,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-6.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-7.png",
+   "sha256": "2df992206cd0270ce5fb64e387444f0262cbcfcd1a245dd53cc30df43d367124",
+   "bytes": 220968,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-7.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-8.png",
+   "sha256": "05f814b0cff508dcfe67c61f46f0449fda4f2cb103d99c34667bfef8c9d8b2e8",
+   "bytes": 219721,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-8.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-9.png",
+   "sha256": "bd0df4452ccf8631627b8061190f426ee34835a4f8cb353f3bfa90db15e05cbd",
+   "bytes": 222204,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100146-bag-9.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100152-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100152-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100204-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100204-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100215-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100215-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100227-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100227-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100238-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100238-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100250-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100250-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100301-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100301-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100312-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100312-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100324-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100324-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100335-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100335-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100347-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100347-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100358-pill-bag-x1.png",
+   "sha256": "70ebc51c63d77dd2c1535fecee7a3c0526783b9b93daa5426f654798aef33812",
+   "bytes": 14789,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100358-pill-bag-x2.png",
+   "sha256": "ef42667cc693a923f53040bf28381738860a18e0fc9d5ad51565f66ccdc64e16",
+   "bytes": 33248,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100405-count-prove-bag.png",
+   "sha256": "07042621d4a060c32598620143c5aff987fe0c73a8fdaf650376ac43b974830a",
+   "bytes": 219728,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100406-pend-1.png",
+   "sha256": "22d9a5915991d76b61d6a506c5801abd91fada4439fa11275981f873aae8dccc",
+   "bytes": 221187,
+   "session": "2026-10-30/100100",
+   "class": "pend"
+  },
+  {
+   "path": "2026-10-30/100100/100406-pend-1.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100412-done-1.png",
+   "sha256": "057fccd986ff54046e0c432b8036adb207857241b17ca8bb2cd491c8beed3766",
+   "bytes": 219707,
+   "session": "2026-10-30/100100",
+   "class": "done"
+  },
+  {
+   "path": "2026-10-30/100100/100412-done-1.xml",
+   "sha256": "05db2fe617d98d8426cb6b5d5868d5fda4dde78c266356432565d72eb552a7fe",
+   "bytes": 89484,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100419-pill-done-x1.png",
+   "sha256": "8523a35850a023598cacdf2e4064b5aa60f0b70ede7ac0c47d7998d8a8d06a33",
+   "bytes": 672,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100419-pill-done-x2.png",
+   "sha256": "fdc832908939662daf269af284b6f80543b871149c68b326e29f2395999a161e",
+   "bytes": 4791,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-1.png",
+   "sha256": "64debc4f93111033036efe61c12c39d1a9573270ba11289f52922179b7f3163d",
+   "bytes": 432423,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-1.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-10.png",
+   "sha256": "7ab30440db956ca5d5824bd8920d20f7abfd7fa375e5afcfafc829fd8e5b10d0",
+   "bytes": 430445,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-10.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-11.png",
+   "sha256": "cea2537e1454dc8f9f382c5b44c5344cf8b4a43fc2f38665d34cbfbf59564398",
+   "bytes": 430576,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-11.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-12.png",
+   "sha256": "10f8cdaad62afe28ec736b16b4a5a8dfca5b23104056c07b93c41d770e18d37d",
+   "bytes": 430536,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-12.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-2.png",
+   "sha256": "e7ceb22ff46c9881ee4f278a68b99f9db28025649368478680525e5a6fbbfd20",
+   "bytes": 432572,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-2.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-3.png",
+   "sha256": "88456794d76b847ffd2f460fabeec0e2ee5170eea4794627bccf7812b355eb73",
+   "bytes": 432121,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-3.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-4.png",
+   "sha256": "df12830695700fa3a9ccd402509cdfd1eff9227192b30188ce139a4b1305bd51",
+   "bytes": 432788,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-4.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-5.png",
+   "sha256": "1459d11a472a3531773c5f8c7ae2f4ad5ee1d6e4493f80b3c23d1f743b60304c",
+   "bytes": 434759,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-5.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-6.png",
+   "sha256": "dab9361340302afc1f0519fd2824a2950cc40fbdf6465f5287028eacc120da29",
+   "bytes": 437190,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-6.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-7.png",
+   "sha256": "4000ba6e5f3111bc2a2d56bffc3df441a57242b53071042001410ee1e93f7695",
+   "bytes": 434098,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-7.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-8.png",
+   "sha256": "10b3f4c0bef2cb14050617ed487a4c826302eb587f0838b6ca8b3e756b0773ba",
+   "bytes": 434788,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-8.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-9.png",
+   "sha256": "ed52c0f2a457319755bd898d17d4c058dba0f161425dfe2d552a9641227e9f03",
+   "bytes": 430561,
+   "session": "2026-10-30/100100",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/100100/100425-bag-9.xml",
+   "sha256": "e786c57878a987ff3f2313be34ae0bc52641b0b051ce9c463f04a12d94e3f89f",
+   "bytes": 82493,
+   "session": "2026-10-30/100100",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/100100/100439-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100439-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100459-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100459-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100518-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100518-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100538-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100538-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100557-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100557-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100617-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100617-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100636-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100636-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100656-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100656-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100715-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100715-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100734-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100734-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100753-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100753-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100812-pill-bag-x1.png",
+   "sha256": "1fdfd436d8319ccc54ad13f555bdae33cd01ed1c6aaae9c070438573fc48b89d",
+   "bytes": 30281,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/100812-pill-bag-x2.png",
+   "sha256": "909d82ad10282ccc09c840004d3997baee8d63ca86568629df842d127971aa59",
+   "bytes": 72711,
+   "session": "2026-10-30/100100",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/100100/run.log",
+   "sha256": "1f71931940bc6ed4a28bb01f73e960744a7353305110d1b8bcd58a50e7e1c478",
+   "bytes": 1136,
+   "session": "2026-10-30/100100",
+   "class": "run-log"
+  },
+  {
+   "path": "2026-10-30/100100/summary.txt",
+   "sha256": "cf7b631951c4b85fe45660edbfa2cd2f9575216db3d081091ff6a87918e542fc",
+   "bytes": 177,
+   "session": "2026-10-30/100100",
+   "class": "summary"
+  },
+  {
+   "path": "2026-10-30/191958/192010-popup-1.png",
+   "sha256": "d8fd7e412246d3a602873c949b1607a7a5308a655c5230c5add0597ea39053d4",
+   "bytes": 585072,
+   "session": "2026-10-30/191958",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-30/191958/192010-popup-1.xml",
+   "sha256": "9b683af52e2ff83d2ebacad2242d4c9533e4359ae8b12a7cf020c93e408d044c",
+   "bytes": 80775,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192010-popup-2.png",
+   "sha256": "eee621c2b790b1c376b90b01a4debe0a08c7af605b14d8c3ce404a08b9b91bdb",
+   "bytes": 585030,
+   "session": "2026-10-30/191958",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-30/191958/192010-popup-2.xml",
+   "sha256": "9b683af52e2ff83d2ebacad2242d4c9533e4359ae8b12a7cf020c93e408d044c",
+   "bytes": 80775,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192010-popup-3.png",
+   "sha256": "029376ae6994cf37562aed53202cd7b0bb8d549ac0d74c287c9f7c43086917b9",
+   "bytes": 584985,
+   "session": "2026-10-30/191958",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-30/191958/192010-popup-3.xml",
+   "sha256": "9b683af52e2ff83d2ebacad2242d4c9533e4359ae8b12a7cf020c93e408d044c",
+   "bytes": 80775,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192054-subsidy-1.png",
+   "sha256": "00919092d94eb90e118b907f32ef9c370dd6c3c47cb5678303c351221702ac47",
+   "bytes": 161168,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192054-subsidy-1.xml",
+   "sha256": "a3d26f24d8abdc1ac12923f64cbfa1321f8436615e142ed2fd74c00c872cbb36",
+   "bytes": 66128,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192054-subsidy-2.png",
+   "sha256": "0d71745b1c752bb6733b60bffb93749807730273dcb9a8d7dc7ed0ccfc43ff68",
+   "bytes": 160554,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192054-subsidy-2.xml",
+   "sha256": "d2c009ef4d5b95d7004e0fe7a34063534d57ec939e90767a4e02dc438557c1bf",
+   "bytes": 66128,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192054-subsidy-3.png",
+   "sha256": "4b74c9123a1fc244a392966e2e3fb9c6d31a4ed0cf5101cd94487837ac5b717e",
+   "bytes": 160564,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192054-subsidy-3.xml",
+   "sha256": "8b13a6ffb71f8604ae2b9b77d73967beaaea2d8a755c7890ddd4f900a30245f7",
+   "bytes": 66128,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192142-subsidy-1.png",
+   "sha256": "24e5754401df68f50fc70708d4a4b0581bdb23c92087c0f8ec0fcc3aca0c5101",
+   "bytes": 165938,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192142-subsidy-1.xml",
+   "sha256": "6da8e58830477cee13fc86cc1f806e4ec038205c0fb28e4882bd093e1b017c80",
+   "bytes": 83759,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192142-subsidy-2.png",
+   "sha256": "9a1513b048ffee545705a750ef965e2bcb3614b5f724b2e0ef041bd7a2e7f47f",
+   "bytes": 166175,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192142-subsidy-2.xml",
+   "sha256": "8d7e46c8196cbeab83be194d301bb76ae94512003df086faa426d2d045177d48",
+   "bytes": 83759,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192142-subsidy-3.png",
+   "sha256": "6828bd08dee0bac6d82a1a23289d01f5d01c6ed399f754450a8cea19bab3e69a",
+   "bytes": 166006,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192142-subsidy-3.xml",
+   "sha256": "6c7edec5654bca87dd9b393662db85c9258cee6246fd09b2d27d8ddc39e60e8b",
+   "bytes": 83759,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-1.png",
+   "sha256": "7cc38125ad241f5fe2cbf34bb883e718ceb2a0bd1cb2937557d057e48677521c",
+   "bytes": 167543,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-1.xml",
+   "sha256": "9eccdab392ae9bc7da32defaed1aec683e0967d7aef9960564effbfb68b917ec",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-10.png",
+   "sha256": "925cf83ba4d01daf16ce21ba667f8bd03d6c34605003a18694d0529fbee57aa4",
+   "bytes": 167744,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-10.xml",
+   "sha256": "9c4d582911664b8b4e75353a332fe1861b7dc02c705152ee5bb08b227a9d45c2",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-11.png",
+   "sha256": "eb197e5aafee2e41f5114d5c88ca427683c868c0951d0b2b5313967d1a5b8bd4",
+   "bytes": 168035,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-11.xml",
+   "sha256": "8254aeef1ffe5b88c0886d2b9eb410a07f4f08efee40f24bc3181784aa643b12",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-12.png",
+   "sha256": "afde80600910ec1db31ebe0f3745fe10e0b8bb89c74769419b67b969d3ed65d5",
+   "bytes": 167952,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-12.xml",
+   "sha256": "e85c86142dee0904dc2ef759449e6a953b00594274d2aa44e45fd3a996cff330",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-2.png",
+   "sha256": "2b0a50bdafe5d05a2c71a16ba9c9ad4801d18323af3b7bdf6005862bd1d88c7b",
+   "bytes": 167546,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-2.xml",
+   "sha256": "309947259f4760cf909e87dd13a29911223f4ed2577efe8b7499225aff3132e3",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-3.png",
+   "sha256": "934b497a6f9555f6c17a946dbbbbe5589f5fca5c45271a38d165ea8e290caf85",
+   "bytes": 167361,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-3.xml",
+   "sha256": "942192f35428810393494dd70d74eeeba24601c0856254d274c5b96184d05409",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-4.png",
+   "sha256": "cdb8725b22bf6aef793000840bd5879f8eec3d95ccd7d4dd8ea2a4da7b28cfe8",
+   "bytes": 168307,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-4.xml",
+   "sha256": "a2eee8fc79fd71c684954adec473a6c7b0e607c9f2a2ec9f8959b05faf3dcd1a",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-5.png",
+   "sha256": "982b38a0569466986cdfd4b3a4c9b5ea66f02dbe3d5d7eea2e60f60d29fbec09",
+   "bytes": 168258,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-5.xml",
+   "sha256": "b5a0bb5ae20d1aa00cbb41483e20651c3bbe6e9ef8a23d102ca23d3d1580fb84",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-6.png",
+   "sha256": "b9c5db95abecc619a676a1ddd215d3d416db84b72655dbe87ee6a1bd29429d5e",
+   "bytes": 168419,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-6.xml",
+   "sha256": "fa5408f585439a16cd3ee223b33585b3baa02af2d2e3e3b6f74001e0fc05a9aa",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-7.png",
+   "sha256": "d623632177642d1b8889f7fa89cb4edddf8ca652dbcdb012c1ed38cde51a1cb7",
+   "bytes": 168433,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-7.xml",
+   "sha256": "4d7f174962ba6747a7240a91b29ad1f81ee654e598a2326409ebb07dd6333861",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-8.png",
+   "sha256": "dc37fd1959e69a2c26a58b43ef7e47f6ca7b9d60790181fa9b9907e4c48e01c7",
+   "bytes": 167938,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-8.xml",
+   "sha256": "dc0629cb40450c64d5500a71a7aafccc6b58e84a1de61092026ebe0af1b7348a",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-9.png",
+   "sha256": "b22c201308d863add74d45cff098135eebe5a706da0b157dac5f587ef40f16c4",
+   "bytes": 167924,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192217-bag-9.xml",
+   "sha256": "08a42d3f93fd2adede92e732c5bbcadd4b27c3856172e6116924cf6ec6206967",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192226-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192226-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192241-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192241-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192255-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192255-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192310-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192310-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192325-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192325-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192340-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192340-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192355-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192355-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192410-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192410-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192425-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192425-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192440-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192440-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192455-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192455-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192510-pill-bag-x1.png",
+   "sha256": "58f5f1e3430bb2cd3eebe852850a7b06ccd9a6e16334866c2d9b06c2fba1bb6a",
+   "bytes": 5735,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192510-pill-bag-x2.png",
+   "sha256": "ed4c4e4f7b5eddb42f8ce23fa8648a7472811a7c847a4c76d2fa2d181ae8a21d",
+   "bytes": 21947,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192517-count-prove-bag.png",
+   "sha256": "74ad92720f0c3b27077014f274aecfc6ecba05c06b04d7c2ed74859d48e84d7e",
+   "bytes": 168103,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192519-pend-1.png",
+   "sha256": "0ab1cad99bc1f3e690c5837d250f7f6e56c64662f9227c4f6114896c7837ca74",
+   "bytes": 168083,
+   "session": "2026-10-30/191958",
+   "class": "pend"
+  },
+  {
+   "path": "2026-10-30/191958/192519-pend-1.xml",
+   "sha256": "ed0389aa464d3011a887877d081be66927edb313d99132a5b6e08d4dfbdaebef",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192528-done-1.png",
+   "sha256": "ea2dd9b51d46049bd985834a4063a277d57496487bd0c4c04609665f3286005c",
+   "bytes": 168205,
+   "session": "2026-10-30/191958",
+   "class": "done"
+  },
+  {
+   "path": "2026-10-30/191958/192528-done-1.xml",
+   "sha256": "7e0b1f2718322c470b7d34379be3b7381057c8b0ea0705d39eec31d53306cfdd",
+   "bytes": 83901,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192540-pill-done-x1.png",
+   "sha256": "fdab84461a148b67cf420c2c792050278bcce51de5c431e0918e0507e9de34e1",
+   "bytes": 736,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192540-pill-done-x2.png",
+   "sha256": "df73d9b9986c40a35c218b757e1ae09492b07101e34df5e70863ef2953495236",
+   "bytes": 6721,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-1.png",
+   "sha256": "8db7558502582fdfefb043f810a0e013fb108dbb2f929ad82cc9f1f97f63676e",
+   "bytes": 161210,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-1.xml",
+   "sha256": "cb82730ee6ac05448dbb9b9547cc5bea8ece6a9570a03aab959c4fb34cee6a0f",
+   "bytes": 66159,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-10.png",
+   "sha256": "9a6779ceece028fe28e50c45b6f071315c3879a9413d616fb4d783120c6bb1c5",
+   "bytes": 161557,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-10.xml",
+   "sha256": "b42b33277e78d5aee216ab2fe4fe81abb128700375de66dcd9d5467fb7c5acbd",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-11.png",
+   "sha256": "11d1b729657d2385980c8945d3adc05c57771c42ef3769cf30b31716c4e83ad3",
+   "bytes": 161552,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-11.xml",
+   "sha256": "efac3fa58bf99725d7c37e89c3803bd9d9aa7ce0d9f017122e8eb516117bc6f2",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-12.png",
+   "sha256": "3a3830043ee4128a488b40f5d4db4b59bb78e981d150b668da41c462b5fedf14",
+   "bytes": 161223,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-12.xml",
+   "sha256": "ab9754f0e4aa093cf4d88eafa73846d1666f84600b5750576c2f153c127d816a",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-2.png",
+   "sha256": "00a2cee9da6b927a9b2d389e3304a3729914698d4683114a02b5e9bbdfdda368",
+   "bytes": 161426,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-2.xml",
+   "sha256": "73cc850c3d7577978bf744b7e80e5effd01d37b94281cf307cb83376940a85e0",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-3.png",
+   "sha256": "f9b986bcb34357c0b42e9ed99695e3549f40b99f057bab404a85591743f80c26",
+   "bytes": 161290,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-3.xml",
+   "sha256": "45202a299efa27c22ac3d1e74f7f19e5db79538f78efe6e84f02b723ae783404",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-4.png",
+   "sha256": "3e4db9093f7a2c3ab6f9f5b71dc69c25906aa817201b19f20a35689517f351c8",
+   "bytes": 161213,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-4.xml",
+   "sha256": "0a414377f48be0ddcfde595433def65009394e168631a9028c85b1a5fab6df03",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-5.png",
+   "sha256": "3a2b58e3facf20b7e9008f29fddad93852f05e72085f2a6545820b26ed9da5dc",
+   "bytes": 160579,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-5.xml",
+   "sha256": "5aee4e7ee6b94adabfe2df72c86c3d930611eb3bf30dd7e0abffa1ed974c64da",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-6.png",
+   "sha256": "c38068f45f1f390b8387cfbb658891368f918367e5cc9c32b9694435d1098b59",
+   "bytes": 160613,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-6.xml",
+   "sha256": "055a51c64a5ef92dee94fdea1599f832cc3aef3342bf91f86c1da1e0b786583f",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-7.png",
+   "sha256": "074d60f0946bbda13b975c551b2dd3097b44bfd180614ced1af5417a71931d57",
+   "bytes": 160662,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-7.xml",
+   "sha256": "0988cf07cb25cf30c5dd2af9b3a3b0301145f2f6342a6ff95e11ed255ea33f55",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-8.png",
+   "sha256": "a3ca0e1aba0f60da8645c41ac474bb530a51d27d5dc41e68490524f1e3c20b74",
+   "bytes": 160455,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-8.xml",
+   "sha256": "8468b6f4f13c466f1338d67fb9bb049dc2c2df2fd1b4c08db9a22203d4b67fec",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-9.png",
+   "sha256": "f330d190a76ac386a45d68a11cc9b22509b98f7869c5b3151dbb4da6c172c4eb",
+   "bytes": 161377,
+   "session": "2026-10-30/191958",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/191958/192545-bag-9.xml",
+   "sha256": "e33e5c764b37c4d92422fb138e2b759607a093baea2c5a33da0cff32f1fcaa42",
+   "bytes": 66126,
+   "session": "2026-10-30/191958",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/191958/192559-pill-bag-x1.png",
+   "sha256": "3641872eba42bc2b1f897372eb022a6ee38bd51d663965d4a100ed55c8560c77",
+   "bytes": 6644,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192559-pill-bag-x2.png",
+   "sha256": "53f1a10f1ab1d801c8d1f68dfbb9210a29ebe1d243726d78a2ae70d7b28b673d",
+   "bytes": 30076,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192618-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192618-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192636-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192636-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192655-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192655-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192714-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192714-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192732-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192732-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192751-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192751-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192810-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192810-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192829-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192829-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192848-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192848-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192906-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192906-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192925-pill-bag-x1.png",
+   "sha256": "8bd54b9c60bbbef2901c41789db7fa31a224ed6fd84614117a831da047000437",
+   "bytes": 6548,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/192925-pill-bag-x2.png",
+   "sha256": "9057813ac17f6c522e5029a38896b518170d9c8ae4610984234cd33604c6e6cf",
+   "bytes": 30164,
+   "session": "2026-10-30/191958",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/191958/run.log",
+   "sha256": "324f50b036eec19d11c5ef56183a08dd50cf31083f4f0c41e99e7b6f72bee655",
+   "bytes": 1494,
+   "session": "2026-10-30/191958",
+   "class": "run-log"
+  },
+  {
+   "path": "2026-10-30/191958/summary.txt",
+   "sha256": "c776992c47b3c2c8ba5f9013d04a887aa05d29f942fbdc5048f0e2eaf39d6588",
+   "bytes": 139,
+   "session": "2026-10-30/191958",
+   "class": "summary"
+  },
+  {
+   "path": "2026-10-30/202825/202837-popup-1.png",
+   "sha256": "c82fa764eda4232fc73632f2994379e56c6c62bb40a5965793467a47792272f3",
+   "bytes": 734982,
+   "session": "2026-10-30/202825",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-30/202825/202837-popup-1.xml",
+   "sha256": "9d0021027f9a11dad9f5df2a5dc13a425ec146349210fa391b79f547a53a348a",
+   "bytes": 80050,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/202837-popup-2.png",
+   "sha256": "571423760d0b80cf14e90fb80cdb67a5e61f7a62445f9808c0c605eeabd45348",
+   "bytes": 735086,
+   "session": "2026-10-30/202825",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-30/202825/202837-popup-2.xml",
+   "sha256": "9d0021027f9a11dad9f5df2a5dc13a425ec146349210fa391b79f547a53a348a",
+   "bytes": 80050,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/202837-popup-3.png",
+   "sha256": "57f7625ed22d8715b4256b6935d25e8d40d97cfd391155946585abe9903739ef",
+   "bytes": 735292,
+   "session": "2026-10-30/202825",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-30/202825/202837-popup-3.xml",
+   "sha256": "9d0021027f9a11dad9f5df2a5dc13a425ec146349210fa391b79f547a53a348a",
+   "bytes": 80050,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/202928-subsidy-1.png",
+   "sha256": "31972dfd7a14e7b4021ba71bce624d483e74a46085391a50d610f99839b106f5",
+   "bytes": 625678,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/202928-subsidy-1.xml",
+   "sha256": "0e4877d5c7e159ab5a48d3c94f5b0c148650dce67deed7dacb7a5fafa70ccfcd",
+   "bytes": 80783,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/202944-bag-1.png",
+   "sha256": "8e8a3f327ffe3b684a21e9d2956c1cf367200d06cf7b11a7b9f6746e8be9ff3f",
+   "bytes": 669478,
+   "session": "2026-10-30/202825",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/202825/202944-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/202955-band-bag.png",
+   "sha256": "5107a74df0c1a4dd128560d5a114e4379938c59be2b99a2895ca727e865f7eb0",
+   "bytes": 663111,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203000-pill-bag-x1.png",
+   "sha256": "585776da6cf8cf01be47913d7bf6c9fc5655c8474abae36dfb3da7764b2b0d76",
+   "bytes": 28161,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203000-pill-bag-x2.png",
+   "sha256": "01b721e37103a04600307187e797e0396f33d13ae2bd560e2ab699e8f9ad5fc6",
+   "bytes": 92802,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203007-count-prove-bag.png",
+   "sha256": "c342b26bc381979951cf1393327f44ccd0e12ef5f10566eafd1521797ac052cf",
+   "bytes": 639643,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203009-pend-1.png",
+   "sha256": "3ff7a56b08123295bfb7a201c7f82d4cc5cd775d8560af47c9aeadd7400b080f",
+   "bytes": 639562,
+   "session": "2026-10-30/202825",
+   "class": "pend"
+  },
+  {
+   "path": "2026-10-30/202825/203009-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203019-done-1.png",
+   "sha256": "1ba7d49b0f60cc9609cfb62378f8e86f91cafbc97c5ad34f678a1f52c08c96dc",
+   "bytes": 639239,
+   "session": "2026-10-30/202825",
+   "class": "done"
+  },
+  {
+   "path": "2026-10-30/202825/203019-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203031-pill-done-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203031-pill-done-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203036-bag-1.png",
+   "sha256": "e3736813674e9b2b0ff289af0b17c47c3c49d75946bf3a7d6f900e0d731922af",
+   "bytes": 646387,
+   "session": "2026-10-30/202825",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/202825/203036-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203048-band-bag.png",
+   "sha256": "f96c339177cd2c497b9754624cb8d92f3e466d06a799c1e86d937f5afee2a76a",
+   "bytes": 671202,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203053-pill-bag-x1.png",
+   "sha256": "946616345a904b27794f6d0b94309c9ccf20750115e92a70f569daa26c0a82af",
+   "bytes": 28549,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203053-pill-bag-x2.png",
+   "sha256": "8d46eb8c72a4f55600bfa816679a4cfe4500415b76e2cf5674d25ea1bd12885c",
+   "bytes": 95167,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203059-count-prove-bag.png",
+   "sha256": "71fc0f65baa81ab6de732c002449f0d2b2b75f62e0f4ba4c493ef452bdca7249",
+   "bytes": 654181,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203102-pend-1.png",
+   "sha256": "e58dc3080bfc05ec0be7c82b0820331dcc87a037000456f8cdfa0e8429ddef20",
+   "bytes": 653368,
+   "session": "2026-10-30/202825",
+   "class": "pend"
+  },
+  {
+   "path": "2026-10-30/202825/203102-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203111-done-1.png",
+   "sha256": "060e56f33544d466e3135f671c2faa9af928a0c347a08e798fedac88d029087f",
+   "bytes": 655339,
+   "session": "2026-10-30/202825",
+   "class": "done"
+  },
+  {
+   "path": "2026-10-30/202825/203111-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203123-pill-done-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203123-pill-done-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203128-bag-1.png",
+   "sha256": "646bf79217575ba34d839a088e760394635ae48ea586be3a8f51895d2f654fc9",
+   "bytes": 647412,
+   "session": "2026-10-30/202825",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/202825/203128-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203139-band-bag.png",
+   "sha256": "d3fa69d774a8744124b16ae21cae3eb63eb09cb5578ccb19f5b17a9144fae778",
+   "bytes": 701772,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203144-pill-bag-x1.png",
+   "sha256": "946616345a904b27794f6d0b94309c9ccf20750115e92a70f569daa26c0a82af",
+   "bytes": 28549,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203144-pill-bag-x2.png",
+   "sha256": "8d46eb8c72a4f55600bfa816679a4cfe4500415b76e2cf5674d25ea1bd12885c",
+   "bytes": 95167,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203151-count-prove-bag.png",
+   "sha256": "2beb7e0b38641127e2b4abade86c32423ac0dec5cda0c47f9ea7cddd77e6b938",
+   "bytes": 658676,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203153-done-1.png",
+   "sha256": "e3b97d5558990948568f250fd78489a0c17ca236dada9d007442e9f923fa887e",
+   "bytes": 658256,
+   "session": "2026-10-30/202825",
+   "class": "done"
+  },
+  {
+   "path": "2026-10-30/202825/203153-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203206-pill-done-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203206-pill-done-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203208-exchange-1.png",
+   "sha256": "69cfedbee5ede218894dd20e76bc097320fe7b79e5375c990f2e7f5749c0f8b0",
+   "bytes": 658434,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203208-exchange-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203217-pill-exchange-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203217-pill-exchange-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203219-pend-1.png",
+   "sha256": "7875a91ffd21ade709fe8832e50c634c332106c837e8ab13aa7356d28e1c50e2",
+   "bytes": 658513,
+   "session": "2026-10-30/202825",
+   "class": "pend"
+  },
+  {
+   "path": "2026-10-30/202825/203219-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203229-count-before.png",
+   "sha256": "40273c344017ec4ba1893275d90e6dbfee87270013433ef851899d048ad241b2",
+   "bytes": 658052,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203232-light-1.png",
+   "sha256": "be3dd2652c6262e6a638450262ee24fed7c2d3f784ca263db88181483bbff103",
+   "bytes": 658736,
+   "session": "2026-10-30/202825",
+   "class": "light"
+  },
+  {
+   "path": "2026-10-30/202825/203232-light-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203237-band-light.png",
+   "sha256": "a6e9ae06545136840b30e642d8a58d993177a31bcfead2e61bcb5caada47cc41",
+   "bytes": 487295,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203241-pill-light-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203241-pill-light-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203253-browse-1.png",
+   "sha256": "6931ce1c2263603d8a676d0472c5000f53623011d85362a8a44102b739d0de94",
+   "bytes": 575930,
+   "session": "2026-10-30/202825",
+   "class": "browse"
+  },
+  {
+   "path": "2026-10-30/202825/203253-browse-1.xml",
+   "sha256": "79bd01cf7f52a38cdaf194e70df7e3540392662b81f49ec7e680ebe4a4826927",
+   "bytes": 5669,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203302-browse-after.png",
+   "sha256": "6db07d14d294de03fd08b229f35dfb08118bbf6a87fa9f57d161989d20299e15",
+   "bytes": 226151,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203302-browse-before.png",
+   "sha256": "3104d5d8b2e5d24272b20080e9a268dd3bdcbc17c0a69c9029eba3b6247dec25",
+   "bytes": 575803,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203319-browse-1.png",
+   "sha256": "b92c9a56ca42a1ec4c6a18fb7a28018429ef954daac81b5f50de36e75d2b8176",
+   "bytes": 226412,
+   "session": "2026-10-30/202825",
+   "class": "browse"
+  },
+  {
+   "path": "2026-10-30/202825/203319-browse-1.xml",
+   "sha256": "8a3f64c6a814bebea6fd9ab538bfc4f1fd144de8aa741ec69a8fbedc18137656",
+   "bytes": 3530,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203330-count-after-back.png",
+   "sha256": "803b250b9901edcd53f3f80bec866a03eaf3015988635f19c5e68b0c914fa65d",
+   "bytes": 702659,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203335-bag-1.png",
+   "sha256": "7c0fbd42966ec985e80f1dce9714351563c7d23d22cec7802be9e467dd26081a",
+   "bytes": 695813,
+   "session": "2026-10-30/202825",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-30/202825/203335-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-10-30/202825",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-30/202825/203345-band-bag.png",
+   "sha256": "abf9be0ab6bf934382c77bd627016c50cfc91d6eff8dbe3a23d4bb907fa30eaf",
+   "bytes": 667720,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203351-pill-bag-x1.png",
+   "sha256": "0b3f977491ef3e42573868d451e14efc99d0ec8bb859104b74fcdbdd725be4f7",
+   "bytes": 28746,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203351-pill-bag-x2.png",
+   "sha256": "aaa77b1443529fe933003c537ea83b721f9218cfd39b859eb96eb1b92792e280",
+   "bytes": 95138,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/203358-count-after-reenter.png",
+   "sha256": "abd15a3ce485c7561fd0d54187df9cd3a3602e2ab035f53c0b6bcf6d22030fdc",
+   "bytes": 668748,
+   "session": "2026-10-30/202825",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-30/202825/run.log",
+   "sha256": "675756517836bc98419748650b6d335c4c91e02e0373531671603ddb84107a3b",
+   "bytes": 3938,
+   "session": "2026-10-30/202825",
+   "class": "run-log"
+  },
+  {
+   "path": "2026-10-30/202825/summary.txt",
+   "sha256": "9ccee97e5af30d6db62a949fe8167f91efe3bc734691189d4a9d0545472edbdc",
+   "bytes": 171,
+   "session": "2026-10-30/202825",
+   "class": "summary"
+  },
+  {
+   "path": "2026-10-31/100203/100215-popup-1.png",
+   "sha256": "c35e81a9face2006d04df84d8689cd14f914a3a4648b41c6a2a1f0b6cfb3d104",
+   "bytes": 544704,
+   "session": "2026-10-31/100203",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-31/100203/100215-popup-1.xml",
+   "sha256": "2fbf14944f7e257b531e28493ee34191762658494046bd962f6313552f44fc53",
+   "bytes": 80083,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100215-popup-2.png",
+   "sha256": "6eb537b4b246364239529d0a87bc582bd0329169de2b0c78fb91f2f4c138e1e0",
+   "bytes": 546570,
+   "session": "2026-10-31/100203",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-31/100203/100215-popup-2.xml",
+   "sha256": "2fbf14944f7e257b531e28493ee34191762658494046bd962f6313552f44fc53",
+   "bytes": 80083,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100215-popup-3.png",
+   "sha256": "d3fca334f3ab74a8f59323f5ad29816768ed50aa8421dc0a2d553df2ce88205f",
+   "bytes": 544657,
+   "session": "2026-10-31/100203",
+   "class": "popup"
+  },
+  {
+   "path": "2026-10-31/100203/100215-popup-3.xml",
+   "sha256": "2fbf14944f7e257b531e28493ee34191762658494046bd962f6313552f44fc53",
+   "bytes": 80083,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100255-subsidy-1.png",
+   "sha256": "c6de15ac7c4c9bfd4f16a74c19ebe4c0585f113ae27e4bf17227ac99a9cd76a1",
+   "bytes": 695774,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100255-subsidy-1.xml",
+   "sha256": "137d8d89239095419e9dba8e8fd6c82beb135408b8f19c2e4568999c7096897e",
+   "bytes": 79377,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100308-bag-1.png",
+   "sha256": "8ecb60df95ead37d19f7aa03be521b482c21a0666ef2d6107fa42310c13092c6",
+   "bytes": 619707,
+   "session": "2026-10-31/100203",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-31/100203/100308-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100319-band-bag.png",
+   "sha256": "89faea150731b5715aabe98245931fe8e8425c543876d5d5199b57851743b595",
+   "bytes": 672499,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100325-pill-bag-x1.png",
+   "sha256": "93cdd951540edcf99b4afe7ffd1803a25adcd5c6c12f97b973fcb126ce035de1",
+   "bytes": 29001,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100325-pill-bag-x2.png",
+   "sha256": "826612dd466b4b4c8989ac37687c0494f88aa9bc70d391e56ec710853b550940",
+   "bytes": 95302,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100332-count-prove-bag.png",
+   "sha256": "5a7d5faa2b9c678c4c63b564916bd1939add4698688cc2cb3500ffc9a8647e9e",
+   "bytes": 595942,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100334-done-1.png",
+   "sha256": "cafa8a811b7d27581b116100395f21b5533cea42284eba005bc6ad27d170ab8c",
+   "bytes": 596305,
+   "session": "2026-10-31/100203",
+   "class": "done"
+  },
+  {
+   "path": "2026-10-31/100203/100334-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100346-pill-done-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100346-pill-done-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100348-exchange-1.png",
+   "sha256": "f61268bcb860a1028b51788eba27550656026b47696cdf4ca8de4516e3aab878",
+   "bytes": 596989,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100348-exchange-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100357-pill-exchange-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100357-pill-exchange-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100359-pend-1.png",
+   "sha256": "cd86b01ab973a2044724da88d216150d4bffeba1e73514051d639d4728c9d174",
+   "bytes": 595498,
+   "session": "2026-10-31/100203",
+   "class": "pend"
+  },
+  {
+   "path": "2026-10-31/100203/100359-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100408-count-before.png",
+   "sha256": "d9abe5da112579cbcb39d0599ddf42e2485f97b3addd13a8eead2ece217ee5cb",
+   "bytes": 595980,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100410-light-1.png",
+   "sha256": "79ccaa5051375a7530a2ed1a62326f7a94a84e3e01f29043c9dae4682083743a",
+   "bytes": 594918,
+   "session": "2026-10-31/100203",
+   "class": "light"
+  },
+  {
+   "path": "2026-10-31/100203/100410-light-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100415-band-light.png",
+   "sha256": "fff8a086067486ab2d187dfad081288e4e2ad9c3a2535d81c37c60398fcc0cb1",
+   "bytes": 486809,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100419-pill-light-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100419-pill-light-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100429-browse-1.png",
+   "sha256": "68fc70f15feafa0540bb94bbe4839fab7809c30f6297b298367586479c8c7fe7",
+   "bytes": 421179,
+   "session": "2026-10-31/100203",
+   "class": "browse"
+  },
+  {
+   "path": "2026-10-31/100203/100429-browse-1.xml",
+   "sha256": "79bd01cf7f52a38cdaf194e70df7e3540392662b81f49ec7e680ebe4a4826927",
+   "bytes": 5669,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100434-band-browse.png",
+   "sha256": "26edf8ef71d0a5fff6ee8a18724633dc0b7355f9ae2b9d207f9c218d8665e456",
+   "bytes": 174922,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100439-browse-after.png",
+   "sha256": "ec6af9c8d41c03b9388ab62dda06ff24308b234cc305d89bb47c39c1cd7aed68",
+   "bytes": 462615,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100439-browse-before.png",
+   "sha256": "06135bc4403a13d18f54717e1f4dbebcdb690678515ee7d0249cb25b739142e7",
+   "bytes": 421046,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100454-browse-1.png",
+   "sha256": "37ebfb9e434b7e140e240891e62b5eb645be26128efe961d7011d83e3541097c",
+   "bytes": 464890,
+   "session": "2026-10-31/100203",
+   "class": "browse"
+  },
+  {
+   "path": "2026-10-31/100203/100454-browse-1.xml",
+   "sha256": "79bd01cf7f52a38cdaf194e70df7e3540392662b81f49ec7e680ebe4a4826927",
+   "bytes": 5669,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100513-count-after-back.png",
+   "sha256": "61ea34af260aa6c1db6028cd537421838ce57fc7ff2bfb433898dac8868ae3f1",
+   "bytes": 661076,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100518-bag-1.png",
+   "sha256": "0e90b4d8e59b05896eaf40cebdab9c8804d70d72aa3e3de906c73252b02623c3",
+   "bytes": 705392,
+   "session": "2026-10-31/100203",
+   "class": "bag"
+  },
+  {
+   "path": "2026-10-31/100203/100518-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-10-31/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-10-31/100203/100528-band-bag.png",
+   "sha256": "98e100557de01d068aa3f61bd6509da23d281f014a129065c1f5c85667f3da7b",
+   "bytes": 676258,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100534-pill-bag-x1.png",
+   "sha256": "7317a4523e66cdece3cbf79e113972bbacb48edc0f2a1a068eb151c8b3ed140c",
+   "bytes": 28375,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100534-pill-bag-x2.png",
+   "sha256": "8243bf0a940c3baf725027295b2aad29cc2a13d4489acb1147159209d398d8fe",
+   "bytes": 94211,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/100540-count-after-reenter.png",
+   "sha256": "7d77a769cd4f4365f24fe89775c2d8bac116d163e7f565c2e62d723a27c58ac5",
+   "bytes": 632136,
+   "session": "2026-10-31/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-10-31/100203/run.log",
+   "sha256": "0580743f16de6c79ab8e2d13780f76ef21db005a0a19a5538457ea9988811d40",
+   "bytes": 3157,
+   "session": "2026-10-31/100203",
+   "class": "run-log"
+  },
+  {
+   "path": "2026-10-31/100203/summary.txt",
+   "sha256": "4d1ff2ff3667d1fd93cdda62d2cf054cba0a92be040aeba56fe2ab5438e7fe86",
+   "bytes": 171,
+   "session": "2026-10-31/100203",
+   "class": "summary"
+  },
+  {
+   "path": "2026-11-01/100102/100114-popup-1.png",
+   "sha256": "ebd1e1c7f6c04362d60a24a59de181c0fc1446d317fb1e0ad85e9eed5bf88721",
+   "bytes": 486087,
+   "session": "2026-11-01/100102",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-01/100102/100114-popup-1.xml",
+   "sha256": "732be8aafd9c09a5032314312d11b2b897cba7014b1fd02738a91974eb8e9895",
+   "bytes": 81526,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100114-popup-2.png",
+   "sha256": "f2fdb981a33cccc81ffdc722b6ad1bd271b0cc37a1522f35d4d875d306b6b0c5",
+   "bytes": 483752,
+   "session": "2026-11-01/100102",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-01/100102/100114-popup-2.xml",
+   "sha256": "732be8aafd9c09a5032314312d11b2b897cba7014b1fd02738a91974eb8e9895",
+   "bytes": 81526,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100114-popup-3.png",
+   "sha256": "709520448b754b441f0a7646f421944bedfe4b3f49434dea6f6b8730174a1321",
+   "bytes": 486004,
+   "session": "2026-11-01/100102",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-01/100102/100114-popup-3.xml",
+   "sha256": "732be8aafd9c09a5032314312d11b2b897cba7014b1fd02738a91974eb8e9895",
+   "bytes": 81526,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100158-subsidy-1.png",
+   "sha256": "0b4b7b02ed0da7bbb4efac75258d838b217d05567fcae633500a1f8bf23f82b2",
+   "bytes": 659533,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100158-subsidy-1.xml",
+   "sha256": "3d5ed4014974547b8d00977fea37a7b9904661e9f7d19d6b3f428d98d664a06b",
+   "bytes": 80839,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100206-band-subsidy.png",
+   "sha256": "e99bed6e8208f92ffe388970d6d421132b8f02f744fac4575db083e329b58f97",
+   "bytes": 365975,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100213-bag-1.png",
+   "sha256": "d382da65fee4c676f33860635c4ddb0236b6561300a468b66ea7da0c6972ee00",
+   "bytes": 582622,
+   "session": "2026-11-01/100102",
+   "class": "bag"
+  },
+  {
+   "path": "2026-11-01/100102/100213-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100225-band-bag.png",
+   "sha256": "1e3cd8b7cdd0ba58d257c1857cdbb082bca8cc52b504d580ce3edc487990282c",
+   "bytes": 618194,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100230-pill-bag-x1.png",
+   "sha256": "5a42de90fa2d9853f1d60c65f8e2046d0c0c42b17e38d9a93a9fd9b94fb5dab8",
+   "bytes": 28179,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100230-pill-bag-x2.png",
+   "sha256": "fccefa033bce8825f27b968622f7bee79675d3e5e0b0ae23e73a36743d981337",
+   "bytes": 92939,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100236-count-prove-bag.png",
+   "sha256": "ef4f3fc9f6c777ec1ee31579b5136aacb23288f76994d78e4ebe591bdd93269a",
+   "bytes": 566719,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100239-done-1.png",
+   "sha256": "ce6d3c7dffa82e271a7976b2bddd447b6fc4152b195a387ff21c8c0a0810fc94",
+   "bytes": 566297,
+   "session": "2026-11-01/100102",
+   "class": "done"
+  },
+  {
+   "path": "2026-11-01/100102/100239-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100250-pill-done-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100250-pill-done-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100252-exchange-1.png",
+   "sha256": "8767a4e88b1fe5bdf2c92cde42e152db42e858ba5edf654ed447ed96bf23fa05",
+   "bytes": 568883,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100252-exchange-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100302-pill-exchange-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100302-pill-exchange-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100303-pend-1.png",
+   "sha256": "1b23c36ce2fa93b594950d81398d1625cdb125d8393b50d9aca3ddd7a5f69cb8",
+   "bytes": 567264,
+   "session": "2026-11-01/100102",
+   "class": "pend"
+  },
+  {
+   "path": "2026-11-01/100102/100303-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100313-count-before.png",
+   "sha256": "5b529f273e18ea260b7eb3836e7d3d719eca607e6fc81e7929f6f2dba4eb50e2",
+   "bytes": 568891,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100315-light-1.png",
+   "sha256": "cf2d64e54dc0efea878bf0988174d499c64b7c454ae1f2ef4cd002096dea1581",
+   "bytes": 566863,
+   "session": "2026-11-01/100102",
+   "class": "light"
+  },
+  {
+   "path": "2026-11-01/100102/100315-light-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100320-band-light.png",
+   "sha256": "587a799ab293ae010413c5a05ed9c66401444c4b7afed6881189a868763a0983",
+   "bytes": 483950,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100324-pill-light-x1.png",
+   "sha256": "ee7738dcdab62ccc8d893cebd23329ffc2d21519835700301b7addc6cd119108",
+   "bytes": 691,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100324-pill-light-x2.png",
+   "sha256": "be5aad7cc2984b39c4073d2a19a0d6c73b42cbbebd726503f3af6b91b833b62f",
+   "bytes": 7194,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100334-browse-1.png",
+   "sha256": "60f050baa21dc8e97eb01b02f9058a218435f082733da5da3d3e626a718cef10",
+   "bytes": 469955,
+   "session": "2026-11-01/100102",
+   "class": "browse"
+  },
+  {
+   "path": "2026-11-01/100102/100334-browse-1.xml",
+   "sha256": "79bd01cf7f52a38cdaf194e70df7e3540392662b81f49ec7e680ebe4a4826927",
+   "bytes": 5669,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100340-band-browse.png",
+   "sha256": "c6ba2c756cb8c2945b56a0d2413c652833d3f2bfa003f9ef7db991b14015c411",
+   "bytes": 205466,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100344-browse-after.png",
+   "sha256": "9098ab134e7b00f92fc7288c710cb2d44a145e78867e5d3c88b7dae1df1e5da8",
+   "bytes": 222192,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100344-browse-before.png",
+   "sha256": "441362d0f57caeb6cb99094a3b36f521cd2fbeeb38b159df7b7e0d7784433f50",
+   "bytes": 469888,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100359-browse-1.png",
+   "sha256": "f2363f504d76c0b9debd907de5a167c2628f0786ecb056a93cbecd2c661e0a7f",
+   "bytes": 222077,
+   "session": "2026-11-01/100102",
+   "class": "browse"
+  },
+  {
+   "path": "2026-11-01/100102/100359-browse-1.xml",
+   "sha256": "8a3f64c6a814bebea6fd9ab538bfc4f1fd144de8aa741ec69a8fbedc18137656",
+   "bytes": 3530,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100411-count-after-back.png",
+   "sha256": "b4a9e2b5a49f5687c826b30be68d41491aa46f2cb670ad4c47a44232b60b46cd",
+   "bytes": 611016,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100416-bag-1.png",
+   "sha256": "31242f1d1e9e5d8a7d63f23485b3bb43c4d1c77131774de48fff7185bebb37c6",
+   "bytes": 634709,
+   "session": "2026-11-01/100102",
+   "class": "bag"
+  },
+  {
+   "path": "2026-11-01/100102/100416-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100427-band-bag.png",
+   "sha256": "f22371b24ce620aebb366881eb93cab93771411c09868c912d6266934b6ba0be",
+   "bytes": 620434,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100432-pill-bag-x1.png",
+   "sha256": "48a3fe91fa828525e746cc0805658e378835bc9ebdd31fd1c23ee3e2f84a9a79",
+   "bytes": 27773,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100432-pill-bag-x2.png",
+   "sha256": "72a2bea67cc46d3b014de99dd92b14a99cc964f5d2c6a622e21a13ed5e3e39e0",
+   "bytes": 92785,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100439-count-after-reenter.png",
+   "sha256": "bed184d4a9f07cb74f58c43dea5728d4cde950056f4f780afa0a5a9c63c3b1ee",
+   "bytes": 601023,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100441-done-1.png",
+   "sha256": "a758249803726f8c1a2f434abedba669c3700075251ac6ae4945031c7ce434c0",
+   "bytes": 600997,
+   "session": "2026-11-01/100102",
+   "class": "done"
+  },
+  {
+   "path": "2026-11-01/100102/100441-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100452-pill-done-x1.png",
+   "sha256": "4eba8224e973d7203d0f6f28a4d0c652326eed12470200e04840d69ae7f4d6cd",
+   "bytes": 692,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100452-pill-done-x2.png",
+   "sha256": "bec041cf89b6a719bfae846fa7f99ab470f69d3e20a62d17bbd53cd3f3d52506",
+   "bytes": 8072,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100455-count-after.png",
+   "sha256": "e2aad889632cbed7d5ceb3a2543ecd601a3f7cfd1a2d801c5b880eafb53fd12e",
+   "bytes": 601851,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100457-prize-1.png",
+   "sha256": "66ab32e6ea8b3a406d326311a31d4e5b61ef50d2e3655a826da1bd189e661072",
+   "bytes": 600803,
+   "session": "2026-11-01/100102",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-01/100102/100457-prize-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/100506-pend-1.png",
+   "sha256": "624c881ce47df8d4cac24b878a5d788bcd7d79ade9e4cfe9e88346ad48ef8757",
+   "bytes": 601303,
+   "session": "2026-11-01/100102",
+   "class": "pend"
+  },
+  {
+   "path": "2026-11-01/100102/100506-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-01/100102",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-01/100102/run.log",
+   "sha256": "c3b1c2169c3467b1af79342790a835206860c3cfda9bfeda917f297ca39e7abe",
+   "bytes": 2527,
+   "session": "2026-11-01/100102",
+   "class": "run-log"
+  },
+  {
+   "path": "2026-11-01/100102/summary.txt",
+   "sha256": "1aedb65b6bdadb034625231e376856c89f50cd4fe4c6199c2221aa84d53972e8",
+   "bytes": 245,
+   "session": "2026-11-01/100102",
+   "class": "summary"
+  },
+  {
+   "path": "2026-11-02/100303/100315-popup-1.png",
+   "sha256": "ac3cde71a42cf95024fc6ecd81cca181b258d2d9d1214f456a3c97a44bd61d35",
+   "bytes": 345948,
+   "session": "2026-11-02/100303",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-02/100303/100315-popup-1.xml",
+   "sha256": "fb00c9d2b71328a720f03aeb32cbdf9e547a9ec405b66d9fa0a1bc2380a8dc2d",
+   "bytes": 90126,
+   "session": "2026-11-02/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-02/100303/100315-popup-2.png",
+   "sha256": "ad36b0fcfe7d9ba418e35d37bf7cf4fb76df994fa809cf98ae2d9e46b1eb66d8",
+   "bytes": 349480,
+   "session": "2026-11-02/100303",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-02/100303/100315-popup-2.xml",
+   "sha256": "fb00c9d2b71328a720f03aeb32cbdf9e547a9ec405b66d9fa0a1bc2380a8dc2d",
+   "bytes": 90126,
+   "session": "2026-11-02/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-02/100303/100315-popup-3.png",
+   "sha256": "bb72db93bfd6ce4d17bc127267daf6457cb586b3de4562f2cccfd6628efef9cc",
+   "bytes": 348901,
+   "session": "2026-11-02/100303",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-02/100303/100315-popup-3.xml",
+   "sha256": "fb00c9d2b71328a720f03aeb32cbdf9e547a9ec405b66d9fa0a1bc2380a8dc2d",
+   "bytes": 90126,
+   "session": "2026-11-02/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-02/100303/100346-subsidy-1.png",
+   "sha256": "36c4f7a317e237b3b31c6f5796775f4bba5f8baa91429dfd994245ac1855b087",
+   "bytes": 351388,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100346-subsidy-1.xml",
+   "sha256": "fb00c9d2b71328a720f03aeb32cbdf9e547a9ec405b66d9fa0a1bc2380a8dc2d",
+   "bytes": 90126,
+   "session": "2026-11-02/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-02/100303/100359-subsidy-1.png",
+   "sha256": "0bbcf19265603304c12dd4e852954a42509c06aae12d886b4402fb73b690a292",
+   "bytes": 637168,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100359-subsidy-1.xml",
+   "sha256": "be28ea699da211695ad1b294486922584ab88e079a32d9daa4a938e38ac729d6",
+   "bytes": 83135,
+   "session": "2026-11-02/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-02/100303/100420-bag-1.png",
+   "sha256": "560d124cbdd113c637f4201aae2fe23b0b2fc9004bb8947aef6acd32bcbe1aae",
+   "bytes": 647682,
+   "session": "2026-11-02/100303",
+   "class": "bag"
+  },
+  {
+   "path": "2026-11-02/100303/100420-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-11-02/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-02/100303/100438-band-bag.png",
+   "sha256": "134a34db9d19c97a064abb7a87e8f55f0a2c45cbe306786e804c1e79a8af7245",
+   "bytes": 607620,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100446-pill-bag-x1.png",
+   "sha256": "585776da6cf8cf01be47913d7bf6c9fc5655c8474abae36dfb3da7764b2b0d76",
+   "bytes": 28161,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100446-pill-bag-x2.png",
+   "sha256": "01b721e37103a04600307187e797e0396f33d13ae2bd560e2ab699e8f9ad5fc6",
+   "bytes": 92802,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100454-count-prove-bag.png",
+   "sha256": "cf6708fa332735d70ebbece4b50a82b3d5a2d89b1f8e643a7e4e3aaf7db146a1",
+   "bytes": 431723,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100458-pend-1.png",
+   "sha256": "aff53f0cfa1734426b90ce88c66373a5e3b780d6e858f0b4ed69de229c0f57b9",
+   "bytes": 432101,
+   "session": "2026-11-02/100303",
+   "class": "pend"
+  },
+  {
+   "path": "2026-11-02/100303/100458-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-02/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-02/100303/100510-done-1.png",
+   "sha256": "8ec7a56d3591efeb029c189514c7684f9cc6c5512cc464d004e9f8dd71913e2f",
+   "bytes": 433798,
+   "session": "2026-11-02/100303",
+   "class": "done"
+  },
+  {
+   "path": "2026-11-02/100303/100510-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-02/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-02/100303/100528-pill-done-x1.png",
+   "sha256": "edb8f529d557c4cf73ace078ae50a19f86686180f1b9b3cb2f3683f4493b03db",
+   "bytes": 707,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100528-pill-done-x2.png",
+   "sha256": "d884a297c2185b6e7f15ff75f42e8b5ecb01ee7034a24e4e606f1b0785d1712d",
+   "bytes": 8181,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100532-exchange-1.png",
+   "sha256": "137d9a2a0aa0c211391645e6d8b28353a1f7b0d965ba8ef19f0491eea67a42fb",
+   "bytes": 431783,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100532-exchange-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-02/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-02/100303/100546-pill-exchange-x1.png",
+   "sha256": "edb8f529d557c4cf73ace078ae50a19f86686180f1b9b3cb2f3683f4493b03db",
+   "bytes": 707,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100546-pill-exchange-x2.png",
+   "sha256": "d884a297c2185b6e7f15ff75f42e8b5ecb01ee7034a24e4e606f1b0785d1712d",
+   "bytes": 8181,
+   "session": "2026-11-02/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-02/100303/100550-pend-1.png",
+   "sha256": "12177b676db96696c64b7be85ec69f95df076b46d2122f1b10974ea470b10b0f",
+   "bytes": 432127,
+   "session": "2026-11-02/100303",
+   "class": "pend"
+  },
+  {
+   "path": "2026-11-02/100303/100550-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-02/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-02/100303/run.log",
+   "sha256": "8f8cec44692fc4c68c560cadf222549dacb230edc75d223308ad47bb0dba54bf",
+   "bytes": 2175,
+   "session": "2026-11-02/100303",
+   "class": "run-log"
+  },
+  {
+   "path": "2026-11-02/100303/summary.txt",
+   "sha256": "33f1a03ea4e46b30a6e4ff40cb33f25144baebf89f55018f1536714494c42c60",
+   "bytes": 245,
+   "session": "2026-11-02/100303",
+   "class": "summary"
+  },
+  {
+   "path": "2026-11-03/100303/100315-popup-1.png",
+   "sha256": "ea63848d1010167b7da0ff029567bc1f79b75e868bc00fe5bb1a98f799ed0b22",
+   "bytes": 513092,
+   "session": "2026-11-03/100303",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-03/100303/100315-popup-1.xml",
+   "sha256": "4c81a723f1c09fadacc6555a8becd1f147a84abdbf29066b566ac44fd78ef249",
+   "bytes": 81800,
+   "session": "2026-11-03/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-03/100303/100315-popup-2.png",
+   "sha256": "7a4c1d41e1b8282f834d34f79c91dc15d5e3ddcd507650d4ab64f0647315f02e",
+   "bytes": 513312,
+   "session": "2026-11-03/100303",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-03/100303/100315-popup-2.xml",
+   "sha256": "4c81a723f1c09fadacc6555a8becd1f147a84abdbf29066b566ac44fd78ef249",
+   "bytes": 81800,
+   "session": "2026-11-03/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-03/100303/100315-popup-3.png",
+   "sha256": "ba1504d816b42a306229e3ad9c32e38d1f24f397f563cfb9b9922be5f24e1964",
+   "bytes": 518652,
+   "session": "2026-11-03/100303",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-03/100303/100315-popup-3.xml",
+   "sha256": "4c81a723f1c09fadacc6555a8becd1f147a84abdbf29066b566ac44fd78ef249",
+   "bytes": 81800,
+   "session": "2026-11-03/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-03/100303/100423-subsidy-1.png",
+   "sha256": "34d7153bd89b410c6d646ddfb0cf3dc222f886f223ce0f947e934aa2055f930a",
+   "bytes": 633614,
+   "session": "2026-11-03/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-03/100303/100423-subsidy-1.xml",
+   "sha256": "b8c46e2c8d465a97d8d53c6263c781f373aa88d48e1729c3aecfb51d77e0b305",
+   "bytes": 82853,
+   "session": "2026-11-03/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-03/100303/100447-bag-1.png",
+   "sha256": "ca3ccd2533049ab41b7e81ba16474ab6e1c1c019b2e9db3c7c4775f418cf4c02",
+   "bytes": 728897,
+   "session": "2026-11-03/100303",
+   "class": "bag"
+  },
+  {
+   "path": "2026-11-03/100303/100447-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-11-03/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-03/100303/100507-band-bag.png",
+   "sha256": "4552f75cb0d7f8f3989cb0526fb8874483571cb9012b164e6aa6e251f7f47510",
+   "bytes": 716327,
+   "session": "2026-11-03/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-03/100303/100516-pill-bag-x1.png",
+   "sha256": "0f67f58786c1b8a72219e0db917920bc884500db21d96d4e38e3d34e0ea728ec",
+   "bytes": 29275,
+   "session": "2026-11-03/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-03/100303/100516-pill-bag-x2.png",
+   "sha256": "459f7140839e28fbbbe87e0ddafc6598d58319c052c707cd604de0ed9275c9bb",
+   "bytes": 95874,
+   "session": "2026-11-03/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-03/100303/100524-count-prove-bag.png",
+   "sha256": "227b96889e15daa1b22ee84e91d26aed3036ae99a9f2dd5961266a899760dc2c",
+   "bytes": 442139,
+   "session": "2026-11-03/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-03/100303/100528-pend-1.png",
+   "sha256": "c3bd6c2c8c8528efc04ffaf99c7574f8fc3c29ca79d716c5bc139dcfe8c98749",
+   "bytes": 443194,
+   "session": "2026-11-03/100303",
+   "class": "pend"
+  },
+  {
+   "path": "2026-11-03/100303/100528-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-03/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-03/100303/100540-done-1.png",
+   "sha256": "a190bbf2f671de67801408e8140a23ff52679eaba004547a3db1b0b647c47a3e",
+   "bytes": 443962,
+   "session": "2026-11-03/100303",
+   "class": "done"
+  },
+  {
+   "path": "2026-11-03/100303/100540-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-03/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-03/100303/100558-pill-done-x1.png",
+   "sha256": "02dafca95840cea6413d272d38f3f7e4e2682250c56b66d3c99d3332e174bcfc",
+   "bytes": 699,
+   "session": "2026-11-03/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-03/100303/100558-pill-done-x2.png",
+   "sha256": "702a61cc50c210296dc50b156943e4848d21dfb8fc5efa505512c93d08f63c4e",
+   "bytes": 8092,
+   "session": "2026-11-03/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-03/100303/100602-exchange-1.png",
+   "sha256": "304ebfe040984c0859cccaf8cc49e9541462caf57ebaacb46b6c60928a9bc888",
+   "bytes": 443218,
+   "session": "2026-11-03/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-03/100303/100602-exchange-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-03/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-03/100303/100617-pill-exchange-x1.png",
+   "sha256": "02dafca95840cea6413d272d38f3f7e4e2682250c56b66d3c99d3332e174bcfc",
+   "bytes": 699,
+   "session": "2026-11-03/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-03/100303/100617-pill-exchange-x2.png",
+   "sha256": "702a61cc50c210296dc50b156943e4848d21dfb8fc5efa505512c93d08f63c4e",
+   "bytes": 8092,
+   "session": "2026-11-03/100303",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-03/100303/100621-pend-1.png",
+   "sha256": "4ce7a9e51c56b31896fae79ee0edf7c827f47ccdd4cb4d531c31813f30e4babe",
+   "bytes": 442933,
+   "session": "2026-11-03/100303",
+   "class": "pend"
+  },
+  {
+   "path": "2026-11-03/100303/100621-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-03/100303",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-03/100303/run.log",
+   "sha256": "e45e7c9cf71770cbf7b6b998c138580c2281a176ab4507315ae955ac4b684bd8",
+   "bytes": 1874,
+   "session": "2026-11-03/100303",
+   "class": "run-log"
+  },
+  {
+   "path": "2026-11-03/100303/summary.txt",
+   "sha256": "b313b98f1092e9d13ba247ffd4648f88240e3884fee84486768dfeb25c4796a7",
+   "bytes": 245,
+   "session": "2026-11-03/100303",
+   "class": "summary"
+  },
+  {
+   "path": "2026-11-04/100203/100215-popup-1.png",
+   "sha256": "fd2852beb675707a38f475e939d68d715db55961822c280b497d6aac9e87a03d",
+   "bytes": 310286,
+   "session": "2026-11-04/100203",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-04/100203/100215-popup-1.xml",
+   "sha256": "a02b1a02e8d8d57b83d85d65eaf9035773536f0752c051d891c48eb18fb2297f",
+   "bytes": 92404,
+   "session": "2026-11-04/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-04/100203/100215-popup-2.png",
+   "sha256": "3a94cb22e033df8bd2c7f185d24d9dac2083c1c1c498f80ad7923d0b23e4c4d8",
+   "bytes": 310037,
+   "session": "2026-11-04/100203",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-04/100203/100215-popup-2.xml",
+   "sha256": "a02b1a02e8d8d57b83d85d65eaf9035773536f0752c051d891c48eb18fb2297f",
+   "bytes": 92404,
+   "session": "2026-11-04/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-04/100203/100215-popup-3.png",
+   "sha256": "8a2149e7a370031f5de68d1da16b4f0052d8d5bff3dfbd576b94bffce01301db",
+   "bytes": 310245,
+   "session": "2026-11-04/100203",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-04/100203/100215-popup-3.xml",
+   "sha256": "a02b1a02e8d8d57b83d85d65eaf9035773536f0752c051d891c48eb18fb2297f",
+   "bytes": 92404,
+   "session": "2026-11-04/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-04/100203/100240-subsidy-1.png",
+   "sha256": "efa166781084225d61a7a794368302350088e0409b644506e5405ed867ebc425",
+   "bytes": 310341,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100240-subsidy-1.xml",
+   "sha256": "a02b1a02e8d8d57b83d85d65eaf9035773536f0752c051d891c48eb18fb2297f",
+   "bytes": 92404,
+   "session": "2026-11-04/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-04/100203/100252-subsidy-1.png",
+   "sha256": "c6343fe4c512b85b16007d0a27848e2d8eb209be31d5942c83f0d3e2f0be1ed7",
+   "bytes": 527841,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100252-subsidy-1.xml",
+   "sha256": "d4fd34787f9e97b265cf658634754302d2ccbf3963a79973ebb89efc6d098608",
+   "bytes": 82446,
+   "session": "2026-11-04/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-04/100203/100307-bag-1.png",
+   "sha256": "75058421456916ca5a648731dfa86900b56e1d7e0cc4797a2edc33350b7b7244",
+   "bytes": 787994,
+   "session": "2026-11-04/100203",
+   "class": "bag"
+  },
+  {
+   "path": "2026-11-04/100203/100307-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-11-04/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-04/100203/100318-band-bag.png",
+   "sha256": "7dcb3fe718778a47a83c1962015740b4853aa99ebd83ac62ab40781c74a7c366",
+   "bytes": 755368,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100324-pill-bag-x1.png",
+   "sha256": "5e70302960c3d9cb67c208409e41ec348674a05159ef07ee64d8e2047e5e7708",
+   "bytes": 29168,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100324-pill-bag-x2.png",
+   "sha256": "c2cfcbc5af3a59c600ef1870175fc235a0d7194d202ded80c2dbf1e58d5e5be9",
+   "bytes": 95790,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100331-count-prove-bag.png",
+   "sha256": "5cb62970c224a2ab1a165f72e68be042d194130b03acbbd9d1c17537d1a57a7f",
+   "bytes": 432917,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100333-pend-1.png",
+   "sha256": "c155525867afac79c7ae6d2d2fbd8964b0e9dd863eb53e3130dac0d9665b07ce",
+   "bytes": 432482,
+   "session": "2026-11-04/100203",
+   "class": "pend"
+  },
+  {
+   "path": "2026-11-04/100203/100333-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-04/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-04/100203/100342-done-1.png",
+   "sha256": "6b0fe13fde03a333ca0ddcee965896e4a3e30fe017e89b572b4774780def9ba1",
+   "bytes": 433816,
+   "session": "2026-11-04/100203",
+   "class": "done"
+  },
+  {
+   "path": "2026-11-04/100203/100342-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-04/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-04/100203/100354-pill-done-x1.png",
+   "sha256": "f22144582aa292190e471358506736b155ca54f148f2378c44cb28dab120d692",
+   "bytes": 675,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100354-pill-done-x2.png",
+   "sha256": "ce58bf93d7fd7dfd238f324a578d4e6dd4e05eb65ab87bd2e3963d7a24cda82f",
+   "bytes": 7812,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100356-exchange-1.png",
+   "sha256": "25646dfcc3e84119c37d2db4aa55e7afc37d36dfbcb809daf4ac3c0c9e65d186",
+   "bytes": 433500,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100356-exchange-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-04/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-04/100203/100405-pill-exchange-x1.png",
+   "sha256": "f22144582aa292190e471358506736b155ca54f148f2378c44cb28dab120d692",
+   "bytes": 675,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100405-pill-exchange-x2.png",
+   "sha256": "ce58bf93d7fd7dfd238f324a578d4e6dd4e05eb65ab87bd2e3963d7a24cda82f",
+   "bytes": 7812,
+   "session": "2026-11-04/100203",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-04/100203/100408-pend-1.png",
+   "sha256": "04ef613a66e6ded1884290ee5c4d476af4071fe826ff0bdfef5afc4f472f0d46",
+   "bytes": 432790,
+   "session": "2026-11-04/100203",
+   "class": "pend"
+  },
+  {
+   "path": "2026-11-04/100203/100408-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-04/100203",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-04/100203/run.log",
+   "sha256": "fbce2019b9af97f8245cd45562365ae857cfdb753662dfb4468b8c337672ae38",
+   "bytes": 2183,
+   "session": "2026-11-04/100203",
+   "class": "run-log"
+  },
+  {
+   "path": "2026-11-04/100203/summary.txt",
+   "sha256": "c3f4d788fc302675e55a4d1d3d10725202f215eedb4f1127f250c37beb90d0c2",
+   "bytes": 245,
+   "session": "2026-11-04/100203",
+   "class": "summary"
+  },
+  {
+   "path": "2026-11-05/100221/100233-popup-1.png",
+   "sha256": "377a415f85b11975525d9caedd41ebd40555152aea6469785496358f2800791b",
+   "bytes": 649227,
+   "session": "2026-11-05/100221",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-05/100221/100233-popup-1.xml",
+   "sha256": "fb7798df0f8fea0cd6a2d88528dcdd6c28d1e21ac8a52ca60c782489db7a1ef3",
+   "bytes": 81370,
+   "session": "2026-11-05/100221",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-05/100221/100233-popup-2.png",
+   "sha256": "9bf0f40e8f6a95113fe8c446d768a2f9daed363e9d5c71021d580564f663ca9a",
+   "bytes": 651834,
+   "session": "2026-11-05/100221",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-05/100221/100233-popup-2.xml",
+   "sha256": "fb7798df0f8fea0cd6a2d88528dcdd6c28d1e21ac8a52ca60c782489db7a1ef3",
+   "bytes": 81370,
+   "session": "2026-11-05/100221",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-05/100221/100233-popup-3.png",
+   "sha256": "5df4300b0806e313ea6040676055f66fd3c99cc17731da76dbb0a1923ba03665",
+   "bytes": 649649,
+   "session": "2026-11-05/100221",
+   "class": "popup"
+  },
+  {
+   "path": "2026-11-05/100221/100233-popup-3.xml",
+   "sha256": "fb7798df0f8fea0cd6a2d88528dcdd6c28d1e21ac8a52ca60c782489db7a1ef3",
+   "bytes": 81370,
+   "session": "2026-11-05/100221",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-05/100221/100317-subsidy-1.png",
+   "sha256": "fafaf13fc15c932ffb5dbf4e787c1da0fa07cb7ff81a7dd2089fbeaa07079f7b",
+   "bytes": 582678,
+   "session": "2026-11-05/100221",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-05/100221/100317-subsidy-1.xml",
+   "sha256": "fc44a4d5acbca8b69ab9cd91ec5fdc31eedc601fbbe1430fd6b4b27a45e9df11",
+   "bytes": 81804,
+   "session": "2026-11-05/100221",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-05/100221/100332-bag-1.png",
+   "sha256": "fe1f2509a1bb59fee527485aed6e7741db4520bc08ed74b427335896768b3684",
+   "bytes": 607542,
+   "session": "2026-11-05/100221",
+   "class": "bag"
+  },
+  {
+   "path": "2026-11-05/100221/100332-bag-1.xml",
+   "sha256": "938289c5ffc4ce57a351c197dace7297b0e866a29ee4c1bfe25a360a4240e105",
+   "bytes": 3530,
+   "session": "2026-11-05/100221",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-05/100221/100343-band-bag.png",
+   "sha256": "881d1c7aefb793a69842ef642be633c6c74d4ae4260d6b455982cee0efa909bd",
+   "bytes": 652366,
+   "session": "2026-11-05/100221",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-05/100221/100348-pill-bag-x1.png",
+   "sha256": "f7017bd6bdf8b94133833b8da89e97f931297ea160259c4038dc4fd9862279c3",
+   "bytes": 28804,
+   "session": "2026-11-05/100221",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-05/100221/100348-pill-bag-x2.png",
+   "sha256": "bdab9bac1ef4f24914f59a26da081f7d5efc37648ed012a0deef7756afa601a7",
+   "bytes": 94517,
+   "session": "2026-11-05/100221",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-05/100221/100355-count-prove-bag.png",
+   "sha256": "2f0f08d6abae8eff4d2373032378598f36b2433f6e21724af2df903c1f4eb707",
+   "bytes": 560426,
+   "session": "2026-11-05/100221",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-05/100221/100358-pend-1.png",
+   "sha256": "d48e0f2ecf5542c46ce7d62323e6efb93a16c5b6b1d7d236f3a72978f4a77659",
+   "bytes": 561088,
+   "session": "2026-11-05/100221",
+   "class": "pend"
+  },
+  {
+   "path": "2026-11-05/100221/100358-pend-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-05/100221",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-05/100221/100408-done-1.png",
+   "sha256": "ba6e86b079dd33ff519f75ad8495a3fef4585714779a282e2aa3f0f3c28e530f",
+   "bytes": 560916,
+   "session": "2026-11-05/100221",
+   "class": "done"
+  },
+  {
+   "path": "2026-11-05/100221/100408-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-05/100221",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-05/100221/100415-done-1.png",
+   "sha256": "0d16b45829ec1aa438649cb8d2d8c8f352e74e25f96477d7a545a39a7a58952e",
+   "bytes": 561600,
+   "session": "2026-11-05/100221",
+   "class": "done"
+  },
+  {
+   "path": "2026-11-05/100221/100415-done-1.xml",
+   "sha256": "98a3239449d9684a4833f9bd16a02a6c39105030c697864b8e276fa490ed2766",
+   "bytes": 5670,
+   "session": "2026-11-05/100221",
+   "class": "hierarchy-xml"
+  },
+  {
+   "path": "2026-11-05/100221/run.log",
+   "sha256": "5d2f01215f03cee7ee3b10c5178af6a41564f0bcd4e99abac18883cec702fedf",
+   "bytes": 1621,
+   "session": "2026-11-05/100221",
+   "class": "run-log"
+  },
+  {
+   "path": "2026-11-05/100221/summary.txt",
+   "sha256": "d91ebb4d8463bc620a24b1632bf8439266f72dbc382c0f5dd5909a5cf12f450d",
+   "bytes": 171,
+   "session": "2026-11-05/100221",
+   "class": "summary"
+  },
+  {
+   "path": "2026-11-06/074350/shot.png",
+   "sha256": "21bbbfa3cb848b80eadc673ff64f646ccee6a47f6a9b89157aa26db81c5a9d78",
+   "bytes": 881139,
+   "session": "2026-11-06/074350",
+   "class": "png-other"
+  },
+  {
+   "path": "2026-11-06/074354/shot.png",
+   "sha256": "1dfd3bef6c093ff53d9a8a9fc83e587fcb790541e0b4379ae8a33e84cc916c58",
+   "bytes": 881159,
+   "session": "2026-11-06/074354",
+   "class": "png-other"
+  }
+ ]
+}

@@ -1,29 +1,40 @@
 # 真图语料清单（corpus-inventory）
 
 目的：重构的质量门禁（acceptance.md §8）需要**固定真实帧**做 ground truth。本文件记录
-2026-11-06 时点真实可得的数据，防止把「文本转记」当「原图」、把「7 天滚动窗口」当「固定语料」。
+语料的采集状态与覆盖。
 
-## 仓库内（已核实，glob 全量）
+## 采集状态：已回收（2026-11-06 07:45，用户授权）
 
-| 类型 | 数量 | 说明 |
+- **来源一：deb-h61 的 7 天证据窗整包回收**（12 场，2026-10-29 → 11-06；再晚一天 10-29 场就会被
+  KEEP_DAYS 删掉）。358 张 PNG + 150 个 XML + run.log/summary，共 98MB。
+- **来源二：真机只读截图 ×2**（07:43/07:43:54，`pdd.sh shot`，无任何点击）——拍到的是
+  **桌面 launcher 态**（亮屏未锁，720×1280）：真机当前状态凭证 + HOME-launcher 类帧。
+- **存放**：仓库外私有目录 `S:\apps\llm\agentwork\pdd-corpus-private\pdd-runs\`
+  （原图含账号昵称/券面额，**永不入 git**）。
+- **索引**：[tests/fixtures/manifest/corpus-v1-index.json](../../tests/fixtures/manifest/corpus-v1-index.json)
+  （544 文件逐个 SHA256+类别+会话，只含路径/哈希，不含像素）；生成器
+  `build_corpus_index.py`，私有目录变动后重跑即可。
+
+### 类别分布（按证据文件名的 key）
+
+| 类别 | 张数 | 说明 |
 |---|---|---|
-| 原始 PNG / XML / run.log | **0** | 仓库不带任何真机证据帧 |
-| 文本转记 | docs/measurements/*.txt（measured-RESULTS、measured-RESULTS2-upscale、measured-FRAMES-two-nights、measured-AB-1102-routes） | 是当时人工/脚本抄录的**识别字符串与结论**，不是图片；不能当 OCR ground truth 或 Q 门禁数据集 |
-
-## 主机端（未采集，需授权/自然机会）
-
-| 数据 | 位置 | 状态 |
-|---|---|---|
-| 7 天滚动证据窗 | deb-h61 `~/Desktop/pdd-runs/<日期>/<场次>/`（PNG + XML + run.log；README 载 9 份 run.log 口径） | **未采集**。KEEP_DAYS=7 会滚动删除，必须先复制到固定语料目录才能当数据集 |
-| 历史更早帧 | 已被 7 天窗口删除 | 不可恢复 |
-| 真机新采集 | 手机 192.168.1.110:16132 | 需用户授权；且受「每天一次真实机会」约束，不能为凑数据集烧福袋/兑换 |
+| bag | 60 | 频道页/轮播帧，含左右两个版式 |
+| popup | 30 | 弹窗帧 |
+| pend | 15 | 待兑换终态 |
+| done | 13 | 已点亮/已使用终态 |
+| browse | 6 | 浏览横幅帧 |
+| light | **3** | 点亮胶囊帧——**低于每类 ≥5 目标，缺口记账** |
+| png-other | 231 | band/pill 裁片与杂项 PNG（非整页帧，标注时单列） |
+| hierarchy-xml | 150 | uiautomator 层级 |
+| run-log / summary / other | 10/10/16 | 会话元数据 |
 
 ## 结论与缺口（对 acceptance §8 的影响）
 
-1. **T04 当前无法开始真图标注**——没有一张原图可标。G1b 的 dataset manifest 只能先立 schema 与
-   采集规程，coverage gap 记「全部真图类缺失」。
-2. 采集优先级（自然机会顺带收集，不额外跑手机）：每日 run 的证据目录在 KEEP_DAYS 删除前
-   复制出库 → 按 HOME/CHANNEL/ACTIVITY(done/used/exchange/pend)/BROWSE/PRIZE/UNKNOWN 分桶。
-3. 目标（每类 ≥5 张、≥3 个日期）在若干个自然日后才可能凑齐；期间 Q 门禁只能以
-   合成 resize（几何性质）+ 桩沙箱（分支契约）运行，**不得冒充真图质量结论**。
-4. 涉及账号昵称/券面额的帧属于私有语料：入库前脱敏，脱敏后重验涉及 ROI 的识别结果。
+1. **T04 标注可以开始了**：bag/popup/pend/done/browse 五类已够每类 ≥5 张的起步目标；
+   **light 只有 3 张**——下一批自然机会（每天 10:00 的 run 会产生新 light 帧）顺带补齐，
+   不为凑数额外跑手机。
+2. xml 与 png 同场配对存在 → 快照级（图+层级+焦点推断）样本可用。
+3. 涉及昵称/券面额：标注在私有目录进行；公开仓库只入索引与脱敏结论。
+4. 切分（calibration/heldout）按场次/日期分组，等标注完成后执行（T04 后续）。
+5. 历史更早帧（10-29 之前）已被 7 天窗口删除，不可恢复——此批即历史存量上限。
