@@ -1,18 +1,96 @@
 #!/usr/bin/env bash
-# 桩沙箱：不碰手机，把同仓库那份 pdd.sh 的分支矩阵走一遍（39 例）。
-# 推荐从本机跑 scripts/run-sandbox.sh，它会连上传带加锁一起办了。
-# 直接在主机上跑：bash /tmp/pddsandbox/in/sbx.sh        # 全跑
+# 桩沙箱：不碰手机、不联网，把同仓库那份 pdd.sh 的分支矩阵走一遍（47 例）。
+# 本地跑法（推荐）：scripts/run-sandbox-local.sh —— 本机 WSL 直跑，唯一运行根、
+#                   完整日志落盘、机器可判定（输入铺装/兼容层自检由它负责）。
+# 远程跑法（显式选择）：scripts/run-sandbox.sh —— SSH 推到签到主机跑，老路径保留。
+# 手工直接跑（输入目录已铺好时）：SBX_IN=<输入目录> bash sbx.sh
 #                ONLY=happy-ocr bash .../sbx.sh      # 只跑一个
 #                SBX_SIZE=1440x2560 bash .../sbx.sh  # 换一块屏，用例几何自动折算
+#                SBX_KEEP=1 bash .../sbx.sh          # 退出后保留自动建的运行根（调试）
+#
+# 退出码契约（机器判定的唯一口径；末行「失败用例数」只是给人看的）：
+#   0  全过且执行数相符          1  有用例失败（FAILED>0）
+#   2  ONLY 选中的用例不在表里   3  基础设施错误（输入/桩缺失、自检不过、几何算不出）
+#   4  实际执行数与登记数不符
+# 正常结束的最后一行必定是 SBX_DONE；被 kill/超时就没有 —— 外层 runner 靠它识别半途死亡。
 set -u
 
-IN=${SBX_IN:-/tmp/pddsandbox/in}
-SBX=${SBX_ROOT:-/tmp/pddsandbox/run}
+die() { # 基础设施错误：不是用例的红，是台子没搭好，整场停
+  printf 'SANDBOX_INFRA_ERROR: %s\n' "$*" >&2
+  exit 3
+}
+
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+IN=${SBX_IN:-$SCRIPT_DIR/..}
+SBX_AUTO=0
+SBX=${SBX_ROOT:-}
+if [ -z "$SBX" ]; then
+  # 唯一运行根：不再是共享的 /tmp/pddsandbox/run，两跑互不踩
+  SBX=$(mktemp -d "${TMPDIR:-/tmp}/pddsandbox-run.XXXXXXXX") || die "mktemp 建运行根失败"
+  SBX_AUTO=1
+fi
+case $SBX in
+  /*) ;;
+  *) die "SBX_ROOT 必须是绝对路径：$SBX" ;;
+esac
+if [ "$SBX" = "/" ] || [ "${#SBX}" -lt 8 ]; then
+  die "SBX_ROOT 太危险，拒绝使用：$SBX"
+fi
+# 自动建的根，退出时清掉（清理目标再做一次形状校验，rm -rf 不吃意外的路径）
+if [ "$SBX_AUTO" = 1 ] && [ "${SBX_KEEP:-0}" != 1 ]; then
+  trap 'case $SBX in "${TMPDIR:-/tmp}"/pddsandbox-run.*) rm -rf "$SBX" ;; esac' EXIT
+fi
+
+[ -d "$IN" ] || die "SBX_IN 不是目录：$IN"
+[ -f "$IN/pdd.sh" ] || die "输入目录里没有 pdd.sh（用 scripts/run-sandbox-local.sh 铺一份）：$IN"
+for _s in adb tesseract curl; do
+  [ -f "$IN/bin/$_s" ] || die "输入目录里缺桩 bin/$_s：$IN"
+done
+if [ -d "$IN/pylib/PIL" ]; then
+  PYLIB=$IN/pylib
+elif [ -d "$IN/sandbox/pylib/PIL" ]; then
+  PYLIB=$IN/sandbox/pylib
+else
+  die "缺 PIL 兼容层（pylib/PIL）：band/pill 裁片在沙箱里起不来。用 scripts/run-sandbox-local.sh 铺装"
+fi
+# CRLF 拒收：bash 见 \r 就炸，宁可在这里说明白
+if grep -q $'\r' "$IN/pdd.sh"; then
+  die "pdd.sh 是 CRLF 行尾（Windows checkout 原样）：先让 runner 铺一份 LF 的再跑"
+fi
+
 SRC=$IN/pdd.sh
 FAILED=0
-rm -rf "$SBX"; mkdir -p "$SBX/bin" "$SBX/farm"
-cp -f "$IN"/bin/adb "$IN"/bin/tesseract "$IN"/bin/curl "$SBX/bin/"
-chmod 755 "$SBX"/bin/*
+RUN_SEEN=0
+export TZ=${SBX_TZ:-Asia/Taipei}    # 账本日期/日标记两边（沙箱与被测脚本）必须落在同一天
+export SBX_STRICT=${SBX_STRICT:-1}  # 桩严格模式：未知 adb/tesseract/curl 调用 = 用例失败
+rm -rf "$SBX"; mkdir -p "$SBX/bin" "$SBX/farm" || die "运行根建不起来：$SBX"
+cp -f "$IN"/bin/adb "$IN"/bin/tesseract "$IN"/bin/curl "$SBX/bin/" || die "桩拷不进运行根"
+chmod 755 "$SBX"/bin/* || die "桩 chmod 失败"
+
+# 用例登记表（47 例）：ONLY 校验与执行数闸门都以它为准，表格与下面的 run_case
+# 调用必须一一对应 —— 删了用例块没删表（或反之），收尾的执行数闸门会红。
+CASES=(marker-already-done no-tesseract no-adb device-offline locked wrong-foreground \
+  shade-slashless-focus bag-not-found already-lit exchange-needs-human happy-ocr \
+  entry-swallowed-back entry-swallowed-stuck bag-right-slot browse-reenter-venue \
+  browse-back-reads browse-band-psm6 count-new-wording prize-take-coord prize-take-ocr \
+  pend-proof-ok pend-verify-4 pend-days-unreadable pend-days-1 pend-days-roll \
+  pend-days-copy pend-days-psm-fallback used-terminal used-band-psm6 recovery-coord-ban \
+  happy-coord happy-pill-band already-lit-pill count-unchanged count-unreadable-coord \
+  popup-rescue carousel-wrong-frame xml-channel-hit ledger-normal-zero ledger-garbage-runs \
+  ledger-no-file ledger-already-lit-zero conf-band-psm6 conf-unknown-key-stops \
+  conf-bad-value-stops conf-calibration-key-stops push-metrics-in-log)
+EXEC_EXPECTED=${#CASES[@]}
+if [ -n "${ONLY:-}" ]; then
+  EXEC_EXPECTED=1
+  _hit=0
+  for _c in "${CASES[@]}"; do
+    [ "$_c" = "$ONLY" ] && { _hit=1; break; }
+  done
+  [ "$_hit" = 1 ] || {
+    printf 'SANDBOX_INFRA_ERROR: ONLY=%s 不在用例表里（共 %d 例）\n' "$ONLY" "${#CASES[@]}" >&2
+    exit 2
+  }
+fi
 
 # 被测的那块"屏"要多大有多大：SBX_SIZE 同时决定桩 adb 报的点空间和桩截图的尺寸。
 # 用例里的 row 坐标一律按 720x1280 那套写死，跑别的尺寸时由 sx/sy 折算过去 ——
@@ -20,18 +98,31 @@ chmod 755 "$SBX"/bin/*
 # 换分辨率还能用就是靠这条来钉。1440x2560 是 2 倍，折算全是整数，比对结果没有取舍歧义。
 SBX_SIZE=${SBX_SIZE:-720x1280}
 SBX_W=${SBX_SIZE%x*}; SBX_H=${SBX_SIZE#*x}
+case "${SBX_W:-}${SBX_H:-}" in
+  ''|*[!0-9]*) die "SBX_SIZE 形状不对（要 WxH 纯数字）：$SBX_SIZE" ;;
+esac
 RSX=$(awk -v w="$SBX_W" 'BEGIN{printf "%.6f", w/720}')
 RSY=$(awk -v h="$SBX_H" 'BEGIN{printf "%.6f", h/1280}')
+[ -n "$RSX" ] && [ -n "$RSY" ] || die "几何折算失败（awk）"
 sx() { awk -v v="$1" -v s="$RSX" 'BEGIN{printf "%d", v*s+0.5}'; }
 sy() { awk -v v="$1" -v s="$RSY" 'BEGIN{printf "%d", v*s+0.5}'; }
 export SBX_SIZE
 
-python3 - "$SBX/shot.png" "${SBX_W:-720}" "${SBX_H:-1280}" <<'PY'
-import sys
-from PIL import Image
-Image.new("RGB", (int(sys.argv[2]), int(sys.argv[3])), (200, 30, 40)).save(sys.argv[1])
+# 纯色截图桩：纯标准库 PNG（zlib+struct），不再依赖 Pillow —— 沙箱自建件越少越好验
+python3 - "$SBX/shot.png" "$SBX_W" "$SBX_H" <<'PY' || die "截图桩生成失败（python3 跑不了）"
+import sys, zlib, struct
+path, w, h = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+row = b"\x00" + bytes((200, 30, 40)) * w          # filter 0 + 一整行纯色
+def chunk(t, d):
+    return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xFFFFFFFF)
+png = (b"\x89PNG\r\n\x1a\n"
+       + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+       + chunk(b"IDAT", zlib.compress(row * h))
+       + chunk(b"IEND", b""))
+with open(path, "wb") as f:
+    f.write(png)
 PY
-[ -s "$SBX/shot.png" ] || { echo "截图桩造不出来，停"; exit 1; }
+[ -s "$SBX/shot.png" ] || die "截图桩造不出来，停"
 
 # 工具农场：/usr/bin 等逐个软链，但 adb/tesseract/curl 不给 —— PATH 里永远只有桩，真 adb 不可能被碰到
 for dir in /usr/local/sbin /usr/sbin /sbin /usr/local/bin /usr/bin /bin; do
@@ -42,7 +133,11 @@ for dir in /usr/local/sbin /usr/sbin /sbin /usr/local/bin /usr/bin /bin; do
     [ -e "$SBX/farm/$b" ] || ln -s "$f" "$SBX/farm/$b" 2>/dev/null
   done
 done
-mkdir -p "$SBX/bin_note" "$SBX/bin_noadb"
+# 农场里有几样工具是被测脚本活命必需的；扫空了后面全是莫名其妙的红，在这里就说清楚
+for _t in bash timeout awk sed grep sleep; do
+  [ -e "$SBX/farm/$_t" ] || die "工具农场里缺 $_t（/usr/bin 扫空了？）"
+done
+mkdir -p "$SBX/bin_note" "$SBX/bin_noadb" || die "bin_note/bin_noadb 建不起来"
 ln -s "$SBX/bin/adb" "$SBX/bin_note/adb"; ln -s "$SBX/bin/curl" "$SBX/bin_note/curl"
 ln -s "$SBX/bin/tesseract" "$SBX/bin_noadb/tesseract"; ln -s "$SBX/bin/curl" "$SBX/bin_noadb/curl"
 
@@ -82,23 +177,21 @@ base() {
   # 是推送端点 / 账本路径 / OCR 配置路径没被换掉 —— 全部用例各往真实 ServerChan 端点推一条、
   # 读写桌面上那个真账本、或集体改用桌面上那份真配置。所以这里当场验一遍，不通过就直接停整个沙箱。
   grep -q 'PUSH_URL=http://stub.push/send' "$dir/pdd.sh" \
-    || { echo "沙箱自检失败：PUSH_URL 没被替换，停（绝不往外推）"; exit 1; }
+    || die "沙箱自检失败：PUSH_URL 没被替换，停（绝不往外推）"
   grep -q "^PUSH_URL_FILE=$dir/push.url\$" "$dir/pdd.sh" \
-    || { echo "沙箱自检失败：PUSH_URL_FILE 没被替换，停（万一 PUSH_URL 是空的就会去读桌面上那个真端点）"; exit 1; }
+    || die "沙箱自检失败：PUSH_URL_FILE 没被替换，停（万一 PUSH_URL 是空的就会去读桌面上那个真端点）"
   grep -q "^PAUSE_FILE=$dir/pause\$" "$dir/pdd.sh" \
-    || { echo "沙箱自检失败：PAUSE_FILE 没被替换，停（绝不碰桌面账本）"; exit 1; }
+    || die "沙箱自检失败：PAUSE_FILE 没被替换，停（绝不碰桌面账本）"
   # 外置那份 OCR 配置同理：主机桌面上要是有 ~/Desktop/pdd-ocr.conf，所有用例会集体读它，
   # base() 上面那串改内建默认的 sed 就被它盖掉了 —— 跑出来的绿是"配置文件的绿"，不是这份字节的绿。
   grep -q "^OCR_CONF_FILE=$dir/ocr.conf\$" "$dir/pdd.sh" \
-    || { echo "沙箱自检失败：OCR_CONF_FILE 没被替换，停（用例不许读桌面上那份真配置）"; exit 1; }
+    || die "沙箱自检失败：OCR_CONF_FILE 没被替换，停（用例不许读桌面上那份真配置）"
   grep -q 'SWIPE_COUNT=2 ' "$dir/pdd.sh" \
-    || { echo "沙箱自检失败：SWIPE_* 那条 sed 没锚上（会按真实时长跑），停"; exit 1; }
+    || die "沙箱自检失败：SWIPE_* 那条 sed 没锚上（会按真实时长跑），停"
   # 仓库是公开的，所以被测脚本本体里不许出现任何真凭据形态。这条和 githooks/pre-commit
   # 是两道独立的闸：钩子管提交，这条管"哪怕绕过钩子跑沙箱也会停"。
   if grep -qE 'sct[0-9a-zA-Z]{8,}|SCT[0-9a-zA-Z]{8,}|push\.ft07\.com|sct\.ftqq\.com' "$SRC"; then
-    echo "沙箱自检失败：$SRC 里还有真推送端点/token，停（这仓库是公开的）"
-    echo "端点应该写在主机的 ~/Desktop/pdd-push.url 里，脚本只读文件。"
-    exit 1
+    die "沙箱自检失败：$SRC 里还有真推送端点/token，停（这仓库是公开的）"
   fi
 }
 
@@ -121,6 +214,9 @@ reset_env() {
   export SBX_PEND_TEXT=
   : >"$SBX_TSV_CAND"; : >"$SBX_TSV_BAND"; : >"$SBX_TSV_PILL1"; : >"$SBX_TSV_PILL2"
   : >"$SBX_EVENTS"; : >"$SBX_PUSH"; : >"$W/count"
+  # 桩严格违规留痕（每用例一份）：未知 adb/tesseract/curl 调用写进来，run_case 收尾时查
+  export SBX_STRICT_LOG=$W/strict-violations.log
+  : >"$SBX_STRICT_LOG"
   export SBX_OFFLINE=0 SBX_WAKE=Awake SBX_LOCK=0
   export SBX_FPKG=com.xunmeng.pinduoduo
   export SBX_FACT=com.xunmeng.pinduoduo.ui.activity.MainFrameActivity
@@ -143,6 +239,7 @@ reset_env() {
 run_case() { # run_case 名字 期望rc 期望lit(-不查) 期望标记(-不查) [额外sed...]
   local name=$1 wrc=$2 wlit=$3 wmark=$4; shift 4
   if [ -n "${ONLY:-}" ] && [ "$ONLY" != "$name" ]; then return 0; fi
+  RUN_SEEN=$((RUN_SEEN + 1))
   local dir=$SBX/cases/$name
   rm -rf "$dir"; base "$dir"
   [ "$MK" = 1 ] && touch "$dir/runs/.done-$(date +%F)"
@@ -153,7 +250,24 @@ run_case() { # run_case 名字 期望rc 期望lit(-不查) 期望标记(-不查)
   [ -z "${SEED_CONF:-}" ] || printf '%s\n' "$SEED_CONF" >"$dir/ocr.conf"
   while [ $# -gt 0 ]; do sed -i "$1" "$dir/pdd.sh"; shift; done
   local logs rc lit marker taps backs bad=
-  logs=$(cd "$dir" && PATH="$PATHP" timeout 240 bash "$dir/pdd.sh" run 2>&1); rc=$?
+  # 执行环境走白名单（env -i）：家目录/临时目录圈进用例目录，PATH 里只有桩和农场，
+  # PYTHONPATH 指向 PIL 兼容层，业务日期 TZ 钉死 —— 宿主环境里其它变量（尤其推送/
+  # 配置/凭据类）一个都不许渗进被测脚本；HOME 隔离顺带把 ~/Desktop 那套真文件挡在外面。
+  mkdir -p "$dir/home" "$dir/tmp" || die "用例 home/tmp 建不起来：$dir"
+  local _e
+  local _envs=()
+  for _e in $(compgen -e); do
+    case $_e in SBX_*) _envs+=("$_e=${!_e}") ;; esac
+  done
+  local _t0; _t0=$(date +%s%N)
+  # 600s：1440x2560 下 band/pill 的 ×3 放大裁片在 drvfs 上慢，240s 会让 bag 轮播类
+  # 用例假超时（rc=124，2026-11-06 实测）；720 下所有用例 <120s，不受影响。
+  # 注意：注释绝不能插进 $() 的续行中间——那会把 timeout/bash 全吞进注释，
+  # env -i 没了命令就只打印环境，下一行 "${_envs[@]}" 的首词被当命令执行（C07，47×127）。
+  logs=$(cd "$dir" && env -i HOME="$dir/home" TMPDIR="$dir/tmp" PATH="$PATHP" \
+    PYTHONPATH="$PYLIB" LC_ALL=C.UTF-8 TZ="$TZ" \
+    "${_envs[@]}" timeout 600 bash "$dir/pdd.sh" run 2>&1); rc=$?
+  local _ms; _ms=$(( ($(date +%s%N) - _t0) / 1000000 ))
   lit=$(printf '%s\n' "$logs" | grep -o 'lit=[0-9]*' | head -1 | tr -dc '0-9')
   ls "$dir"/runs/.done-* >/dev/null 2>&1 && marker=yes || marker=no
   local taps; taps=$(grep -c '^tap' "$SBX_EVENTS" 2>/dev/null)
@@ -196,6 +310,10 @@ run_case() { # run_case 名字 期望rc 期望lit(-不查) 期望标记(-不查)
   if [ -n "${EXPECT_NOLOG:-}" ]; then
     grep -qF "$EXPECT_NOLOG" "$dir/out.log" && bad="$bad 日志里不该有「$EXPECT_NOLOG」"
   fi
+  # 桩严格违规留痕 = 用例失败：未知调用哪怕被被测脚本吞了退出码，门禁也看得见
+  if [ -s "$SBX_STRICT_LOG" ]; then
+    bad="$bad 桩严格违规:$(head -1 "$SBX_STRICT_LOG")"
+  fi
   if [ -n "$bad" ]; then
     FAILED=$((FAILED + 1))
     printf '%-24s rc=%-3s lit=%-3s 标记=%-3s tap=%-3s BACK=%-2s 推送=%-2s 收尾关=%-2s ✗%s\n' \
@@ -205,6 +323,10 @@ run_case() { # run_case 名字 期望rc 期望lit(-不查) 期望标记(-不查)
     printf '%-24s rc=%-3s lit=%-3s 标记=%-3s tap=%-3s BACK=%-2s 推送=%-2s 收尾关=%-2s ✓\n' \
       "$name" "$rc" "${lit:-?}" "$marker" "${taps:-0}" "${backs:-0}" "${pushed:-0}" "$gotclose"
   fi
+  # 机读行：harness-result.json 的每用例记录就从这里来（人看的行保持原样在上头）
+  printf 'CASE name=%s ok=%s rc=%s lit=%s marker=%s taps=%s backs=%s pushes=%s close=%s duration_ms=%s\n' \
+    "$name" "$([ -n "$bad" ] && echo 0 || echo 1)" "$rc" "${lit:-}" "$marker" \
+    "${taps:-0}" "${backs:-0}" "${pushed:-0}" "$gotclose" "$_ms"
   return 0
 }
 
@@ -483,4 +605,15 @@ reset_env; tsvfile "$W/cand.tsv" "$T_SUB$T_BAG$T_LIGHT$T_BROWSE"; countfile 4 4 
 
 echo
 echo "失败用例数: $FAILED"
+printf 'SANDBOX_SUMMARY expected=%d executed=%d failed=%d skipped=0 infra_error=0 size=%s only=%s\n' \
+  "$EXEC_EXPECTED" "$RUN_SEEN" "$FAILED" "$SBX_SIZE" "${ONLY:-}"
+# 执行数闸门：登记几个就得跑几个（ONLY 时=1）。少 = 有用例块被删/没跑到，多 = 重复登记；
+# 老版沙箱「一个都没跑也报 0 失败」的假绿口子就堵在这里。
+if [ "$RUN_SEEN" -ne "$EXEC_EXPECTED" ]; then
+  printf 'SANDBOX_INFRA_ERROR: 执行数不符：应 %d 实 %d\n' "$EXEC_EXPECTED" "$RUN_SEEN" >&2
+  echo SBX_DONE
+  exit 4
+fi
 echo SBX_DONE
+[ "$FAILED" -eq 0 ] && exit 0
+exit 1

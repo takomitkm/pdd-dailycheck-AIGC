@@ -31,7 +31,8 @@ trap '"${SS[@]}" "rmdir /tmp/pddsandbox.lock" >/dev/null 2>&1' EXIT
 
 "${SS[@]}" "cd /tmp/pddsandbox/in && for f in sbx.sh pdd.sh bin/adb bin/tesseract bin/curl; do tr -d '\015' < \$f > t && mv t \$f; done
 chmod 755 bin/*
-bash -n sbx.sh && bash -n pdd.sh && bash -n bin/adb && bash -n bin/tesseract && bash -n bin/curl && echo STUBS_OK
+bash -n sbx.sh && bash -n pdd.sh && bash -n bin/adb && bash -n bin/tesseract && bash -n bin/curl && echo STUBS_OK" || exit 1
 export SBX_SIZE='$SIZE' ONLY='${ONLY:-}'
-timeout 900 bash sbx.sh 2>&1 | tail -60"
-echo "RUNSANDBOX_OK 屏=$SIZE"
+set -o pipefail
+timeout 900 bash sbx.sh 2>&1 | tail -60 || { echo "RUNSANDBOX-REMOTE: 沙箱/超时失败（退出码 $?）"; exit 1; }
+echo "RUNSANDBOX_OK 屏=$SIZE（远程模式；日常请用 scripts/run-sandbox-local.sh）"

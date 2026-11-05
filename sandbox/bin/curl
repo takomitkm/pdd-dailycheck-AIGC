@@ -6,25 +6,49 @@
 #   --stderr F   错误文本写进 F（桩一律成功，所以只留一个空文件）
 # notify() 判成功读的是 -o 那个文件里的 "code":0，指标读的是 -w；这两个开关不演，
 # 六档跑得再对也会报「推送失败」，那种红钉的不是判据。
+# 严格模式（SBX_STRICT=1，沙箱默认）：不认识的开关/参数直接失败并留痕；端点必须是
+# 桩地址（SBX_PUSH_URL，默认 http://stub.push/send）—— 老桩谁来都成功，等于给
+# "配置坏了往真端点推"留后门；这里收掉。
+strict_err() {
+  if [ "${SBX_STRICT:-0}" = 1 ]; then
+    [ -n "${SBX_STRICT_LOG:-}" ] && printf 'curl: %s\n' "$*" >>"$SBX_STRICT_LOG" 2>/dev/null
+    printf 'SBX_STRICT: curl 不认识这次调用：%s\n' "$*" >&2
+    exit 66
+  fi
+  return 0
+}
 t=
 d=
 out=
 fmt=
 errf=
+url=
 prev=
 for a in "$@"; do
   case "$prev" in
     -o)       out=$a;  prev=; continue ;;
     -w)       fmt=$a;  prev=; continue ;;
     --stderr) errf=$a; prev=; continue ;;
+    -m)       prev=;   continue ;;
   esac
   case "$a" in
-    -o|--stderr) prev=$a; continue ;;
-    -w)          prev=-w; continue ;;
-    title=*) t=${a#title=} ;;
-    desp=*)  d=${a#desp=} ;;
+    -o|--stderr|-m) prev=$a; continue ;;
+    -w)             prev=-w; continue ;;
+    -G)             ;;                     # GET 化，无值开关
+    -s|-k)          ;;                     # 静默/不验证书：真 curl 语义，桩照收
+    --data-urlencode) ;;                   # 取值开关；值（title=/desp=）由下一轮提取
+    -sk|-ks|-sG|-Gs|-kG|-Gk|-skG|-sGk|-ksG|-kGs|-Gsk|-Gks)
+                    ;;                     # pdd.sh:1478 实际就是组合短开关 -sk，逐枚举漏了会全盘假红
+    -*)             strict_err "未知开关 $a" ;;
+    http://*|https://*) url=$a ;;
+    title=*)  t=${a#title=} ;;
+    desp=*)   d=${a#desp=} ;;
+    *)        strict_err "不认识的参数 $a" ;;
   esac
 done
+if [ "${SBX_STRICT:-0}" = 1 ] && [ "$url" != "${SBX_PUSH_URL:-http://stub.push/send}" ]; then
+  strict_err "推送端点不是桩（${url:-空}），拒绝"
+fi
 if [ -n "${SBX_PUSH:-}" ]; then
   { printf 'TITLE\t%s\n' "$t"; printf 'DESPI\t%s\n' "$d"; printf '.\n'; } >>"$SBX_PUSH"
 fi

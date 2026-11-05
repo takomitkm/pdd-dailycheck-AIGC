@@ -6,11 +6,12 @@
   "semantics": "口径 = 桩沙箱（sandbox/sbx.sh @ a7d4e95，47 例）。这里记录的是「桩沙箱认什么」，不是真机正确性：截图是纯色图、OCR 是按文件名返回的预制 TSV。断言字段只列 harness 真正 assert 的项；null 表示该例未 assert（lit=null 另有一个事实：早退路径 stdout 无 lit= 行，lit 提取为空）。",
   "evidence_anchor": "sbx_sh_a7d4e95_line = 用例 run_case 调用在 a7d4e95 版 sandbox/sbx.sh 的行号；当前工作区版（T00 加了 118 行 plumbing，用例表逐字节一致）= 该行号 +118。",
   "resolution_note": "720x1280 为主口径（sx/sy 恒等）。1440x2560 整 2 倍无舍入歧义；含几何 EXPECT 的 7 例折算值见 folded_expectations_1440。",
+  "sigpipe_note": "2026-11-06 发现（B09/C05）：legacy 的 device_online/keyguard_up 是 pipefail+grep -q，存在 SIGPIPE 竞态——桩 adb 的 devices/window 分支已改为单次写入，使 03/05/07 等依赖该闸的用例在桩下确定性通过；真实脚本里该竞态仍在（真机大输出下锁屏检测几乎必然失效），见 discrepancies.md B09。",
   "field_semantics": {
     "marker": "done 标记：yes/no 被 assert；null=未 assert",
     "expect_pause": "兑换账本文件首行；NONE=断言文件不存在",
     "expect_close": "事件流末两行 == am force-stop + KEYCODE_HOME",
-    "lit": "stdout 中 lit= 的提取值；null=未 assert（早退路径没有这一行）"
+    "lit": "stdout 中 lit= 的提取值；null=未 assert。是否有 lit= 行分两类（2026-11-06 首跑实测核实）：cmd_run 内走到收尾的失败（rc4/5/6/7，如 06/07/08/13/30/34/35/37）实产 lit=0；cmd_run 之前退出（03 no-adb@L449、04 rc2@L1546、05 rc3@L1549、02/44/45/46 rc78）无 lit 行"
   },
   "cases": [
     {"id": "01", "name": "marker-already-done", "inputs": {"mk_marker": true}, "asserted": {"rc": 0, "lit": null, "marker": null}, "evidence": {"sbx_sh_a7d4e95_line": 240}},

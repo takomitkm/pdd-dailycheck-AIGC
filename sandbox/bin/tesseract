@@ -1,9 +1,34 @@
 #!/usr/bin/env bash
 # 桩 tesseract：按输入图的文件名认出是哪一路 OCR，回该路预置好的 TSV。
 # count.png + 没有 tsv 参数 = light_count 读进度行，按 SBX_COUNT_FILE 逐行给值。
+# 严格模式（SBX_STRICT=1，沙箱默认）：不认识的参数/图名直接失败并留痕 —— 老桩谁来了
+# 都有回应（未知图名回 cand 那份、未知参数照单全收），桩语义只在严格开关下收紧。
+strict_err() {
+  if [ "${SBX_STRICT:-0}" = 1 ]; then
+    [ -n "${SBX_STRICT_LOG:-}" ] && printf 'tesseract: %s\n' "$*" >>"$SBX_STRICT_LOG" 2>/dev/null
+    printf 'SBX_STRICT: tesseract 不认识这次调用：%s\n' "$*" >&2
+    exit 65
+  fi
+  return 0
+}
 img=${1:-}
+[ -n "$img" ] || strict_err "没有输入图"
 want_tsv=0
-for a in "$@"; do [ "$a" = tsv ] && want_tsv=1; done
+_prev=
+_i=0
+for a in "$@"; do
+  _i=$((_i + 1))
+  [ "$_i" = 1 ] && continue                    # 第一个参数是图
+  case $_prev in
+    -l|--psm) _prev=; continue ;;               # 这两个开关的值收下就行
+  esac
+  case "$a" in
+    stdout) : ;;
+    tsv) want_tsv=1 ;;
+    -l|--psm) _prev=$a; continue ;;
+    *) strict_err "未知参数 $a" ;;
+  esac
+done
 HDR="level	page_block_number	page_block_row	block_par_number	block_par_row	line_num	word_num	left	top	width	height	conf	text"
 
 if [ $want_tsv = 0 ]; then
@@ -28,7 +53,7 @@ if [ $want_tsv = 0 ]; then
       case " ${SBX_PEND_MISS:-} " in *" $psmv "*) exit 0 ;; esac
       printf '%s\n' "${SBX_PEND_TEXT:-}"
       ;;
-    *) printf '%s\n' "${SBX_PLAIN:-}" ;;
+    *) strict_err "纯文本档不认识的图：$img"; printf '%s\n' "${SBX_PLAIN:-}" ;;
   esac
   exit 0
 fi
@@ -50,7 +75,7 @@ case "$img" in
     ;;
   *pill-1.png) v=${SBX_TSV_PILL1:-} ;;
   *pill-2.png) v=${SBX_TSV_PILL2:-} ;;
-  *) v=${SBX_TSV_CAND:-} ;;
+  *) strict_err "TSV 档不认识的图：$img"; v=${SBX_TSV_CAND:-} ;;
 esac
 [ -n "$v" ] && cat "$v"
 exit 0

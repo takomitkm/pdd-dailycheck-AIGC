@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 # 桩 adb：只回话，不碰手机。行为由 SBX_* 环境变量决定。
 # 每个 input 事件都追加到 $SBX_EVENTS，用来数"到底点了几下、点了什么"。
+# 严格模式（SBX_STRICT=1，沙箱默认）：不认识的子命令直接失败并留痕 —— 老桩对未知
+# 命令装没看见还回 0，等于给"程序在沙箱里偷偷干了别的"留了后门。
 ev() { [ -n "${SBX_EVENTS:-}" ] && printf '%s\n' "$*" >>"$SBX_EVENTS"; return 0; }
+strict() {
+  if [ "${SBX_STRICT:-0}" = 1 ]; then
+    [ -n "${SBX_STRICT_LOG:-}" ] && printf 'adb: %s\n' "$sub" >>"$SBX_STRICT_LOG" 2>/dev/null
+    printf 'SBX_STRICT: adb 不认识这次调用：%s\n' "$sub" >&2
+    exit 64
+  fi
+  return 0
+}
 
 args=("$@")
 rest=()
@@ -15,8 +25,11 @@ sub="${rest[*]}"
 
 case "$sub" in
   devices)
-    printf 'List of devices attached\n'
-    [ "${SBX_OFFLINE:-0}" = 1 ] || printf '%s\tdevice\n' "${SBX_DEV:-192.168.1.110:16132}"
+    # 单次写入：被测脚本 device_online 是 `adb devices | grep -q`（pipefail），分两次
+    # printf 会让 grep 在两次之间退出 → tr/桩吃 SIGPIPE → 141 假红（2026-11-06 实测）。
+    dev_out='List of devices attached\n'
+    [ "${SBX_OFFLINE:-0}" = 1 ] || dev_out="${dev_out}${SBX_DEV:-192.168.1.110:16132}\tdevice\n"
+    printf '%b' "$dev_out"
     ;;
   start-server) : ;;
   connect*)
@@ -30,7 +43,10 @@ case "$sub" in
   "exec-out cat "*)      cat "${SBX_XML:-/dev/null}" ;;
   "shell dumpsys power"*) printf 'mWakefulness=%s\n' "${SBX_WAKE:-Awake}" ;;
   "shell dumpsys window"*)
-    if [ "${SBX_LOCK:-0}" = 1 ]; then printf 'mShowingLockscreen=true\n'; fi
+    # 单次写入（同 devices 分支的 SIGPIPE 理由）：keyguard_up 的 grep -q 第一行命中即退，
+    # 两次 printf 之间有内部 grep 拖时序，pipefail 下竞态翻车。
+    win=''
+    if [ "${SBX_LOCK:-0}" = 1 ]; then win="${win}mShowingLockscreen=true\n"; fi
     # 焦点默认是首页；$SBX_FACT_AFTER_TAP / $SBX_FACT_AFTER_BACK 一旦配上，
     # 就从"事件日志里出现过 tap / KEYCODE_BACK"那一刻起换成它 —— 用来演
     # 「点一下页面就走」和「BACK 把弹窗退掉」这两种真机行为（10-30 那条入口吞枪用例）。
@@ -46,15 +62,16 @@ case "$sub" in
     fi
     if [ -n "${SBX_FOCUS_RAW:-}" ]; then
       # 整行照抄，不套 包名/活动名 那个形状 —— 用来演通知栏那种没有斜杠的焦点行
-      printf 'mCurrentFocus=%s\n' "$SBX_FOCUS_RAW"
+      win="${win}mCurrentFocus=$SBX_FOCUS_RAW\n"
     else
-      printf 'mCurrentFocus=Window{ab12cd3 u0 %s/%s}\n' "$fpkg" "$fact"
+      win="${win}mCurrentFocus=Window{ab12cd3 u0 $fpkg/$fact}\n"
     fi
+    printf '%b' "$win"
     ;;
   "shell wm size"*) printf 'Physical size: %s\nOverride size: %s\n' \
       "${SBX_SIZE:-720x1280}" "${SBX_SIZE:-720x1280}" ;;
   "shell wm dismiss-keyguard") : ;;
   "shell am "*) ev "${sub#shell }" ;;
-  *) : ;;
+  *) strict ;;
 esac
 exit 0

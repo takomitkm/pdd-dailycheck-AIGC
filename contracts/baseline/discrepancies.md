@@ -14,6 +14,7 @@
 | B06 | `cmd_status` L2030-2032 会跑 `device_online`（L643-645 adb devices）与 tesseract --version；bootstrap L291-297 对**所有**子命令（含 status/replay）都读 PUSH_URL_FILE | calibration.md 说 status 无设备操作 | live status 保留；新增 `--offline` 纯本地路径：不构造 live 适配器、不读端点（D05），差异显式登记 |
 | B07 | 收尾三分支 L1628-1637：rc0&非NO_CLOSE→force-stop+HOME；rc0&NO_CLOSE(lit2/4)→**零动作**；rc≠0→仅 HOME。而 L1535-1549 的 marker/缺tesseract/掉线/锁屏四条早退**无 HOME** | 「跑完会关 app」的笼统说法 | 按完整 trace 区分路径；绝不统一 finally 无条件 HOME（会破坏 I02：lit2/4 后零动作） |
 | B08 | `focused_act` L1443-1446 无斜杠返空；`is_home_page` L1448-1456 子串匹配（同名 Activity≠同页）；`foreground_pkg` L683-690 有标签退回；`require_pdd` L692-703 fail-closed | 入口守卫看起来总在岗 | 无斜杠帧上 focused_act 为空 → `do_step` 的首页守卫（L1092）不触发，只会归因错（README 已知残留 11）。迁移：UNKNOWN 显式阻断（D02），不把「读不到」解释成「已离开首页」 |
+| B09 | `keyguard_up` L678-681 与 `device_online` L643-645：`set -o pipefail`（L35）下 `… \| grep -q`，grep 首行命中即退 → 上游 SIGPIPE → 管道 rc=141 → 「已匹配」判成「未匹配」。沙箱实测 141（changes.md C05）；真机 dumpsys 输出巨大，锁屏检测几乎必然失效 | states 文档把 rc3 锁屏当成可靠闸 | 新程序用 Reading 状态与结构化探测替代管道布尔（契约 §3.2/§5）；legacy 冻结不改，但真机历史数据里「锁屏」档的覆盖率要打问号 |
 
 ## 用例语义补充要点（来自 47 例表精读，供 T15/oracle 使用）
 
