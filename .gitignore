@@ -30,3 +30,10 @@ pdd-ocr.conf
 bench*/
 frames*/
 exp/
+
+# refactor-v2：门禁/测量产物不入库
+reports/
+.venv/
+# 但重构规划里的测量代码目录要入库（上面 bench*/ 原指标定大图目录，这里显式豁免）
+!bench/
+!benchmarks/
