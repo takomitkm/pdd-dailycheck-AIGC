@@ -1,0 +1,146 @@
+# pdd 每日签到 · 单机 profile v1（公共标定，不含任何账号资料/端点）
+# 与 src/pddcheck/config/profile.py 的 DEFAULTS 逐字段对应；
+# 测试 test_profile_toml_matches_defaults 保证这份文件永不漂移。
+# 改动规则：先走 contracts/changes.md，再动这里和 DEFAULTS（同一提交）。
+
+[meta]
+schema_version = 1
+profile_id = "pdd-v1"
+
+[device]
+serial = "192.168.1.110:16132"
+pkg = "com.xunmeng.pinduoduo"
+home_activity = "com.xunmeng.pinduoduo.ui.activity.MainFrameActivity"
+
+[flow]
+scroll_top = 2
+top_retry_key = "subsidy"
+top_swipes = 4
+entry_retry = 2
+entry_retry_wait = 3
+focus_retry = 3
+focus_retry_wait = 1
+restart_app = true
+launch_wait = 8
+step_wait = 4
+find_retry = 3
+find_interval = 2
+popup_max = 3
+popup_wait = 2
+swipe_x = 0.75
+swipe_y1 = 0.9375
+swipe_y2 = 0.546875
+swipe_dur = 300
+swipe_count = 20
+swipe_wait = 1
+top_swipe_y1 = 0.328125
+top_swipe_y2 = 0.8984375
+browse_seconds = 15
+browse_dur = 800
+browse_wait = 0
+browse_max_swipes = 60
+browse_prove = true
+browse_back = false
+keep_days = 7
+close_app_on_ok = true
+no_close_lit = [2, 4]
+abort_if_locked = true
+check_done_before = "light"
+prove_key = "bag"
+prove_max = 3
+recovery_no_coord = true
+min_overlap = 3
+
+[ocr]
+lang = "chi_sim+eng"
+psm = 11
+psm_page = 6
+min_conf = 40
+psm_band = [7]
+band_scale = 3
+band_cutoff = 1
+pill_th = 120
+pill_scales = [1, 2]
+pend_psm = [6, 11, 12]
+pend_line_re = "任务已完成|待兑换|天后可"
+pend_days_re = "[0-9]{1,2}天后"
+count_text = "再点亮|天内点亮"
+
+[ocr.psm_band_by_key]
+browse = [7, 6]
+done = [7, 6]
+
+# ---- targets：alias / overlap / region / pill / coord / 专用重试 ----
+# region/pill/coord 一律 0..1 屏幕比例（契约 §3.4：坐标换算的舍入规则在 domain）。
+
+[targets.popup]
+alias = ["关闭", "跳过广告", "暂不", "以后再说"]
+overlap = 2
+region = [0.45, 0.0, 1.0, 0.45]
+
+[targets.dialog]
+alias = []          # 空 = 停用（不自动按 BACK，不点 COORD_dialog）
+overlap = 4
+region = [0.05, 0.10, 0.95, 0.90]
+coord = [0.85694, 0.17344]
+
+[targets.subsidy]
+alias = ["百亿补贴", "官方补贴"]
+overlap = 4
+region = [0.0, 0.30, 0.40, 0.80]
+coord = [0.125, 0.46875]
+
+[targets.bag]
+alias = ["抽福袋", "去抢购"]
+overlap = 3
+region = [0.0, 0.35, 1.0, 0.85]
+coord = [0.13889, 0.69922]
+pill = [0.02, 0.64, 0.32, 0.78]
+pill_mode = "color"
+find_retry = 12      # 轮播位：一帧抽福袋一帧消费券，三轮全落后的实测（10-07）
+find_interval = 3
+
+[targets.light]
+alias = ["立即点亮"]
+overlap = 3
+region = [0.0, 0.08, 1.0, 0.42]
+coord = [0.83056, 0.22266]
+pill = [0.597, 0.184, 1.0, 0.270]
+pill_mode = "inv"
+
+[targets.done]
+alias = ["已点亮", "明日再来", "明天再来", "已使用"]
+overlap = 3
+region = [0.0, 0.08, 1.0, 0.42]
+pill = [0.597, 0.184, 1.0, 0.270]
+pill_mode = "inv"
+
+[targets.exchange]
+alias = ["立即兑换", "去兑换"]
+overlap = 3
+region = [0.0, 0.08, 1.0, 0.42]
+pill = [0.597, 0.184, 1.0, 0.270]
+pill_mode = "inv"
+
+[targets.browse]
+alias = ["浏览当前页面", "即可点亮"]
+overlap = 4
+region = [0.0, 0.30, 1.0, 0.45]
+
+[targets.prize]
+alias = ["翻倍券", "提前锁定"]
+overlap = 3
+region = [0.0, 0.30, 1.0, 0.65]
+
+[targets.take]
+alias = ["开心收下"]
+overlap = 3
+region = [0.0, 0.50, 1.0, 0.70]
+coord = [0.49861, 0.58750]
+pill = [0.15, 0.553, 0.849, 0.622]
+pill_mode = "inv"
+
+[targets.pend]
+alias = ["任务已完成", "天后可兑换", "待兑换"]
+overlap = 3
+region = [0.0, 0.08, 1.0, 0.45]
