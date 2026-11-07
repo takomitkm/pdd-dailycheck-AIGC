@@ -213,6 +213,15 @@
 - 顺手修：cli/__init__ 改惰性导出，消除 `python -m pddcheck.cli.app` 的 runpy 警告。
 - 测试 341 passed + 4 skipped。
 
+### 24. 2026-11-07 11:15 — 流程段补齐（就绪/入口/福袋）+ 阶段失败码
+- workflow/stages.py：StageRunner（read_page/act 注入，纯逻辑）——就绪（显式 HOME_ACT
+  启动、禁止 monkey 兜底、启动后非 PDD→rc7）、入口 subsidy（点不进→BACK 退遮罩重试
+  ≤2→rc4）、福袋 bag（点进后须证明：进度数/待兑换/已点亮；否则 BACK 换轮播帧 ≤3→rc5）。
+- flow.run_once：阶段失败（StageFailure）→ 直接映射 rc4/5/7 进终态效果（不写标记、
+  只 HOME 收尾），并把原因写进 notes。
+- tests/workflow 新增 9 项（Fake 页面序列：启动/已在 pdd/启动失败 rc7/入口 tap/入口重试
+  rc4/福袋按进度证明/按 pend 证明/轮播换帧/证明失败 rc5）。测试 351 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

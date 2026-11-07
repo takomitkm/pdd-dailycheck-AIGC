@@ -89,45 +89,54 @@ def run_once(deps: RunDeps) -> RunOutcome:
         if deps.force and deps.store.marker_exists(deps.business_date):
             notes.append("--force：跳过日标记，其它边界照旧")
 
-        # 3) 点前终态
-        facts = deps.screen.light_facts()
-        pre = check_done_before_decision(
-            done_text=facts.get("done_text"),
-            exchange_text=facts.get("exchange_text"),
-            pend_text=facts.get("pend_text"),
-            before_count=facts.get("before_count"))
+        # 3) 点前终态（含就绪/入口/福袋段；阶段失败→rc4/5 直接收尾）
+        from pddcheck.workflow.stages import StageFailure
+        stage_rc: int | None = None
+        try:
+            facts = deps.screen.light_facts()
+        except StageFailure as exc:
+            facts, stage_rc = {}, exc.rc
+            notes.append(f"阶段失败 rc={exc.rc}：{exc.why}")
+
         lit: int | None = None
         rc = 0
-        if pre.kind is CheckBeforeKind.DONE:
-            lit = 1
-        elif pre.kind is CheckBeforeKind.EXCHANGE:
-            lit = 2
-        elif pre.kind is CheckBeforeKind.PENDING:
-            lit = 4                      # pend 是 lit=4，进程码 0（acceptance §5）
-        else:
-            # 4) 点亮一枪 + 核实
-            intent = _make_tap_intent(deps, facts)
-            receipt = deps.device.execute(intent, facts.get("tap_point"))
-            if deps.journal is not None:
-                deps.journal.record_intent(intent.action_id, "tap",
-                                           {"target": "light", "state_epoch": deps.device.state_epoch,
-                                            "before_count": pre.before_count})
-                deps.journal.record_receipt(intent.action_id, receipt.status.value, receipt.error_code)
-            if receipt.status is ExecutionStatus.UNKNOWN_EXECUTION:
-                # 未知执行：绝不自动重发；按无法核实处理（I15）
-                notes.append(f"动作执行状态未知（{receipt.error_code}），不重发按无法核实")
-                rc, lit = 1, None
+        pre = None
+        if stage_rc is None:
+            pre = check_done_before_decision(
+                done_text=facts.get("done_text"),
+                exchange_text=facts.get("exchange_text"),
+                pend_text=facts.get("pend_text"),
+                before_count=facts.get("before_count"))
+            if pre.kind is CheckBeforeKind.DONE:
+                lit = 1
+            elif pre.kind is CheckBeforeKind.EXCHANGE:
+                lit = 2
+            elif pre.kind is CheckBeforeKind.PENDING:
+                lit = 4                  # pend 是 lit=4，进程码 0（acceptance §5）
             else:
-                obs = deps.screen.post_tap_observations()
-                decision = verify_light_decision(pre.before_count, facts.get("tap_method", "ocr"), obs)
-                rc, lit = decision.rc, decision.lit
-                notes.append(f"核实：{decision.proof_kind.value} — {decision.why}")
+                # 4) 点亮一枪 + 核实
+                intent = _make_tap_intent(deps, facts)
+                receipt = deps.device.execute(intent, facts.get("tap_point"))
+                if deps.journal is not None:
+                    deps.journal.record_intent(intent.action_id, "tap",
+                                               {"target": "light", "state_epoch": deps.device.state_epoch,
+                                                "before_count": pre.before_count})
+                    deps.journal.record_receipt(intent.action_id, receipt.status.value, receipt.error_code)
+                if receipt.status is ExecutionStatus.UNKNOWN_EXECUTION:
+                    notes.append(f"动作执行状态未知（{receipt.error_code}），不重发按无法核实")
+                    rc, lit = 1, None
+                else:
+                    obs = deps.screen.post_tap_observations()
+                    decision = verify_light_decision(pre.before_count, facts.get("tap_method", "ocr"), obs)
+                    rc, lit = decision.rc, decision.lit
+                    notes.append(f"核实：{decision.proof_kind.value} — {decision.why}")
 
         # 内部 verify 的 rc=1（未过）对用户是 6（LIGHT_NOT_APPLIED）——acceptance §5
-        business_rc = 6 if rc == 1 else rc
+        business_rc = stage_rc if stage_rc is not None else (6 if rc == 1 else rc)
+        done_word = pre.done_word if pre is not None else None
 
         # 5) 终态效果
-        plan = terminal_plan(rc=business_rc, lit=lit, done_word=pre.done_word,
+        plan = terminal_plan(rc=business_rc, lit=lit, done_word=done_word,
                              pend_days=facts.get("pend_days"),
                              ledger_current=deps.store.ledger_read(),
                              close_app_on_ok=deps.close_app_on_ok)
@@ -151,7 +160,7 @@ def run_once(deps: RunDeps) -> RunOutcome:
         # 6) 通知（失败不改业务 rc——I11）
         title, body = render_notification(NotifyInput(
             rc=business_rc, lit=lit, evidence_dir=deps.evidence_dir,
-            steps=deps.steps_label, done_word=pre.done_word,
+            steps=deps.steps_label, done_word=done_word,
             pend_days=facts.get("pend_days"),
             pend_line=facts.get("pend_line"),
             pend_msg="", exc_msg="", verify_why=""))
