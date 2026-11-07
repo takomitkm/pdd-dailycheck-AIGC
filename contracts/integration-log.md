@@ -307,6 +307,14 @@
 - 仓库处于可交接终态：分支 refactor-v2，工作树干净，380 tests + 4 skipped；
   真机 0.1.24 部署验证通过；剩余 3 项等用户决定（profile 标定/timer/未签到日验证）。
 
+### 37. 2026-11-07 12:50 — timer 最后技术障碍排掉（只读校验）
+- h61 `systemd-analyze verify /tmp/pddcheck.service`：**语法通过**；唯一警告
+  「launcher.sh 不存在」= 占位符尚未安装（安装脚本展开），非缺陷。
+- 日历规格验证：`Mon..Fri *-*-* 10:00:00` 合法，下次触发 Mon 2026-11-09 10:00 CST
+  （旧 pdd.timer 是每日 10:00:31，工作日口径待用户选）。
+- 结论：安装批准后零语法风险；安装步骤 = 装 launcher.sh + unit 到
+  ~/.config/systemd/user/ + `daemon-reload && systemctl --user enable --now pddcheck.timer`。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
