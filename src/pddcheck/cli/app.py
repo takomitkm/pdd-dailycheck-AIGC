@@ -32,7 +32,7 @@ def _cmd_check_config(args) -> CliResult:
     try:
         profile = load_profile(Path(args.profile) if args.profile else None)
     except ConfigError as exc:
-        return CliResult(ExitCode.CONFIG_INVALID, stderr=f"配置非法：{exc}\n")
+        return CliResult(ExitCode.PRECHECK_FAILED, stderr=f"配置非法：{exc}\n")
     return CliResult(ExitCode.OK,
                      f"配置 OK：profile_id={getattr(profile, 'profile_id', '?')} "
                      f"targets={len(profile.targets)}\n")

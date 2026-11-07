@@ -18,8 +18,9 @@ def test_exit_table_covers_all_codes():
 
 def test_exit_for_outcome_mapping():
     assert exit_for_outcome(rc=0, lit=3) is ExitCode.OK
-    assert exit_for_outcome(rc=4, lit=4) is ExitCode.PENDING
-    assert exit_for_outcome(rc=1, lit=None) is ExitCode.UNVERIFIED
+    assert exit_for_outcome(rc=0, lit=4) is ExitCode.OK        # pend：进程码 0
+    assert exit_for_outcome(rc=1, lit=None) is ExitCode.LIGHT_NOT_APPLIED  # 内部未过→6
+    assert exit_for_outcome(rc=4, lit=None) is ExitCode.ENTRY_FAILED
     assert exit_for_outcome(rc=5, lit=None) is ExitCode.LOCATE_FAILED
     assert exit_for_outcome(rc=6, lit=None) is ExitCode.LIGHT_NOT_APPLIED
     assert exit_for_outcome(rc=69, lit=None) is ExitCode.NO_ADB
@@ -34,10 +35,10 @@ def test_version_runs(capsys):
     assert "schema_version" in capsys.readouterr().out
 
 
-def test_check_config_bad_profile_returns_73(tmp_path, capsys):
+def test_check_config_bad_profile_returns_78(tmp_path, capsys):
     bad = tmp_path / "bad.toml"
     bad.write_text("[flow]\nnosuch_key = 1\n", encoding="utf-8")
-    assert main(["check-config", "--profile", str(bad)]) == int(ExitCode.CONFIG_INVALID)
+    assert main(["check-config", "--profile", str(bad)]) == int(ExitCode.PRECHECK_FAILED)
 
 
 def test_doctor_reports_capabilities_without_device(capsys):

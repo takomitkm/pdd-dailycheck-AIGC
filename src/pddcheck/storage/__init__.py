@@ -9,6 +9,7 @@
 
 from pddcheck.storage.atomic import atomic_write, atomic_write_text
 from pddcheck.storage.daily import DailyStore
+from pddcheck.storage.errors import LockBusy
 from pddcheck.storage.journal import Journal, JournalEntry
 
 try:                                   # fcntl 仅 POSIX；Windows 收集期不炸
@@ -30,6 +31,7 @@ __all__ = [
     "DailyStore",
     "Journal",
     "JournalEntry",
+    "LockBusy",
     "RunLease",
     "acquire_run_lease",
 ]

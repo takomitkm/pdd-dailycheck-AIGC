@@ -12,11 +12,7 @@ from __future__ import annotations
 import fcntl
 from pathlib import Path
 
-from pddcheck.domain.errors import DomainError
-
-
-class LockBusy(DomainError):
-    """另一个实例持有运行锁（映射旧 rc75 语义）。"""
+from pddcheck.storage.errors import LockBusy
 
 
 class RunLease:
