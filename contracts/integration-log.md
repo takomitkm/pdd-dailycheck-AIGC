@@ -331,6 +331,17 @@
 - tests/cli/test_device_env.py 2 项：两者都无→rc69 / 环境变量被接受（报连接失败而非没设备）。
 - 测试 385 passed + 4 skipped。
 
+### 40. 2026-11-07 13:10 — 并行观察 timer 已装（授权范围内）
+- 依用户授权「可安装到h61自动取证因为本机可能关闭」，采用**并行观察**（不动旧 pdd.timer）：
+  错峰旧 10:00 vs 新 10:30；共享同一 `.done-<date>` → 旧流程成功则新单元 observes=0 跳过；
+  **NO_PUSH=1**（只取证不推送，绝不与旧流程抢推送）；Persistent 补跑；Restart=no。
+- 装：launcher.sh（读 current 指针）+ env 文件（600）+ service/timer 到 ~/.config/systemd/user。
+- 手动触发实测：`exit=0 lit=None observes=0`（今天已签到 → 正确跳过）；unit 描述「并行观察」。
+- **两 timer 并行**：pdd.timer 10:00:31（enabled）+ pddcheck.timer 10:30（enabled）。
+- 迁移到 pddcheck 接管（将来用户批准后）：删 env 里 NO_PUSH、`systemctl --user disable pdd.timer`、
+  enable 推送。**回滚**：`systemctl --user disable --now pddcheck.timer`（旧流程完全不受影响）。
+- 打包：packaging/systemd/pddcheck.timer.candidate + packaging/install-parallel.sh。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

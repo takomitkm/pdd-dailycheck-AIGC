@@ -1,0 +1,14 @@
+[Unit]
+Description=PDD 每日签到（pddcheck，并行观察模式）
+# 与旧 pdd.timer 错峰：旧 10:00:31 触发、约 10:06 完成；本单元 10:30 启动，
+# 共享同一 .done-<date> 日标记 → 旧流程成功则本单元安全跳过（observes=0）。
+
+[Timer]
+OnCalendar=Mon..Sun *-*-* 10:30:00
+# h61 若 10:30 前重启过，开机后补跑一次（错过窗口由退出码暴露）
+Persistent=true
+AccuracySec=1min
+Unit=pddcheck.service
+
+[Install]
+WantedBy=timers.target
