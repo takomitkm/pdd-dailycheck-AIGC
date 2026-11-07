@@ -16,7 +16,8 @@ PKG = "com.xunmeng.pinduoduo"
 HOME = "com.xunmeng.pinduoduo.ui.activity.HomeActivity"
 ACT = "com.xunmeng.pinduoduo.activity.NewPageActivity"
 
-POLICY = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=2, prove_max=3)
+POLICY = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=2, prove_max=3,
+                     step_wait_s=0)          # 测试不真睡
 
 SUBSIDY = TargetLocateSpec(key="subsidy", labels=("百亿补贴",), min_overlap=3)
 BAG = TargetLocateSpec(key="bag", labels=("抽福袋",), min_overlap=3,
@@ -78,6 +79,31 @@ def test_enter_subsidy_retries_with_back_then_fails_rc4():
     assert e.value.rc == 4
     kinds = [c[0] for c in act.calls]
     assert kinds.count("back") == POLICY.entry_retry      # 退两次
+
+
+def test_enter_subsidy_uses_coord_fallback_when_text_not_found():
+    """认不到字时用标定坐标点一次（旧脚本同款：入口是艺术字图片）。"""
+    pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=0, prove_max=1, step_wait_s=0)
+    seq = [PageView(PKG, HOME, "限时秒杀 免费领礼物"), PageView(PKG, ACT, "")]
+    r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
+    spec = TargetLocateSpec(key="subsidy", labels=("百亿补贴",), min_overlap=3,
+                            coord=(0.125, 0.46875))
+    r.enter_subsidy(spec)
+    # 坐标换算：0.125*720=90、0.46875*1280=600
+    assert r._act.calls == [("tap", (90, 600))]
+
+
+def test_enter_subsidy_waits_step_after_tap():
+    """真机实测：点击后必须等跳转，否则判「没进去」。"""
+    slept = []
+    pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=0, prove_max=1,
+                      step_wait_s=4.0, sleep=lambda s: slept.append(s))
+    seq = [PageView(PKG, HOME, "限时秒杀"), PageView(PKG, ACT, "")]
+    r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
+    spec = TargetLocateSpec(key="subsidy", labels=("百亿补贴",), min_overlap=3,
+                            coord=(0.125, 0.46875))
+    r.enter_subsidy(spec)
+    assert slept == [4.0]
 
 
 def test_open_bag_proves_by_progress_count():

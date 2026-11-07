@@ -222,6 +222,20 @@
 - tests/workflow 新增 9 项（Fake 页面序列：启动/已在 pdd/启动失败 rc7/入口 tap/入口重试
   rc4/福袋按进度证明/按 pend 证明/轮播换帧/证明失败 rc5）。测试 351 passed + 4 skipped。
 
+### 25. 2026-11-07 11:25 — 真机流程演练：入口打通、福袋找到根因
+- scripts/rehearse_real.py：真机逐段演练（识别+决策全做，动作分级放行：lifecycle /
+  入口坐标一枪 / 全量 execute），每步落 JSONL 取证。发布链 0.1.3→0.1.8（每版实测）。
+- 实测打通 **entry:ok**：坐标兜底 (90,600) 后前台变 NewPageActivity ✓；StageRunner
+  补了坐标兜底（旧脚本同款：入口是艺术字，OCR 认不到）与 **tap 后等跳转 4s**
+  （真机证实：不等就误判「没进去」→ rc4）。
+- **福袋 rc5 根因定位**：整页 psm6/11 与 band 档都读不出频道页「抽福袋」；
+  **pill 档 color 模式 ×2 psm7** 读出三词同行 → 合成「抽福袋」conf 92.6，
+  用我们自己的定位器算出 tap **(435,524)**，与旧脚本 10-18 实测逐位一致。
+  → 属新标定数据（D08），写进 t18a-calibration-findings.md 待批准，**未擅改冻结 profile**。
+- 其他真机事实：频道页 XML 仅 3.5KB（WebView，XML 通道基本无效）；真实 HOME_ACT
+  = MainFrameActivity；默认时钟 lambda:0 会让 FocusState 校验失败 → 改真实单调时钟。
+- 测试 353 passed + 4 skipped（新增坐标兜底/等待跳转 2 项）。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

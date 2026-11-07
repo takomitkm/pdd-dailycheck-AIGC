@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
+import time
 
 from pddcheck.domain import (
     ActionIntent,
@@ -33,7 +34,7 @@ class FakeDevice:
 
     def __init__(self, now_ns=None, *, pkg: str = "com.xunmeng.pinduoduo",
                  tap_size=(720, 1280), activity: str = "HomeActivity") -> None:
-        self._now = now_ns or (lambda: 0)
+        self._now = now_ns or (lambda: max(1, time.monotonic_ns()))
         self.pkg = pkg
         self.tap_width, self.tap_height = tap_size
         self.activity = activity

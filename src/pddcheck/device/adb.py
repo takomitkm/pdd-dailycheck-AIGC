@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 import struct
 import subprocess
+import time
 from dataclasses import dataclass
 
 from pddcheck.domain import (
@@ -73,7 +74,8 @@ class AdbDevice:
         self.home_activity = home_activity
         self._run = runner or _subprocess_runner
         self._timeout_s = timeout_s
-        self._now = now_ns or (lambda: 0)
+        # 真实单调时钟（纳秒）；领域对象要求时间戳 >= 1
+        self._now = now_ns or (lambda: time.monotonic_ns())
         self.state_epoch = 0
         self.tap_width = 0
         self.tap_height = 0
