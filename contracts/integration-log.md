@@ -163,6 +163,14 @@
   天后可兑换/券已放进口袋」）；「无真 sleep」阈值 2s→5s（负载波动）。
 - 测试 333 passed + 4 skipped。
 
+### 19. 2026-11-07 11:50 — 交付完整性审计门禁
+- scripts/audit_claims.py：把 merge-report 的关键断言做成可复跑审计——oracle 47 覆盖、
+  mutation 11/11、G0 harness（2×47、neg 11/11、cex 4）、T16 基线 n=178、
+  调用计数 69→9/-87%、挑战者 lat5.28×/hit1.58×、18 个关键文件齐、测试收集 ≥333。
+  产出 reports/audit.json；任何 FAIL 即非零退出。证据缺失记 SKIP（可见，不冒充通过）。
+- tests/integration/test_audit_claims.py：审计作为门禁（无 FAIL 才绿）。
+- 结果：8 项全 PASS（collected=339）。测试 335 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
