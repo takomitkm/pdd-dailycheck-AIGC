@@ -185,6 +185,20 @@ class AdbDevice:
         if intent.kind.value == "swipe" and (not point or len(point) != 4):
             return ActionReceipt(intent.action_id, ExecutionStatus.REJECTED, now, now,
                                  "swipe_point_missing")
+        # 动作前前台校验（T06.6 安全护栏）：业务动作必须落在预期包/窗口上，否则拒绝。
+        # 真机干跑证实：裸坐标在错页会「命中」——这一层是最后防线。
+        if intent.kind.value in ("tap", "swipe", "back"):
+            try:
+                fs = self.focus()
+            except Exception:
+                return ActionReceipt(intent.action_id, ExecutionStatus.REJECTED, now, now,
+                                     "focus_unavailable")
+            if intent.expected_package and fs.focused_package != intent.expected_package:
+                return ActionReceipt(intent.action_id, ExecutionStatus.REJECTED, now, now,
+                                     "wrong_window_package")
+            if intent.required_window_kind is not None and fs.window_kind is not intent.required_window_kind:
+                return ActionReceipt(intent.action_id, ExecutionStatus.REJECTED, now, now,
+                                     "wrong_window_kind")
         try:
             c = self._dispatch(intent, point)
         except (OSError, subprocess.TimeoutExpired) as exc:

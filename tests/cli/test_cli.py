@@ -75,5 +75,5 @@ def test_replay_ok_renders_report(tmp_path, capsys):
 
 
 def test_device_commands_report_not_wired(capsys):
-    assert main(["run"]) == int(ExitCode.NO_ADB)
+    assert main(["probe"]) == int(ExitCode.NO_ADB)
     assert "尚未接通" in capsys.readouterr().err

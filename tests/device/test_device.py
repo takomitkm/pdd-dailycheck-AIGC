@@ -166,7 +166,11 @@ def test_adb_connect_reports_states():
 
 
 def test_adb_tap_builds_argv_with_coords():
-    scripted = Scripted([(["adb"], (0, b"", b""))])
+    focus_pdd = (0, b"mCurrentFocus=Window{a u0 com.xunmeng.pinduoduo/com.xunmeng.pinduoduo.ui.activity.HomeActivity}\n", b"")
+    scripted = Scripted([
+        (["adb", "-s", "ABC", "shell", "dumpsys", "window"], focus_pdd),
+        (["adb", "-s", "ABC", "shell", "input", "tap"], (0, b"", b"")),
+    ])
     dev = AdbDevice("ABC", runner=scripted, now_ns=lambda: 100)
     dev.state_epoch = 0
     r = dev.execute(intent(deadline=5000), (123, 456))
@@ -175,7 +179,8 @@ def test_adb_tap_builds_argv_with_coords():
 
 
 def test_adb_tap_without_point_fails_closed():
-    dev = AdbDevice("ABC", runner=Scripted([(["adb"], (0, b"", b""))]), now_ns=lambda: 100)
+    focus_pdd = (0, b"mCurrentFocus=Window{a u0 com.xunmeng.pinduoduo/com.xunmeng.pinduoduo.ui.activity.HomeActivity}\n", b"")
+    dev = AdbDevice("ABC", runner=Scripted([(["adb"], focus_pdd)]), now_ns=lambda: 100)
     r = dev.execute(intent(deadline=5000), None)
     assert r.status is ExecutionStatus.REJECTED and r.error_code == "tap_point_missing"
 
@@ -205,6 +210,27 @@ def test_adb_capture_bad_png_raises_not_fake():
     dev = AdbDevice("ABC", runner=scripted, now_ns=lambda: 100)
     with pytest.raises(PngDecodeError):
         dev.capture()
+
+
+def test_adb_action_guard_rejects_wrong_foreground():
+    """T06.6 安全护栏：业务动作前校验前台包/窗口，错页一律拒绝。"""
+    focus_other = (0, b"mCurrentFocus=Window{a u0 com.android.launcher3/com.android.launcher3.Launcher}\n", b"")
+    scripted = Scripted([(["adb", "-s", "ABC", "shell", "dumpsys", "window"], focus_other)])
+    dev = AdbDevice("ABC", runner=scripted, now_ns=lambda: 100)
+    r = dev.execute(intent(deadline=5000), (100, 200))
+    assert r.status is ExecutionStatus.REJECTED and r.error_code == "wrong_window_package"
+    assert not any("input" in " ".join(c) for c in scripted.calls)   # 绝不发 tap
+
+
+def test_adb_action_guard_allows_correct_foreground():
+    focus_pdd = (0, b"mCurrentFocus=Window{a u0 com.xunmeng.pinduoduo/com.xunmeng.pinduoduo.ui.activity.HomeActivity}\n", b"")
+    scripted = Scripted([
+        (["adb", "-s", "ABC", "shell", "dumpsys", "window"], focus_pdd),
+        (["adb", "-s", "ABC", "shell", "input", "tap"], (0, b"", b"")),
+    ])
+    dev = AdbDevice("ABC", runner=scripted, now_ns=lambda: 100)
+    r = dev.execute(intent(deadline=5000), (100, 200))
+    assert r.status is ExecutionStatus.ACKNOWLEDGED
 
 
 def test_adb_screenshot_bytes_strict(tmp_path):

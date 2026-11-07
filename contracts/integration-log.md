@@ -194,6 +194,16 @@
 - 新增 AdbDevice.screenshot_bytes（严格 PNG 校验）+ 测试；文档
   docs/refactor-v2/t16-real-device-measurement.md。测试 337 passed + 4 skipped。
 
+### 22. 2026-11-07 11:05 — 真机前护栏 + `pddcheck run` 接通
+- 环境事实（h61 只读核查）：旧 `pdd.timer`/`pdd.service` 仍在跑，**今天 10:02 已执行**
+  rc=0 lit=3、marker 10:06 已写、推送已发 → 今天不该再实跑（与旧流程重复）。
+- AdbDevice 新增**动作前前台校验**（T06.6）：业务动作（tap/swipe/back）先查焦点，包不符
+  → REJECTED wrong_window_package、窗口类不符 → wrong_window_kind，绝不对错页发动作。
+- `pddcheck run --device <serial>` 接通：真实 AdbDevice+TesseractEngine → bootstrap 端到端，
+  带运行锁/日标记/通知/退出码映射；无 --device 报 69（禁止自动选设备）。
+- 测试 341 passed + 4 skipped（新增护栏 2 + run 接线 2）。开发期修：tap 测试需先备焦点桩；
+  `run` 不再是「未接通」；Windows 不可 import fcntl（测试改补丁到包导出）。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

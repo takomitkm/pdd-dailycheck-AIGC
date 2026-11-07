@@ -23,6 +23,62 @@ class CliResult:
     stderr: str = ""
 
 
+def _cmd_run(args) -> CliResult:
+    """run：真实适配器装配（AdbDevice + TesseractEngine）→ bootstrap 端到端。"""
+    from pathlib import Path
+    from pddcheck.cli.bootstrap import PipelineConfig, build_and_run
+    from pddcheck.device.adb import AdbDevice, AdbError
+    from pddcheck.exits import ExitCode
+    from pddcheck.notify import NotificationSender, read_endpoint_file
+    from pddcheck.perception import TargetLocateSpec
+    from pddcheck.storage import DailyStore, Journal, LockBusy, acquire_run_lease
+    from pddcheck.vision.engine import TesseractEngine
+    import os
+
+    if not args.device:
+        return CliResult(ExitCode.NO_ADB, stderr="run 需要 --device <serial>（禁止自动选设备）\n")
+    home = Path(os.environ.get("HOME", "."))
+    state = Path(os.environ.get("PDDCHECK_STATE", home / ".local" / "share" / "pddcheck"))
+    ev = Path(os.environ.get("PDDCHECK_EVIDENCE", home / "pddcheck-runs"))
+    date = __import__("datetime").date.today().isoformat()
+
+    specs = {
+        "subsidy": TargetLocateSpec(key="subsidy", labels=("百亿补贴", "搜索补贴"), min_overlap=3),
+        "bag": TargetLocateSpec(key="bag", labels=("抽福袋",), min_overlap=3,
+                                coord=(0.13889, 0.69922)),
+        "light": TargetLocateSpec(key="light", labels=("立即点亮",), min_overlap=4),
+    }
+    cfg = PipelineConfig(business_date=date, run_id=f"run-{date}",
+                         evidence_dir=str(ev / date), endpoint=read_endpoint_file(
+                             home / "Desktop" / "pdd-push.url"),
+                         force=bool(getattr(args, "force", False)), specs=specs)
+    dev = AdbDevice(args.device)
+    try:
+        dev.connect()
+    except AdbError as exc:
+        return CliResult(ExitCode.NO_ADB if exc.code in ("adb_failed", "serial_required") else
+                         ExitCode.DEVICE_GONE, stderr=f"连接失败：{exc}\n")
+    store = DailyStore(ev, home / "Desktop" / "pdd-pause")
+    lease = None
+    try:
+        lease = acquire_run_lease(state / "run.lock", args.device)
+    except LockBusy:
+        return CliResult(ExitCode.LOCK_BUSY, stderr="另一个实例持锁\n")
+    try:
+        outcome, stats = build_and_run(
+            device=dev, engine=TesseractEngine(), store=store,
+            notifier=NotificationSender(), journal=Journal(state / "journal" / "actions.jsonl"),
+            cfg=cfg, now_ns=lambda: __import__("time").monotonic_ns(),
+            lease_factory=None)
+        line = (f"run {date}: exit={int(outcome.exit_code)} lit={outcome.lit} rc={outcome.rc} "
+                f"marker={outcome.marker_written} ledger={outcome.ledger_written} "
+                f"delivered={outcome.delivered} observes={stats['observe_calls']}\n")
+        return CliResult(outcome.exit_code, stdout=line)
+    finally:
+        if lease is not None:
+            lease.release()
+
+
 def _cmd_version(_args) -> CliResult:
     import pddcheck.domain.version as v
     return CliResult(ExitCode.OK, f"pddcheck schema_version={v.SCHEMA_VERSION}\n")
@@ -78,7 +134,7 @@ _COMMANDS = {
     "doctor": _cmd_doctor,
     "replay": _cmd_replay,
 }
-_DEVICE_ONLY = frozenset({"run", "probe", "find", "shot"})
+_DEVICE_ONLY = frozenset({"probe", "find", "shot"})
 
 
 def _build_parser():
@@ -105,12 +161,15 @@ def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = _build_parser()
     args = parser.parse_args(argv)
-    if args.cmd in _DEVICE_ONLY:
-        # 设备流程在 T14(2/2)；此处明确报告「未接设备」并给出与旧语义一致的码
-        print(f"{args.cmd}: 设备流程尚未接通（T14 2/2）——离线命令可用："
-              f"version/check-config/doctor/replay", file=sys.stderr)
+    if args.cmd == "run":
+        result = _cmd_run(args)
+    elif args.cmd in _DEVICE_ONLY:
+        # 其余设备命令暂未接（probe/find/shot）
+        print(f"{args.cmd}: 尚未接通——离线命令可用：version/check-config/doctor/replay/run",
+              file=sys.stderr)
         return int(ExitCode.NO_ADB)
-    result = _COMMANDS[args.cmd](args)
+    else:
+        result = _COMMANDS[args.cmd](args)
     if result.stdout:
         print(result.stdout, end="")
     if result.stderr:
