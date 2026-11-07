@@ -269,6 +269,11 @@
 - 集成测试 3 项：默认关（stats.stages==[]）/ 开（ready/entry/bag→lit1 写标记）/
   失败（entry_rc4 → out.rc==4 且不写标记）。测试 374 passed + 4 skipped。
 
+### 32. 2026-11-07 12:15 — run --stages CLI 旗标 + subsidy 坐标兜底入 specs
+- cli/app.py：run 增 --stages（默认不开）；specs 补上 subsidy 的 coord=(0.125,0.46875)
+  （真机证实入口是艺术字、坐标是唯一手段；此前 specs 没带 coord，开流程段也认不到）。
+- h61 0.1.23 部署验证：`run --help` 显示 --stages ✓。CLI/集成测试全绿。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

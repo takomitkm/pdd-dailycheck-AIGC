@@ -43,16 +43,20 @@ def _cmd_run(args) -> CliResult:
     date = __import__("datetime").date.today().isoformat()
 
     specs = {
-        "subsidy": TargetLocateSpec(key="subsidy", labels=("百亿补贴", "搜索补贴"), min_overlap=3),
+        "subsidy": TargetLocateSpec(key="subsidy", labels=("百亿补贴", "搜索补贴"), min_overlap=3,
+                                    coord=(0.125, 0.46875)),
         "bag": TargetLocateSpec(key="bag", labels=("抽福袋",), min_overlap=3,
                                 coord=(0.13889, 0.69922)),
         "light": TargetLocateSpec(key="light", labels=("立即点亮",), min_overlap=4),
     }
+    # --stages：先走 就绪→入口→福袋 流程段（真机验证见 t18a-calibration-findings.md）。
+    run_stages = bool(getattr(args, "stages", False))
     cfg = PipelineConfig(business_date=date, run_id=f"run-{date}",
                          evidence_dir=str(ev / date),
                          endpoint=(None if os.environ.get("PDDCHECK_NO_PUSH") == "1"
                                    else read_endpoint_file(home / "Desktop" / "pdd-push.url")),
-                         force=bool(getattr(args, "force", False)), specs=specs)
+                         force=bool(getattr(args, "force", False)), specs=specs,
+                         run_stages=run_stages)
     dev = AdbDevice(args.device)
     try:
         dev.connect()
@@ -155,6 +159,8 @@ def _build_parser():
         sp = sub.add_parser(name)
         sp.add_argument("--device", required=False, default=None)
         sp.add_argument("--force", action="store_true")
+        sp.add_argument("--stages", action="store_true",
+                        help="先走 就绪→入口→福袋 流程段（默认只做点亮段）")
     return p
 
 
