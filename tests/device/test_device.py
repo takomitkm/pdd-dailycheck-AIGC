@@ -205,3 +205,19 @@ def test_adb_capture_bad_png_raises_not_fake():
     dev = AdbDevice("ABC", runner=scripted, now_ns=lambda: 100)
     with pytest.raises(PngDecodeError):
         dev.capture()
+
+
+def test_adb_read_hierarchy_falls_back_to_file_when_tty_empty():
+    """真机坑（T18a）：dump /dev/tty 返回空 → 必须回退 dump 到文件再 cat，并清理。"""
+    xml = b"<hierarchy><node text='x' bounds='[0,0][1,1]'/></hierarchy>"
+    scripted = Scripted([
+        (["adb", "-s", "ABC", "shell", "uiautomator", "dump", "/dev/tty"], (0, b"", b"")),
+        (["adb", "-s", "ABC", "shell", "uiautomator", "dump", "/sdcard/pddcheck-dump.xml"],
+         (0, b"UI hierchary dumped to: /sdcard/pddcheck-dump.xml", b"")),
+        (["adb", "-s", "ABC", "exec-out", "cat", "/sdcard/pddcheck-dump.xml"], (0, xml, b"")),
+        (["adb", "-s", "ABC", "shell", "rm", "-f", "/sdcard/pddcheck-dump.xml"], (0, b"", b"")),
+    ])
+    dev = AdbDevice("ABC", runner=scripted, now_ns=lambda: 100)
+    assert "<hierarchy" in dev.read_hierarchy()
+    # 确认清理动作真的发了（不在手机上留垃圾）
+    assert any("rm" in " ".join(c) for c in scripted.calls)

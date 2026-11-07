@@ -123,10 +123,22 @@ class AdbDevice:
         return WindowKind.FOREIGN
 
     def read_hierarchy(self) -> str:
+        # 真机坑（T18a 实测）：`uiautomator dump /dev/tty` 在部分机型返回空，
+        # 必须 dump 到文件再读。先试标准路径，空则回退文件法。
         c = self._adb("shell", "uiautomator", "dump", "/dev/tty")
         text = c.out.decode("utf-8", "replace")
-        if c.rc != 0 or "<hierarchy" not in text:
-            raise AdbError("hierarchy_failed", c.err.decode("utf-8", "replace")[:200])
+        if c.rc == 0 and "<hierarchy" in text:
+            return text
+        remote = "/sdcard/pddcheck-dump.xml"
+        d = self._adb("shell", "uiautomator", "dump", remote)
+        if d.rc != 0:
+            raise AdbError("hierarchy_failed",
+                           d.err.decode("utf-8", "replace")[:200] or d.out.decode("utf-8", "replace")[:200])
+        cat = self._adb("exec-out", "cat", remote)
+        text = cat.out.decode("utf-8", "replace")
+        if "<hierarchy" not in text:
+            raise AdbError("hierarchy_empty", "dump 文件里没有 <hierarchy>")
+        self._adb("shell", "rm", "-f", remote)     # 清理，别在手机上留垃圾
         return text
 
     def capture(self) -> Capture:

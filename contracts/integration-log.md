@@ -171,6 +171,18 @@
 - tests/integration/test_audit_claims.py：审计作为门禁（无 FAIL 才绿）。
 - 结果：8 项全 PASS（collected=339）。测试 335 passed + 4 skipped。
 
+### 20. 2026-11-07 10:55 — T17 staging 装机 h61 + T18a 真机只读通道资格
+- T17：本机构建 wheel(96KB)/manifest → scp 到 deb-h61:/home/user/pddcheck-staging →
+  expand → `pddcheck version` rc0、`doctor` rc0（能力集无 device_act ✓）；current=0.1.0。
+  未装 systemd 单元、未触发现役 timer。h61 自带 adb+tesseract。
+- T18a（用户授权 11:00-14:00/21:00-03:00）：真机 192.168.1.110:16132 只读探针
+  channel_ok——device/焦点 launcher/截图 720×1280 881KB 750ms/层级 11932 字 3484ms。
+- 真机坑修复：`uiautomator dump /dev/tty` 返回空 → `AdbDevice.read_hierarchy` 回退
+  dump 到 /sdcard 再 cat（读完 rm 清理），有测试兜底。
+- 真机 OCR（部署目标 h61，同一真图）：psm6 p50 2.29s、psm11 p50 2.16s。
+- 未做：真机业务动作（点亮/领取/兑换）本轮一律未执行（只读）；端到端实跑待明确同意。
+- 记录：docs/refactor-v2/t18a-channel-report.md。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
