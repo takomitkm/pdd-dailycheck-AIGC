@@ -127,6 +127,15 @@
   会抛异常**的真实 bug（改容错：坏行跳过/坏值按 0，与旧 awk 强制转换一致）。
 - 测试 306 passed + 4 skipped（53s，含语料扫描）。
 
+### 15. 2026-11-07 11:05 — T16 同帧共享落地（-87% 进代码）
+- perception/observe.py：observe_frame 每帧取 1 次 XML + 每通道 1 次 OCR（重复请求=
+  编程错误直接抛）；locate_all 从同一观察定位全部目标，不再取数。
+- 语义等价：locate_all 内部走同一 locate_candidates，逐目标结果与单独定位一致
+  （tests/perception/test_observe.py、tests/integration/test_observe_pipeline.py）。
+- 计数证明：9 目标仍是 1+xml + N 通道取数（3 次），非 9×(1+N)；端到端 run_once
+  用共享观察得出的点击点完成点亮，全程只取 2 次。
+- 测试 312 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

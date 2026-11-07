@@ -8,6 +8,12 @@ from pddcheck.perception.geometry_map import scale_5dp, emit_point
 from pddcheck.perception.lcs import longest_common_span
 from pddcheck.perception.locate import ParsedFrame, TargetLocateSpec, locate_candidates
 from pddcheck.perception.normalize import normalize
+from pddcheck.perception.observe import (
+    FrameObservation,
+    ObservationSource,
+    locate_all,
+    observe_frame,
+)
 from pddcheck.perception.ocr_pass import OcrPassInput, ocr_pass_candidates
 from pddcheck.perception.tsv import parse_tsv
 from pddcheck.perception.xml_pass import xml_pass_candidates
@@ -24,4 +30,8 @@ __all__ = [
     "emit_point",
     "ParsedFrame",
     "TargetLocateSpec",
+    "FrameObservation",
+    "ObservationSource",
+    "observe_frame",
+    "locate_all",
 ]
