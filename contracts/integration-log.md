@@ -84,6 +84,17 @@
 - 发现：10-29 场（214026）整场熄屏黑帧（1280×720 横尺寸、5KB 纯色）——空识别正确，
   保留为负样本；批处理 summary 属生成工件，按 .gitignore 保持不入库。
 
+### 11. 2026-11-07 10:00 — T14/T15 接通与整合门禁
+- T14(1/2) CLI 退出码全表 + 离线子命令（92e4253）；T14(2/2) run 端到端编排
+  （007786b）——退出码口径按 acceptance §5 修正：pend=lit4/进程码0，内部 verify
+  rc1→进程码 6，4=入口/5=定位/6=核实/7=焦点；D04 marker 落盘失败→73 且业务 rc 保留。
+- T15(1/2) fixture 场景表（9a8cc07）：D04 语义 + 精确 trace + 无真 sleep；
+  退出码下沉 pddcheck/exits.py，workflow 不再依赖 cli（新增边界断言防回退）。
+- T15(2/2) 47 场景 Python 驱动（a5e8ef4）：23 flow + 14 kernel + 10 suite 全覆盖、
+  缺号即失败；11 语义 mutation 全杀死（reports/t15/mutations.json = 11/11/0/0）。
+- 测试规模：274 passed + 3 skipped（POSIX 锁测试 Windows 跳过、Debian 真跑），16.7s。
+- 修：无斜杠 StatusBar 焦点识别；profile 测试改 tmp_path 不再污染 CWD。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
