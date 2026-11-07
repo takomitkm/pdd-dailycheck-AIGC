@@ -299,6 +299,14 @@
   退出码与 lit 语义、真机标定速查表、测试口径、待用户决定 3 项、已知边界。
 - 测试 380 passed + 4 skipped。
 
+### 36. 2026-11-07 12:45 — 终态回归：verify 门 + 审计 8/8 PASS
+- scripts/verify.py → G0-skeleton passed（37.2s，384 collected）。
+- scripts/audit_claims.py 8/8 PASS：oracle47(47=47)、mutations(11/11 killed)、
+  g0-harness(2×47+neg 11/11+cex 4)、t16-baseline(n=178)、t16-callcount(69→9 −87%)、
+  t07-challenger(lat 5.28×/hit 1.58×)、required-files(18)、tests-collected(384≥333)。
+- 仓库处于可交接终态：分支 refactor-v2，工作树干净，380 tests + 4 skipped；
+  真机 0.1.24 部署验证通过；剩余 3 项等用户决定（profile 标定/timer/未签到日验证）。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
