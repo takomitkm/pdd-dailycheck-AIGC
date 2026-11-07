@@ -102,6 +102,9 @@ class AdbDevice:
         text = c.out.decode("utf-8", "replace")
         m = _FOCUS.search(text)
         if not m:
+            # 无斜杠焦点（如 Window{c485e35 u0 StatusBar}）：仍按状态栏识别；其余未知
+            if "StatusBar" in text or "NotificationShade" in text:
+                return FocusState(window_kind=WindowKind.STATUSBAR, sampled_ns=self._now())
             return FocusState(window_kind=WindowKind.UNKNOWN, sampled_ns=self._now())
         pkg, act = m.group(1), m.group(2)
         kind = self._classify(pkg, act, text)
