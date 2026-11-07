@@ -145,6 +145,13 @@
 - observe：新增 XmlPolicy——消费券/浏览页跳过 XML dump（省一次取数），其余照取。
 - 测试 320 passed + 4 skipped。
 
+### 17. 2026-11-07 11:25 — T07.4/T16 OCR 引擎适配器抽象
+- vision/engine.py：TesseractEngine / RapidOcrEngine 产出同一 TsvResult（TSV 形状），
+  交给同一 parse_tsv；detections_to_tsv 把 rapidocr 四点框→外接矩形词行、conf×100；
+  失败=INVALID（不伪装空读）；EngineLease 按 engine_id 独占（同 id 第二实例报错）。
+- 跨引擎一致性：同一框/文本/置信度下，两后端 parse_tsv 的行文本/几何/conf 完全一致。
+- 测试 326 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
