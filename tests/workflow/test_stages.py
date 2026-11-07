@@ -120,13 +120,16 @@ def test_open_bag_proves_by_pend_text():
     assert [c[0] for c in act.calls] == ["tap"]
 
 
-def test_open_bag_backs_to_next_carousel_frame_then_proves():
+def test_open_bag_retries_tap_without_blind_back_then_proves():
+    """点完证明不了时不再盲目 BACK（真机踩过：BACK 会把已进的活动页退回频道页）。
+    只重新观察/再点，直到证明成功。"""
     r, act = runner([PageView(PKG, ACT, "抽福袋"),        # 第 1 帧：点了但没证明
-                     PageView(PKG, ACT, "抽福袋"),        # back 后换帧
-                     PageView(PKG, ACT, "9天内点亮4次必得")])  # 第 2 帧：证明成功
+                     PageView(PKG, ACT, "抽福袋"),        # 再观察一轮
+                     PageView(PKG, ACT, "9天内点亮4次必得")])  # 证明成功
     r.open_bag(BAG)
     kinds = [c[0] for c in act.calls]
-    assert kinds == ["tap", "back", "tap"]
+    assert "back" not in kinds                    # 绝不盲目 BACK
+    assert kinds.count("tap") >= 1
 
 
 def test_open_bag_fails_rc5_when_never_proves():
@@ -134,4 +137,5 @@ def test_open_bag_fails_rc5_when_never_proves():
     with pytest.raises(StageFailure) as e:
         r.open_bag(BAG)
     assert e.value.rc == 5
-    assert [c[0] for c in act.calls].count("back") == POLICY.prove_max - 1
+    # 点过但证明不了 → 用完 prove_max 次观察后失败，期间没有 BACK 死循环
+    assert "back" not in [c[0] for c in act.calls]

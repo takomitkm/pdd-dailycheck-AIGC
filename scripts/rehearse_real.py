@@ -25,12 +25,13 @@ from pddcheck.workflow.stages import PageView, StageFailure, StagePolicy, StageR
 
 PKG = "com.xunmeng.pinduoduo"
 HOME_ACT = "com.xunmeng.pinduoduo.ui.activity.HomeActivity"
+# 真机实测（t18a-calibration-findings）：频道页「抽福袋」只有 pill color×2 psm7 认得出
+BAG_PILL = (0.472, 0.375, 0.75, 0.4375)
 
 SPECS = {
     "subsidy": TargetLocateSpec(key="subsidy", labels=("百亿补贴", "搜索补贴", "签到"),
                                 min_overlap=3, coord=(0.125, 0.46875)),
-    "bag": TargetLocateSpec(key="bag", labels=("抽福袋",), min_overlap=3,
-                            coord=(0.13889, 0.69922)),
+    "bag": TargetLocateSpec(key="bag", labels=("抽福袋",), min_overlap=3),
     "light": TargetLocateSpec(key="light", labels=("立即点亮", "今日已点亮"), min_overlap=4),
     "done": TargetLocateSpec(key="done", labels=("今日已点亮", "已使用"), min_overlap=3),
 }
@@ -75,11 +76,9 @@ class ActionBridge:
         if not self.execute:
             return False
         if self.lifecycle_only:
-            if kind not in self._LIFECYCLE:
-                return False
-            return True
-        # 允许业务点击，但**只放行坐标兜底的入口那一枪**（其余 tap/back/swipe 仍只记录）：
-        # 入口是艺术字图片，OCR 认不出，坐标是唯一可靠手段（旧脚本同款）。
+            return kind in self._LIFECYCLE
+        # 放行的业务点击由 allow_entry_coord_tap 统一控制（入口那枪 + 福袋那枪）；
+        # 其余（back/swipe 等）仍只记录——真机演练刻意保守。
         if kind == "tap" and self._allow_entry_coord_tap:
             return True
         return False
@@ -163,6 +162,47 @@ def main(argv=None) -> int:
             rec.write(kind="band", box=list(box), chars=len(res.tsv_text or ""))
         except Exception as exc:
             rec.write(kind="band_error", error=f"{type(exc).__name__}: {exc}")
+        # pill 通道：真机实测频道页「抽福袋」只有这个配方认得出（color ×2 psm7）
+        try:
+            import io
+            from PIL import Image
+            from pddcheck.vision.preprocess import pill_crop_box, preprocess_pill
+            im2 = Image.open(io.BytesIO(png))
+            pbox = pill_crop_box(BAG_PILL, im2.width, im2.height)
+            pcrop = preprocess_pill(im2, pbox, div=2, th=120, mode="color")
+            pbuf = io.BytesIO()
+            try:
+                pcrop.save(pbuf, format="PNG")
+            except TypeError:
+                pcrop.save(pbuf)
+            ptmp = f"/tmp/pdd-pill-{frames['n']}.png"
+            open(ptmp, "wb").write(pbuf.getvalue())
+            pres = engine.recognize(ptmp, 7)
+            if pres.status is ReadStatus.OK:
+                # 几何：scale=TAP/整图/2（5dp）、offset=裁片原点回推（1dp）
+                sx = float(f"{720/im2.width/2:.5f}")
+                sy = float(f"{1280/im2.height/2:.5f}")
+                ox = float(f"{pbox[0]/im2.width*720:.1f}")
+                oy = float(f"{pbox[1]/im2.height*1280:.1f}")
+                pill_text = pres.tsv_text
+                from pddcheck.perception import ocr_pass_candidates
+                from pddcheck.perception.ocr_pass import OcrPassInput
+                pc = ocr_pass_candidates("f", "cap", 1,
+                                         OcrPassInput(source=CoordinateSource.PILL,
+                                                      tsv_text=pill_text,
+                                                      scale_x=sx, scale_y=sy,
+                                                      offset_x=ox, offset_y=oy),
+                                         "bag", ("抽福袋",), min_overlap=3, min_conf=40)
+                rec.write(kind="pill", box=list(pbox), geom=[sx, sy, ox, oy],
+                          candidates=[(list(c.tap_point), c.overlap) for c in pc])
+                last_pill_cands["c"] = pc
+            else:
+                last_pill_cands["c"] = ()
+                rec.write(kind="pill", status=str(pres.status))
+        except Exception as exc:
+            last_pill_cands["c"] = ()
+            rec.write(kind="pill_error", error=f"{type(exc).__name__}: {exc}")
+
         frames["n"] += 1
         raw = "\n".join(texts)
         lines = parse_tsv(raw)
@@ -177,6 +217,11 @@ def main(argv=None) -> int:
         """滑回页面顶部（旧脚本 TOP_RETRY 的做法），再认一轮入口。"""
         runner.scroll_to_top(swipes)
 
+    # 裁片通道候选供给器：StageRunner 用它补整页认不到的「抽福袋」
+    last_pill_cands = {"c": ()}
+
+    def pill_candidates():
+        return last_pill_cands["c"]
     bridge = ActionBridge(dev, rec, a.execute or a.execute_lifecycle or a.execute_entry_tap,
                           lifecycle_only=a.execute_lifecycle,
                           allow_entry_coord_tap=a.execute_entry_tap)
@@ -189,7 +234,7 @@ def main(argv=None) -> int:
             stages.append("ready:ok")
         runner.enter_subsidy(SPECS["subsidy"], scroll_to_top=runner.scroll_to_top)
         stages.append("entry:ok")
-        runner.open_bag(SPECS["bag"])
+        runner.open_bag(SPECS["bag"], extra_candidates=pill_candidates)
         stages.append("bag:ok")
         # 点亮页事实
         v = read_page()

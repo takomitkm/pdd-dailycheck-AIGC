@@ -36,6 +36,12 @@ class PipelineConfig:
     close_app_on_ok: bool = True
     page_kind: str = "activity"
     specs: dict[str, TargetLocateSpec] = field(default_factory=dict)
+    # 裁片通道标定（None=不启用该通道；值来自 profile，真机验证见 t18a-calibration-findings）
+    pill_box: tuple[float, float, float, float] | None = None
+    pill_div: int = 2
+    pill_mode: str = "color"
+    band_region: tuple[float, float, float, float] | None = None
+    band_scale: int = 3
 
 
 class _ScreenFromPipeline:
@@ -51,12 +57,23 @@ class _ScreenFromPipeline:
         self.observe_calls = 0
 
     def _observe(self) -> tuple[ScreenFacts, object]:
-        source = DeviceVisionSource(self._device, self._engine)
+        # 通道选择：整页恒取；有 pill/band 标定的目标才加对应裁片通道
+        # （真机实测：频道页「抽福袋」只有 pill color×2 psm7 认得出，整页与 band 都不行）
+        channels = [CoordinateSource.TESSERACT_PAGE]
+        if self._cfg.pill_box is not None:
+            channels.append(CoordinateSource.PILL)
+        if self._cfg.band_region is not None:
+            channels.append(CoordinateSource.BAND)
+        source = DeviceVisionSource(
+            self._device, self._engine,
+            pill_box=self._cfg.pill_box, pill_div=self._cfg.pill_div,
+            pill_mode=self._cfg.pill_mode,
+            band_region=self._cfg.band_region, band_scale=self._cfg.band_scale)
         obs = observe_frame(source, frame_id=f"{self._cfg.run_id}-f", capture_id="cap",
                             state_epoch=getattr(self._device, "state_epoch", 0),
                             tap_width=getattr(self._device, "tap_width", 720),
                             tap_height=getattr(self._device, "tap_height", 1280),
-                            channels=(CoordinateSource.TESSERACT_PAGE,),
+                            channels=tuple(channels),
                             xml_policy=xml_policy_for(self._cfg.page_kind))
         self.observe_calls += 1
         results = locate_all(obs, self._cfg.specs, min_conf=40) if self._cfg.specs else {}

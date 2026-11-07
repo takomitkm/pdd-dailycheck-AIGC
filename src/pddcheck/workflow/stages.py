@@ -121,19 +121,41 @@ class StageRunner:
         raise StageFailure(4, "入口连着点还是没进补贴活动页")
 
     # ---- 福袋：点进福袋页并证明（进度/待兑换/已点亮 任一） ---------------
-    def open_bag(self, spec: TargetLocateSpec) -> None:
+    def open_bag(self, spec: TargetLocateSpec, *, extra_candidates=None) -> None:
+        """extra_candidates：可选供给器 ()->tuple[Candidate,...]，返回裁片通道
+        （pill/band）的候选——真机实测：频道页「抽福袋」整页认不出，只有 pill 档认得出。
+
+        注意（真机踩过）：一旦提供 extra_candidates，就**禁用整页坐标兜底**——
+        bag 的 COORD 是活动页那颗的位置，在频道页盲点它会点到别处。
+        """
         for attempt in range(self.policy.prove_max):
             v = self._read()
-            page = _Page(v.ocr_text)
-            res = locate_all(page.frame("bag"), {spec.key: spec}, min_conf=self.policy.min_conf)
-            r = res[spec.key]
-            if r.winning is not None:
-                self._act("tap", r.winning.tap_point)
+            point = None
+            # 顺序：裁片通道优先（真机实测频道页只有 pill 认得出；整页会把零散单字
+            # 误配成「抽福袋」→ 点错地方），整页仅在无裁片供给器时使用。
+            if extra_candidates is not None:
+                for cand in extra_candidates():
+                    if cand.key == spec.key and cand.tap_point is not None:
+                        point = cand.tap_point
+                        break
+            if point is None:
+                page = _Page(v.ocr_text)
+                res = locate_all(page.frame("bag"), {spec.key: spec},
+                                 min_conf=self.policy.min_conf)
+                r = res[spec.key]
+                point = r.winning.tap_point if r.winning is not None else None
+            if point is not None:
+                self._act("tap", point)
                 self.policy.wait_step()
                 v2 = self._read()
                 f = facts_from_text(v2.ocr_text)
+                # 判据是**页面文字**（旧脚本口径）：进度行 / 待兑换 / 已点亮 任一即证明。
+                # 不要求 activity 变化——活动页与频道页常常是同一个 NewPageActivity。
                 if f.progress_count is not None or f.pend_text or f.done_text:
                     return                                 # 进对了福袋页
+                # 点完还证明不了：**不再盲目 BACK**（真机踩过：BACK 把已进的活动页退回
+                # 频道页，形成 点→退→点 的死循环）。只重新观察一轮。
+                continue
             if attempt < self.policy.prove_max - 1:
                 self._act("back", None)                    # 轮播另一帧，退一步换一帧
         raise StageFailure(5, "福袋页进不去/证明失败")
