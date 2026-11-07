@@ -292,6 +292,13 @@
   CLI 与流程段已消费该值（bag_pill fallback 仍在，等批准后改为只读 profile）。
 - 测试 377 passed + 4 skipped。
 
+### 35. 2026-11-07 12:35 — T18b 自然日用例 + T19 交接文档
+- tests/storage 补 3 项自然日口径：标记按日独立（昨日不挡今日）/ 账本跨日清零 /
+  日期严格零填充等值（.done-2026-11-07）。
+- docs/refactor-v2/t19-handover.md：架构一句话、部署（staging 结构+运行方式）、
+  退出码与 lit 语义、真机标定速查表、测试口径、待用户决定 3 项、已知边界。
+- 测试 380 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

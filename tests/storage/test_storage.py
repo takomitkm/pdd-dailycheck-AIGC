@@ -114,6 +114,36 @@ def test_ledger_write_read_roundtrip(tmp_path):
     assert store.ledger_clear() and store.ledger_read() == 0   # case39/42：清 0
 
 
+# --------------------------------------------------------------- T18b 自然日口径
+
+def test_marker_is_per_natural_day(tmp_path):
+    """自然日边界：昨天的标记不挡今天（旧脚本同口径，.done-<date> 按日独立）。"""
+    store = DailyStore(tmp_path / "runs", tmp_path / "pause")
+    store.write_marker("2026-11-06")
+    assert store.marker_exists("2026-11-06")
+    assert not store.marker_exists("2026-11-07")     # 跨零点后是新的业务日
+    assert not store.marker_exists("2026-11-05")     # 往前翻也不算
+    assert store.marker_path("2026-11-06") != store.marker_path("2026-11-07")
+
+
+def test_ledger_clears_across_natural_days(tmp_path):
+    """账本跨日清零口径：新的一天 ledger_clear 后从 0 起算（case39）。"""
+    store = DailyStore(tmp_path / "runs", tmp_path / "pause")
+    store.ledger_write(3)                             # 昨天 3 次
+    store.ledger_clear()                              # 新的一天清 0
+    assert store.ledger_read() == 0
+    store.ledger_write(1)
+    assert store.ledger_read() == 1                   # 今天第 1 次
+
+
+def test_marker_date_format_is_iso_and_padded(tmp_path):
+    """日期必须是零填充 ISO（.done-2026-11-07），非零填充视为不同文件。"""
+    store = DailyStore(tmp_path / "runs", tmp_path / "pause")
+    store.write_marker("2026-11-07")
+    assert store.marker_path("2026-11-07").name == ".done-2026-11-07"
+    assert not store.marker_exists("2026-11-7")       # 非零填充不命中（严格等值比较）
+
+
 # --------------------------------------------------------------- journal
 
 
