@@ -258,6 +258,17 @@
 - 未解决：连跑时页面状态漂移（上一轮残留页影响下一轮起点）→ 下轮加「确定性起点」。
 - 记录：docs/refactor-v2/t18a-calibration-findings.md 第 5/6 节。测试 356→358 绿。
 
+### 31. 2026-11-07 12:10 — stages 正式串进 bootstrap（默认关闭）
+- PipelineConfig 增 run_stages（默认 False=行为不变）；开启后 build_and_run 先跑
+  就绪→入口→福袋，再进 run_once。act() 构造完整 ActionIntent（业务动作带
+  expected_package/required_window_kind/target_key），read_page 保留**完整 OCR 文本**
+  （facts 字段拼接会丢「抽福袋」等控件文本——第一版就栽在这）。
+- **真 bug 修复**：阶段失败原先只进 stats，run_once 不知情 → 继续跑点亮段拿错页
+  事实做弱证明 → 误报 lit3。改为 RunDeps 增 stage_failure_rc/why，run_once 见非空
+  直接按 rc4/5/7 收尾（不写标记、只 HOME）。
+- 集成测试 3 项：默认关（stats.stages==[]）/ 开（ready/entry/bag→lit1 写标记）/
+  失败（entry_rc4 → out.rc==4 且不写标记）。测试 374 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

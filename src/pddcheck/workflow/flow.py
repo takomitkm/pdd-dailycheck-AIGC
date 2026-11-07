@@ -64,6 +64,11 @@ class RunDeps:
     force: bool = False
     close_app_on_ok: bool = True
     steps_label: str = "subsidy bag light"
+    # 流程段（就绪/入口/福袋）失败时由调用方带进来的 rc（4/5/7）：
+    # 一旦非空，run_once 直接按该 rc 收尾，不再执行点亮段（真机教训：
+    # 阶段失败后继续跑点亮会拿错页的事实做弱证明 → 误报 lit3）。
+    stage_failure_rc: int | None = None
+    stage_failure_why: str | None = None
 
 
 def _exit(rc: int, lit: int | None) -> ExitCode:
@@ -91,16 +96,20 @@ def run_once(deps: RunDeps) -> RunOutcome:
 
         # 3) 点前终态（含就绪/入口/福袋段；阶段失败→rc4/5 直接收尾）
         from pddcheck.workflow.stages import StageFailure
-        stage_rc: int | None = None
-        try:
-            facts = deps.screen.light_facts()
-        except StageFailure as exc:
-            facts, stage_rc = {}, exc.rc
-            notes.append(f"阶段失败 rc={exc.rc}：{exc.why}")
+        stage_rc: int | None = getattr(deps, "stage_failure_rc", None)
+        facts: dict = {}
+        pre = None
+        if stage_rc is not None:
+            notes.append(f"阶段失败 rc={stage_rc}：{getattr(deps, 'stage_failure_why', '')}")
+        else:
+            try:
+                facts = deps.screen.light_facts()
+            except StageFailure as exc:
+                stage_rc = exc.rc
+                notes.append(f"阶段失败 rc={exc.rc}：{exc.why}")
 
         lit: int | None = None
         rc = 0
-        pre = None
         if stage_rc is None:
             pre = check_done_before_decision(
                 done_text=facts.get("done_text"),

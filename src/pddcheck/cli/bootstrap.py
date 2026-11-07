@@ -42,6 +42,16 @@ class PipelineConfig:
     pill_mode: str = "color"
     band_region: tuple[float, float, float, float] | None = None
     band_scale: int = 3
+    # 流程段（默认关闭：只做点亮段；开启后先走 就绪→入口→福袋 再读事实）
+    # 真机验证见 docs/refactor-v2/t18a-calibration-findings.md
+    run_stages: bool = False
+    home_activity: str = "com.xunmeng.pinduoduo.ui.activity.HomeActivity"
+    entry_retry: int = 2
+    prove_max: int = 3
+    step_wait_s: float = 4.0
+    # 页型驱动的裁片框：{PageKind.value: {key: (box, mode)}}
+    pill_by_page: dict[str, dict[str, tuple[tuple[float, float, float, float], str]]] = \
+        field(default_factory=dict)
 
 
 class _ScreenFromPipeline:
@@ -79,6 +89,10 @@ class _ScreenFromPipeline:
         results = locate_all(obs, self._cfg.specs, min_conf=40) if self._cfg.specs else {}
         text = "\n".join(obs.ocr_texts.values())
         facts = facts_from_text(text)
+        # 裁片通道里认到的 done（整页读不到进度条右侧那个按钮）合并进事实
+        done_cand = results.get("done")
+        if facts.done_text is None and done_cand is not None and done_cand.winning is not None:
+            facts = facts_from_text(text + " 今日已点亮")
         return facts, results
 
     def light_facts(self) -> dict:
@@ -108,10 +122,79 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                   notifier: NotificationSender, journal: Journal | None,
                   cfg: PipelineConfig, now_ns, lease_factory=None) -> tuple[RunOutcome, dict]:
     screen = _ScreenFromPipeline(device, engine, cfg)
+    stats: dict = {"observe_calls": 0, "stages": []}
+
+    # 流程段（可选）：就绪 → 入口 → 福袋；失败以 StageFailure 带 rc 收手，
+    # 由 run_once 映射成 4/5/7（不写标记、只 HOME 收尾）。
+    if cfg.run_stages:
+        from pddcheck.workflow.stages import (
+            StageFailure, StagePolicy, StageRunner,
+        )
+        policy = StagePolicy(pkg="com.xunmeng.pinduoduo", home_activity=cfg.home_activity,
+                             entry_retry=cfg.entry_retry, prove_max=cfg.prove_max,
+                             step_wait_s=cfg.step_wait_s)
+
+        def act(kind, point):
+            from pddcheck.domain import ActionIntent, ActionKind, WindowKind
+            mapping = {"tap": ActionKind.TAP, "back": ActionKind.BACK, "start": ActionKind.START,
+                       "wake": ActionKind.WAKE, "dismiss_keyguard": ActionKind.DISMISS_KEYGUARD,
+                       "swipe": ActionKind.SWIPE}
+            k = mapping[kind]
+            business = k in (ActionKind.TAP, ActionKind.BACK, ActionKind.SWIPE)
+            intent = ActionIntent(
+                action_id=f"{cfg.run_id}-{kind}-{now_ns()}",
+                run_id=cfg.run_id, kind=k, source_capture_id="stage",
+                state_epoch=getattr(device, "state_epoch", 0), geometry_revision=0,
+                deadline_ns=now_ns() + 30_000_000_000, reason=f"stage {kind}",
+                source_candidate_id=("stage-cand" if business else None),
+                target_key=("stage" if business else None),
+                expected_package=("com.xunmeng.pinduoduo" if business else None),
+                required_window_kind=(WindowKind.APP if business else None))
+            return device.execute(intent, point)
+
+        def read_page():
+            from pddcheck.workflow.stages import PageView
+            # 必须保留**完整 OCR 文本**（不是只留 facts 字段）：流程段要用它定位
+            # 「百亿补贴」「抽福袋」等控件文本。
+            from pddcheck.domain import CoordinateSource
+            from pddcheck.perception import observe_frame, parse_tsv
+            src = DeviceVisionSource(
+                device, engine, pill_box=cfg.pill_box, pill_div=cfg.pill_div,
+                pill_mode=cfg.pill_mode)
+            obs = observe_frame(src, frame_id=f"{cfg.run_id}-s", capture_id="stage",
+                                state_epoch=getattr(device, "state_epoch", 0),
+                                tap_width=getattr(device, "tap_width", 720),
+                                tap_height=getattr(device, "tap_height", 1280),
+                                channels=(CoordinateSource.TESSERACT_PAGE,),
+                                xml_policy=XmlPolicy.SKIP)
+            stats["observe_calls"] += 1
+            text = " ".join(ln.normalized_text
+                            for ln in parse_tsv("\n".join(obs.ocr_texts.values())))
+            fs = device.focus()
+            return PageView(fs.focused_package, fs.focused_activity, text)
+
+        runner = StageRunner(read_page, act, policy)
+        try:
+            runner.ensure_ready()
+            stats["stages"].append("ready:ok")
+            runner.enter_subsidy(cfg.specs["subsidy"], scroll_to_top=runner.scroll_to_top)
+            stats["stages"].append("entry:ok")
+            runner.open_bag(cfg.specs["bag"])
+            stats["stages"].append("bag:ok")
+        except StageFailure as exc:
+            stats["stages"].append(f"failed:rc{exc.rc}")
+            stats["stage_failure"] = exc.why
+            stats["stage_failure_rc"] = exc.rc
+        except KeyError as exc:                     # specs 缺键=配置错误，直接报
+            stats["stages"].append(f"config_error:{exc}")
+
     deps = RunDeps(device=device, screen=screen, store=store, journal=journal,
                    notifier=notifier, endpoint=cfg.endpoint,
                    evidence_dir=cfg.evidence_dir, business_date=cfg.business_date,
                    run_id=cfg.run_id, now_ns=now_ns, lease_factory=lease_factory,
-                   force=cfg.force, close_app_on_ok=cfg.close_app_on_ok)
+                   force=cfg.force, close_app_on_ok=cfg.close_app_on_ok,
+                   stage_failure_rc=stats.get("stage_failure_rc"),
+                   stage_failure_why=stats.get("stage_failure"))
     outcome = run_once(deps)
-    return outcome, {"observe_calls": screen.observe_calls}
+    stats["observe_calls"] = screen.observe_calls
+    return outcome, stats
