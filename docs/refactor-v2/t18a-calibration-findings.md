@@ -62,11 +62,31 @@ candidates: [((435, 524), 3)]        ← 与旧脚本 10-18 实测 (435,524) 逐
 8. 演练脚本的 receipt 记录只在 executed 时写，dry 分级下看不到「点了但被拦」——
    已在 p5 后补（本轮的 tap 确实执行了，见 points (435,524)×3）。
 
-## 6. 结论：配方与坐标已被真机证实，剩下的是流程编排的确定性
+## 6. 真机全链路已跑通（2026-11-07 11:52，v0.1.18）
 
-标定数据（入口 (90,600)、福袋 (435,524)）与通道配方（pill color×2 psm7）**都已在真机
-验证到位**；剩下的失败全部来自「起点不确定 + BACK 死循环 + activity 判据误用」，
-属流程编排问题，不是识别问题。
+```
+stages: ["ready:ok", "entry:ok", "bag:ok", "facts:read"]     pages=6
+receipts: tap acknowledged ×2（护栏校验通过）
+页面文字: 「拼多多首页 点百亿补贴 参与活动 … 9天内再点亮5次必得 … 共100元券」
+facts: progress=5
+```
+
+**这轮修掉的编排 bug（都是真机才暴露的）**
+1. 确定性起点：`ensure_ready` 现在会 `start` → 校验 pdd → 不在首页则 BACK ≤3 次回首页（rc7 收手）
+2. activity 判据误用：活动页/频道页同为 `NewPageActivity` → 改**页面文字**判据
+3. BACK 死循环：点后证明失败又 BACK → 退回频道页再点（p5 循环）→ 点后不 BACK
+4. 裁片候选优先：整页会把零散「抽/福/袋」误配成「抽福袋」（曾点错到 (200,20)）
+5. 有裁片供给器时禁用整页坐标兜底（bag COORD 是活动页那颗的位置）
+6. 演练开关语义冲突：`--execute-lifecycle` 与 `--execute-entry-tap` 同时给时 tap 全被拦
+   （p7 的 executed:false）→ entry-tap 优先
+7. `ActionIntent` 业务动作必须带 expected_package + required_window_kind（SWIPE 也算业务）
+
+**遗留**
+- `done` 读不到：活动页「今日已点亮」按钮不在整页 OCR 文本里（真图确认在进度条右侧，
+  属 pill 档/裁片范围）。需给 `done` 配 pill 框（现有 profile 已有
+  `done.pill = [0.597, 0.184, 1.0, 0.270]`，但演练只接了 bag 的 pill）→ 下轮把
+  多目标 pill 通道接上。
+
 
 
 ## 7. 其他真机事实

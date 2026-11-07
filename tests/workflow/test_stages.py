@@ -51,8 +51,23 @@ def test_ensure_ready_starts_app_when_not_foreground():
     assert kinds == ["wake", "dismiss_keyguard", "start"]
 
 
+def test_ensure_ready_backs_to_home_when_on_other_page():
+    """确定性起点：在 PDD 但不在首页 → BACK 退回首页（真机连跑教训）。"""
+    r, act = runner([PageView(PKG, ACT, "消费券页"),
+                     PageView(PKG, HOME, "")])
+    r.ensure_ready()
+    assert [c[0] for c in act.calls] == ["back"]
+
+
+def test_ensure_ready_fails_rc7_when_cannot_return_home():
+    r, act = runner([PageView(PKG, ACT, "消费券页")])
+    with pytest.raises(StageFailure) as e:
+        r.ensure_ready(back_to_home=3)
+    assert e.value.rc == 7 and "退不回首页" in e.value.why
+
+
 def test_ensure_ready_noop_when_already_in_pdd():
-    r, act = runner([PageView(PKG, ACT, "")])
+    r, act = runner([PageView(PKG, HOME, "")])
     r.ensure_ready()
     assert act.calls == []
 

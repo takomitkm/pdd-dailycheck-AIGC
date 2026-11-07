@@ -75,12 +75,11 @@ class ActionBridge:
     def _allowed(self, kind: str) -> bool:
         if not self.execute:
             return False
+        # entry-tap 开关优先级更高：它要放行 tap/back，lifecycle_only 只放行生命周期。
+        if self._allow_entry_coord_tap:
+            return kind in ("tap", "back") or kind in self._LIFECYCLE
         if self.lifecycle_only:
             return kind in self._LIFECYCLE
-        # 放行的业务点击由 allow_entry_coord_tap 统一控制（入口那枪 + 福袋那枪）；
-        # 其余（back/swipe 等）仍只记录——真机演练刻意保守。
-        if kind == "tap" and self._allow_entry_coord_tap:
-            return True
         return False
 
     def __call__(self, kind, point):
@@ -89,7 +88,7 @@ class ActionBridge:
                        executed=allowed)
         if not allowed:
             return None
-        from pddcheck.domain import ActionIntent, ActionKind
+        from pddcheck.domain import ActionIntent, ActionKind, WindowKind
         mapping = {"tap": ActionKind.TAP, "back": ActionKind.BACK, "start": ActionKind.START,
                    "wake": ActionKind.WAKE, "dismiss_keyguard": ActionKind.DISMISS_KEYGUARD,
                    "swipe": ActionKind.SWIPE}
@@ -102,8 +101,10 @@ class ActionBridge:
             geometry_revision=0, deadline_ns=time.monotonic_ns() + 30_000_000_000,
             reason=f"rehearsal {kind}",
             source_candidate_id=("cand-rehearsal" if business else None),
+            target_key=("rehearsal" if business else None),
             expected_package=(PKG if business else None),
-            required_window_kind=(None if business else None))
+            required_window_kind=(WindowKind.APP if business else None),
+            allow_coord=bool(business and kind == "tap"))
         receipt = self.device.execute(intent, point)
         self.rec.write(kind="receipt", action=kind, status=receipt.status.value,
                        error=receipt.error_code)
@@ -232,6 +233,10 @@ def main(argv=None) -> int:
         if not a.skip_ready:
             runner.ensure_ready()
             stages.append("ready:ok")
+        else:
+            # --skip-ready 也要回到确定起点（首页），否则页面残留会让后续判定漂移
+            runner.ensure_ready(back_to_home=3)
+            stages.append("ready:forced")
         runner.enter_subsidy(SPECS["subsidy"], scroll_to_top=runner.scroll_to_top)
         stages.append("entry:ok")
         runner.open_bag(SPECS["bag"], extra_candidates=pill_candidates)

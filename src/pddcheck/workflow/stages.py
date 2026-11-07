@@ -62,17 +62,35 @@ class StageRunner:
         self.policy = policy
 
     # ---- 就绪：唤醒/启动到 PDD -----------------------------------------
-    def ensure_ready(self) -> None:
+    def ensure_ready(self, *, back_to_home: int = 3) -> None:
+        """把手机带到 PDD 首页（确定性起点）。
+
+        真机教训（T18a 连跑）：上一轮残留的页面（活动页/频道页）会让下一轮的
+        入口判定产生 rc4/rc5 交替——必须先回到**首页**这个确定状态再开始。
+        """
         v = self._read()
-        if v.focus_package == self.policy.pkg:
-            return
-        # 显式 HOME_ACT 启动（禁止 monkey 兜底）
-        self._act("wake", None)
-        self._act("dismiss_keyguard", None)
-        self._act("start", None)
-        v2 = self._read()
-        if v2.focus_package != self.policy.pkg:
-            raise StageFailure(7, f"launch 后焦点不是 PDD（{v2.focus_package}）")
+        if v.focus_package == self.policy.pkg and \
+                (v.focus_activity or "").endswith("HomeActivity"):
+            return                                     # 已在首页
+        if v.focus_package != self.policy.pkg:
+            # 显式 HOME_ACT 启动（禁止 monkey 兜底）
+            self._act("wake", None)
+            self._act("dismiss_keyguard", None)
+            self._act("start", None)
+            self.policy.wait_step()
+            v = self._read()
+            if v.focus_package != self.policy.pkg:
+                raise StageFailure(7, f"launch 后焦点不是 PDD（{v.focus_package}）")
+            if (v.focus_activity or "").endswith("HomeActivity"):
+                return
+        # 在 PDD 但不在首页：按 BACK 逐步退回首页（上限 back_to_home 次）
+        for _ in range(back_to_home):
+            self._act("back", None)
+            self.policy.wait_step()
+            v = self._read()
+            if (v.focus_activity or "").endswith("HomeActivity"):
+                return
+        raise StageFailure(7, f"退不回首页（当前 {v.focus_activity}）")
 
     # ---- 入口：回到/进入补贴活动页 --------------------------------------
     def scroll_to_top(self, swipes: int = 3) -> None:
