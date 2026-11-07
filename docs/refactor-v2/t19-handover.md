@@ -59,6 +59,29 @@ pddcheck run --device <serial> --stages   # 先走 就绪→入口→福袋（�
 - 行为基线 47 案 ×2 + 负例 11 + 变异 11/11 killed + 审计 8 claims：见 `docs/refactor-v2/`、`reports/`。
 - 真机演练：`scripts/rehearse_real.py`（分级放行动作，JSONL 取证）。
 
+## 已安装的并行观察 timer（2026-11-07，h61 用户级）
+
+```
+pdd.timer      10:00:31  enabled   ← 旧生产流程（未动）
+pddcheck.timer 10:30:00  enabled   ← 新流程，仅取证
+```
+
+配置在 `~/.config/pddcheck/env`（600）：共享 `PDDCHECK_EVIDENCE=~/Desktop/pdd-runs`
+（与旧流程同一日标记根）、`PDDCHECK_NO_PUSH=1`（不推送，绝不与旧流程抢通知）。
+
+**行为约定（重要）**
+- 旧流程当天成功（写了 `.done-<date>`）→ pddcheck 10:30 起来后 `observes=0` **安全跳过**（实测）。
+- **旧流程当天失败**（无标记）→ pddcheck 会**自己尝试完整签到**（就绪→入口→福袋→点亮）。
+  这是有意的兜底：所有业务动作仍过前台护栏（package+window），阶段失败不写标记只 HOME。
+- 手机若被占用/不在 pdd，`ensure_ready` 起不来就 rc7 收手，**不会在非 pdd 界面按 BACK 或点击**。
+
+**回滚（一行）**
+```
+ssh deb-h61 'systemctl --user disable --now pddcheck.timer'
+```
+
+**将来让 pddcheck 接管（需用户批准）**：env 去掉 `PDDCHECK_NO_PUSH` → `systemctl --user disable --now pdd.timer` → 观察一天推送与 lit 值。
+
 ## 待用户决定
 
 1. **批准 bag.pill_channel 进 v1 profile**：[targets.bag] 加一行
