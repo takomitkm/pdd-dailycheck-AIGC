@@ -37,3 +37,6 @@ reports/
 # 但重构规划里的测量代码目录要入库（上面 bench*/ 原指标定大图目录，这里显式豁免）
 !bench/
 !benchmarks/
+
+pytest-of-*/
+tmp*.toml

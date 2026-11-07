@@ -38,47 +38,47 @@ def test_load_none_returns_defaults():
     assert load_profile(None) is defaults()
 
 
-def test_unknown_target_rejected():
+def test_unknown_target_rejected(tmp_path):
     bad = V1.read_text(encoding="utf-8") + "\n[targets.nosuch]\nalias = [\"x\"]\n"
     with pytest.raises(ConfigError, match="未知目标"):
-        load_profile(path := _tmp(bad))
+        load_profile(_tmp(tmp_path, bad))
 
 
-def test_unknown_flow_key_rejected():
+def test_unknown_flow_key_rejected(tmp_path):
     bad = V1.read_text(encoding="utf-8").replace(
         "[flow]\n", "[flow]\nstep_wait_fast = 0\n")
     with pytest.raises(ConfigError, match="未知键"):
-        load_profile(_tmp(bad))
+        load_profile(_tmp(tmp_path, bad))
 
 
-def test_band_scale_zero_rejected_like_case45():
+def test_band_scale_zero_rejected_like_case45(tmp_path):
     bad = V1.read_text(encoding="utf-8").replace("band_scale = 3", "band_scale = 0")
     with pytest.raises(ConfigError, match="band_scale"):
-        load_profile(_tmp(bad))
+        load_profile(_tmp(tmp_path, bad))
 
 
-def test_region_out_of_range_rejected():
+def test_region_out_of_range_rejected(tmp_path):
     bad = V1.read_text(encoding="utf-8").replace(
         "region = [0.0, 0.35, 1.0, 0.85]", "region = [0.0, 0.35, 1.0, 1.85]")
     with pytest.raises(ConfigError, match="0..1"):
-        load_profile(_tmp(bad))
+        load_profile(_tmp(tmp_path, bad))
 
 
-def test_pill_mode_invalid_rejected():
+def test_pill_mode_invalid_rejected(tmp_path):
     bad = V1.read_text(encoding="utf-8").replace('pill_mode = "color"', 'pill_mode = "gray"')
     with pytest.raises(ConfigError, match="pill_mode"):
-        load_profile(_tmp(bad))
+        load_profile(_tmp(tmp_path, bad))
 
 
-def test_cross_reference_unknown_key_rejected():
+def test_cross_reference_unknown_key_rejected(tmp_path):
     bad = V1.read_text(encoding="utf-8").replace(
         'top_retry_key = "subsidy"', 'top_retry_key = "nope"')
     with pytest.raises(ConfigError, match="不存在"):
-        load_profile(_tmp(bad))
+        load_profile(_tmp(tmp_path, bad))
 
 
-def _tmp(text: str) -> Path:
-    import tempfile
-    f = Path(tempfile.mkstemp(suffix=".toml")[1])
+def _tmp(directory: Path, text: str) -> Path:
+    """写进 pytest 的 tmp_path（不污染 CWD，跑完自动清理）。"""
+    f = directory / "case.toml"
     f.write_text(text, encoding="utf-8")
     return f
