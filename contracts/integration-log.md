@@ -204,6 +204,15 @@
 - 测试 341 passed + 4 skipped（新增护栏 2 + run 接线 2）。开发期修：tap 测试需先备焦点桩；
   `run` 不再是「未接通」；Windows 不可 import fcntl（测试改补丁到包导出）。
 
+### 23. 2026-11-07 11:10 — 真机零动作跳过验证（安全性里程碑）
+- 部署 0.1.2 到 h61（含动作前前台校验 + PDDCHECK_NO_PUSH 开关）。
+- 真机跑 `pddcheck run --device 192.168.1.110:16132`，`PDDCHECK_EVIDENCE=~/Desktop/pdd-runs`
+  （看到今天旧流程写的 .done）→ 结果：**exit=0 lit=None rc=0 observes=0**，
+  journal 为空，**前后焦点都是 launcher（零 UI 副作用）**，无推送（NO_PUSH）。
+- 这验证了真机链路：连接→运行锁→读日标记→当天已完成跳过→退出码映射，全程不动作。
+- 顺手修：cli/__init__ 改惰性导出，消除 `python -m pddcheck.cli.app` 的 runpy 警告。
+- 测试 341 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

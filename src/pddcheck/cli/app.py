@@ -49,8 +49,9 @@ def _cmd_run(args) -> CliResult:
         "light": TargetLocateSpec(key="light", labels=("立即点亮",), min_overlap=4),
     }
     cfg = PipelineConfig(business_date=date, run_id=f"run-{date}",
-                         evidence_dir=str(ev / date), endpoint=read_endpoint_file(
-                             home / "Desktop" / "pdd-push.url"),
+                         evidence_dir=str(ev / date),
+                         endpoint=(None if os.environ.get("PDDCHECK_NO_PUSH") == "1"
+                                   else read_endpoint_file(home / "Desktop" / "pdd-push.url")),
                          force=bool(getattr(args, "force", False)), specs=specs)
     dev = AdbDevice(args.device)
     try:
