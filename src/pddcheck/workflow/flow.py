@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from pddcheck.cli.exits import ExitCode
+from pddcheck.exits import ExitCode, exit_for_outcome
 from pddcheck.domain import ActionKind, ActionIntent, ExecutionStatus, WindowKind
 from pddcheck.notify import NotificationSender, NotifyInput, render_notification
 from pddcheck.storage import DailyStore, Journal, LockBusy
@@ -67,7 +67,6 @@ class RunDeps:
 
 
 def _exit(rc: int, lit: int | None) -> ExitCode:
-    from pddcheck.cli.exits import exit_for_outcome
     return exit_for_outcome(rc=rc, lit=lit)
 
 
@@ -134,12 +133,20 @@ def run_once(deps: RunDeps) -> RunOutcome:
                              close_app_on_ok=deps.close_app_on_ok)
         marker_written = False
         ledger_written = None
-        if plan.marker_write:
-            deps.store.write_marker(deps.business_date)
-            marker_written = True
-        if plan.ledger_write is not None:
-            deps.store.ledger_write(plan.ledger_write)
-            ledger_written = plan.ledger_write
+        operational_failed = False
+        try:
+            if plan.marker_write:
+                deps.store.write_marker(deps.business_date)
+                marker_written = True
+            if plan.ledger_write is not None:
+                ok = deps.store.ledger_write(plan.ledger_write)
+                if not ok:
+                    raise OSError("账本写入失败")
+                ledger_written = plan.ledger_write
+        except OSError as exc:
+            # D04：业务成功但状态落盘失败 → 进程码 73，业务 rc 另存，绝不虚称已写
+            operational_failed = True
+            notes.append(f"状态写入失败（operational）：{exc}")
 
         # 6) 通知（失败不改业务 rc——I11）
         title, body = render_notification(NotifyInput(
@@ -150,6 +157,12 @@ def run_once(deps: RunDeps) -> RunOutcome:
             pend_msg="", exc_msg="", verify_why=""))
         delivery = deps.notifier.send(deps.endpoint, title, body)
 
+        if operational_failed:
+            return RunOutcome(ExitCode.STATE_DIR_FAILED, lit, business_rc, title, body,
+                              delivered=delivery.status.value,
+                              marker_written=False, ledger_written=None,
+                              close_policy=str(plan.close_policy),
+                              notes=tuple(notes) + ("business_rc=" + str(business_rc),))
         return RunOutcome(_exit(business_rc, lit), lit, business_rc, title, body,
                           delivered=delivery.status.value,
                           marker_written=marker_written,

@@ -71,3 +71,17 @@ def test_domain_never_imports_sibling_adapters():
         roots = _imported_roots(tree)
         bad = roots & {"device", "vision", "perception", "workflow", "storage", "evidence", "notify", "replay"}
         assert not bad, f"domain/{py.name} import 了兄弟包 {sorted(bad)}"
+
+
+def test_business_packages_never_import_cli_or_adapters():
+    """业务包（除 device/vision 适配器）不得导入 cli（组合根）或设备/视觉适配器。
+
+    workflow 曾经从 cli.exits 取退出码——退出码已下沉到顶层 pddcheck.exits；
+    这条断言防止分层回退。"""
+    banned = {"cli", "device", "vision"}
+    for pkg in BUSINESS_PACKAGES:
+        for py in sorted((SRC / pkg).rglob("*.py")):
+            tree = ast.parse(py.read_text(encoding="utf-8"))
+            roots = _imported_roots(tree)
+            bad = roots & banned
+            assert not bad, f"{pkg}/{py.name} 越界 import 了 {sorted(bad)}（分层：业务包不依赖 cli/适配器）"
