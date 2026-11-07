@@ -274,6 +274,16 @@
   （真机证实入口是艺术字、坐标是唯一手段；此前 specs 没带 coord，开流程段也认不到）。
 - h61 0.1.23 部署验证：`run --help` 显示 --stages ✓。CLI/集成测试全绿。
 
+### 33. 2026-11-07 12:25 — CLI 全链路真机成功（lit=3，标记+账本落盘）
+- PipelineConfig 增 bag_pill（box,mode）；build_and_run 的 open_bag 接
+  extra_candidates=bag_pill_candidates（pill color×2 psm7，几何换算同演练配方）。
+  此前 CLI 路径 open_bag 只有整页 OCR → 频道页 rc5（第一跑实测暴露）。
+- 真机（独立测试证据目录，PDDCHECK_NO_PUSH=1）：
+  `run --device ... --stages` → **exit=0 lit=3 rc=0 marker=True ledger=0 observes=2**；
+  `.done-2026-11-07` 落在证据根目录（与旧脚本同口径）；无兑换动作（今日已签到）。
+- 安全跳过验证：指向生产证据目录时 lit=None observes=0（日标记已存在 → 直接跳过）。
+- 测试 374 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

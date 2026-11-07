@@ -49,9 +49,11 @@ class PipelineConfig:
     entry_retry: int = 2
     prove_max: int = 3
     step_wait_s: float = 4.0
-    # 页型驱动的裁片框：{PageKind.value: {key: (box, mode)}}
-    pill_by_page: dict[str, dict[str, tuple[tuple[float, float, float, float], str]]] = \
-        field(default_factory=dict)
+    # 频道页「抽福袋」的裁片标定（ADR-003 候选值，真机实测 (435,524)）：
+    # (box, mode)；None=不启用（open_bag 就只用整页 OCR，频道页会 rc5）
+    bag_pill: tuple[tuple[float, float, float, float], str] | None = None
+    pill_div: int = 2
+    pill_th: int = 120
 
 
 class _ScreenFromPipeline:
@@ -118,6 +120,15 @@ class _ScreenFromPipeline:
                                   pend_text=facts_after.pend_text is not None),)
 
 
+def _write_tmp_png(data: bytes):
+    import tempfile
+    from pathlib import Path
+    fh = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+    fh.write(data)
+    fh.close()
+    return Path(fh.name)
+
+
 def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                   notifier: NotificationSender, journal: Journal | None,
                   cfg: PipelineConfig, now_ns, lease_factory=None) -> tuple[RunOutcome, dict]:
@@ -174,12 +185,54 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
             return PageView(fs.focused_package, fs.focused_activity, text)
 
         runner = StageRunner(read_page, act, policy)
+
+        def bag_pill_candidates():
+            """频道页「抽福袋」裁片候选（真机实测只有 pill color×2 psm7 认得出）。"""
+            if cfg.bag_pill is None:
+                return ()
+            from pddcheck.domain import CoordinateSource, ReadStatus
+            from pddcheck.perception import ocr_pass_candidates, parse_tsv
+            from pddcheck.perception.ocr_pass import OcrPassInput
+            from pddcheck.vision.preprocess import pill_crop_box, preprocess_pill
+            import io as _io
+            try:
+                from PIL import Image
+                png = device.screenshot_bytes()
+                im = Image.open(_io.BytesIO(png))
+                box_spec, mode = cfg.bag_pill
+                box = pill_crop_box(box_spec, im.width, im.height)
+                g = preprocess_pill(im, box, div=cfg.pill_div, th=cfg.pill_th, mode=mode)
+                buf = _io.BytesIO()
+                try:
+                    g.save(buf, format="PNG")
+                except TypeError:
+                    g.save(buf)
+                tmp = _write_tmp_png(buf.getvalue())
+                try:
+                    res = engine.recognize(str(tmp), 7)
+                finally:
+                    tmp.unlink(missing_ok=True)
+                if res.status is not ReadStatus.OK:
+                    return ()
+                sx = float(f"{720 / im.width / cfg.pill_div:.5f}")
+                sy = float(f"{1280 / im.height / cfg.pill_div:.5f}")
+                ox = float(f"{box[0] / im.width * 720:.1f}")
+                oy = float(f"{box[1] / im.height * 1280:.1f}")
+                return ocr_pass_candidates(
+                    f"{cfg.run_id}-p", "stage", 1,
+                    OcrPassInput(source=CoordinateSource.PILL, tsv_text=res.tsv_text,
+                                 scale_x=sx, scale_y=sy, offset_x=ox, offset_y=oy),
+                    "bag", cfg.specs["bag"].labels,
+                    min_overlap=cfg.specs["bag"].min_overlap, min_conf=40)
+            except Exception:
+                return ()
+
         try:
             runner.ensure_ready()
             stats["stages"].append("ready:ok")
             runner.enter_subsidy(cfg.specs["subsidy"], scroll_to_top=runner.scroll_to_top)
             stats["stages"].append("entry:ok")
-            runner.open_bag(cfg.specs["bag"])
+            runner.open_bag(cfg.specs["bag"], extra_candidates=bag_pill_candidates)
             stats["stages"].append("bag:ok")
         except StageFailure as exc:
             stats["stages"].append(f"failed:rc{exc.rc}")

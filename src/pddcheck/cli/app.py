@@ -56,7 +56,8 @@ def _cmd_run(args) -> CliResult:
                          endpoint=(None if os.environ.get("PDDCHECK_NO_PUSH") == "1"
                                    else read_endpoint_file(home / "Desktop" / "pdd-push.url")),
                          force=bool(getattr(args, "force", False)), specs=specs,
-                         run_stages=run_stages)
+                         run_stages=run_stages,
+                         bag_pill=((0.472, 0.375, 0.75, 0.4375), "color") if run_stages else None)
     dev = AdbDevice(args.device)
     try:
         dev.connect()
