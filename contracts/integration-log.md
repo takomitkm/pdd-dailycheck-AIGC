@@ -284,6 +284,14 @@
 - 安全跳过验证：指向生产证据目录时 lit=None observes=0（日标记已存在 → 直接跳过）。
 - 测试 374 passed + 4 skipped。
 
+### 34. 2026-11-07 12:30 — pill_channel 批准后生效路径铺好
+- config/profile.py：解析 targets.*.pill_channel（0..1 四比例校验）；缺省 None=关闭。
+- tests/config/test_pill_channel.py 3 项：v1 未写→None（现标定不动）/ 写入即生效
+  （原 pill 框不受影响）/ 越界拒收（D06 一律拒绝口径）。
+- 「批准 → 生效」只剩一步：profile.toml 的 [targets.bag] 加一行 pill_channel；
+  CLI 与流程段已消费该值（bag_pill fallback 仍在，等批准后改为只读 profile）。
+- 测试 377 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

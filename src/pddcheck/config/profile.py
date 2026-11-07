@@ -253,11 +253,15 @@ def _build_profile(doc: dict) -> Profile:
         merged = {**dataclasses.asdict(DEFAULTS.target(name)), **tdoc}
         if merged["alias"] is not None and not isinstance(merged["alias"], list):
             raise ConfigError(f"targets.{name}.alias 必须是字符串数组")
+        if "pill_channel" in tdoc and merged["pill_channel"] is not None:
+            _ratio4(merged["pill_channel"], f"targets.{name}.pill_channel")
         spec = TargetSpec(
             alias=tuple(str(a) for a in (merged["alias"] or [])),
             overlap=int(merged["overlap"]),
             region=None if merged["region"] is None else _ratio4(merged["region"], f"targets.{name}.region"),
             pill=None if merged["pill"] is None else _ratio4(merged["pill"], f"targets.{name}.pill"),
+            pill_channel=None if merged.get("pill_channel") is None
+            else _ratio4(merged["pill_channel"], f"targets.{name}.pill_channel"),
             pill_mode=str(merged["pill_mode"]),
             coord=None if merged["coord"] is None else _ratio2(merged["coord"], f"targets.{name}.coord"),
             find_retry=None if merged["find_retry"] is None else _int_in(merged["find_retry"], 1, 99, f"targets.{name}.find_retry"),
