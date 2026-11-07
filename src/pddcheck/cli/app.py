@@ -51,13 +51,25 @@ def _cmd_run(args) -> CliResult:
     }
     # --stages：先走 就绪→入口→福袋 流程段（真机验证见 t18a-calibration-findings.md）。
     run_stages = bool(getattr(args, "stages", False))
+    # bag 裁片标定：优先读 profile 的 pill_channel（ADR-003；用户批准后写入即生效），
+    # 读不到再用真机验证过的 fallback（t18a-calibration-findings §2，(435,524)）。
+    bag_pill = None
+    if run_stages:
+        try:
+            from pddcheck.config.profile import load_profile
+            prof = load_profile(Path(__file__).resolve().parents[2] / "profiles"
+                                / "pdd" / "v1" / "profile.toml")
+            pc = prof.target("bag").pill_channel
+        except Exception:
+            pc = None
+        bag_pill = (pc, "color") if pc is not None else ((0.472, 0.375, 0.75, 0.4375), "color")
     cfg = PipelineConfig(business_date=date, run_id=f"run-{date}",
                          evidence_dir=str(ev / date),
                          endpoint=(None if os.environ.get("PDDCHECK_NO_PUSH") == "1"
                                    else read_endpoint_file(home / "Desktop" / "pdd-push.url")),
                          force=bool(getattr(args, "force", False)), specs=specs,
                          run_stages=run_stages,
-                         bag_pill=((0.472, 0.375, 0.75, 0.4375), "color") if run_stages else None)
+                         bag_pill=bag_pill)
     dev = AdbDevice(args.device)
     try:
         dev.connect()

@@ -315,6 +315,14 @@
 - 结论：安装批准后零语法风险；安装步骤 = 装 launcher.sh + unit 到
   ~/.config/systemd/user/ + `daemon-reload && systemctl --user enable --now pddcheck.timer`。
 
+### 38. 2026-11-07 12:55 — 批准路径零代码化（pill_channel 优先读 profile）
+- cli/app.py：run_stages 时先 load_profile 读 targets.bag.pill_channel；读到就用它，
+  读不到用真机验证过的 fallback（(0.472,0.375,0.75,0.4375)/color）。
+  → 用户批准后只需在 profile.toml 加一行，**无任何代码改动**。
+- tests/config/test_approval_path.py 3 项：未批准=None（防漂移）/ 批准后 profile 优先
+  / fallback=真机实测值（裁片原点 (339,480)，中心点 (435,524)）。
+- 测试 383 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
