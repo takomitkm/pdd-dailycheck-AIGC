@@ -136,6 +136,15 @@
   用共享观察得出的点击点完成点亮，全程只取 2 次。
 - 测试 312 passed + 4 skipped。
 
+### 16. 2026-11-07 11:15 — T16 缓存与按页跳过 XML
+- vision/cache.py：解码缓存（按图 sha）+ 裁片缓存（键=图 sha+裁切框+recipe 串）；
+  LRU 带 hit/miss/evict 计数；recipe 隔离（防把 A recipe 裁片喂给 B）。
+- vision/preprocess.py：band/pill 裁切几何与预处理（±pad / 不补 pad、灰度+autocontrast、
+  反色+硬阈值、×scale/×div LANCZOS），与旧 band_pass/pill_pass 逐条对齐；用 sandbox
+  compat PIL 真跑验证尺寸。
+- observe：新增 XmlPolicy——消费券/浏览页跳过 XML dump（省一次取数），其余照取。
+- 测试 320 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

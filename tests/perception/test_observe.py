@@ -94,3 +94,16 @@ def test_nine_targets_still_only_five_fetches():
                         channels=(CoordinateSource.TESSERACT_PAGE, CoordinateSource.BAND))
     locate_all(obs, specs, min_conf=40)
     assert len(src.calls) == 3                      # 9 个目标仍是 3 次取数
+
+
+def test_skip_xml_policy_saves_one_fetch():
+    from pddcheck.perception.observe import XmlPolicy, xml_policy_for
+    src = CountingSource()
+    obs = observe_frame(src, frame_id="f", capture_id="c", state_epoch=1,
+                        tap_width=720, tap_height=1280,
+                        channels=(CoordinateSource.TESSERACT_PAGE,),
+                        xml_policy=XmlPolicy.SKIP)
+    assert src.calls == ["ocr:tesseract_page"]      # 不取 XML
+    assert obs.xml_text is None
+    assert xml_policy_for("browse") is XmlPolicy.SKIP
+    assert xml_policy_for("activity") is XmlPolicy.ALWAYS

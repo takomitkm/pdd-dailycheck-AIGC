@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Protocol
 
 from pddcheck.domain import CoordinateSource, LocateResult
@@ -24,6 +25,16 @@ from pddcheck.perception.locate import (
     locate_candidates,
 )
 from pddcheck.perception.ocr_pass import OcrPassInput
+
+
+class XmlPolicy(StrEnum):
+    ALWAYS = "always"
+    SKIP = "skip"        # 已知无可用层级的页（如消费券页）省掉一次 dump
+
+
+def xml_policy_for(page_kind: str) -> XmlPolicy:
+    """按页类型决定是否取 XML。消费券/浏览页层级常常整块空或残缺，跳过省调用。"""
+    return XmlPolicy.SKIP if page_kind in ("browse", "coupon") else XmlPolicy.ALWAYS
 
 
 class ObservationSource(Protocol):
@@ -52,11 +63,14 @@ class FrameObservation:
 
 def observe_frame(source: ObservationSource, *, frame_id: str, capture_id: str,
                   state_epoch: int, tap_width: int, tap_height: int,
-                  channels: tuple[CoordinateSource, ...]) -> FrameObservation:
-    """取一次 XML + 每个通道取一次 OCR。同一通道绝不重复取（重复=编程错误）。"""
+                  channels: tuple[CoordinateSource, ...],
+                  xml_policy: XmlPolicy = XmlPolicy.ALWAYS) -> FrameObservation:
+    """取一次 XML（除非策略跳过）+ 每个通道取一次 OCR。同通道绝不重复取。"""
     calls: list[str] = []
-    xml_text = source.fetch_xml()
-    calls.append("xml")
+    xml_text = None
+    if xml_policy is XmlPolicy.ALWAYS:
+        xml_text = source.fetch_xml()
+        calls.append("xml")
     ocr: dict[CoordinateSource, str] = {}
     for src in channels:
         if src in ocr:
