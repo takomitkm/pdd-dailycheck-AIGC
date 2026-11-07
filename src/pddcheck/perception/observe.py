@@ -51,14 +51,24 @@ class FrameObservation:
     tap_height: int
     xml_text: str | None = None
     ocr_texts: dict[CoordinateSource, str] = field(default_factory=dict)
+    # 每个 OCR 通道的几何 (scale_x, scale_y, offset_x, offset_y)：
+    # 整页=(1,1,0,0)；band/pill 是裁片放大后的图，必须带缩放与原点偏移，
+    # 否则裁片坐标会被当成整页坐标（旧脚本踩过这个坑，见 band_pass 注释）。
+    geometries: dict[CoordinateSource, tuple[float, float, float, float]] = field(
+        default_factory=dict)
     fetch_calls: tuple[str, ...] = ()          # 实际取数记录（供计数断言）
 
     def to_parsed_frame(self) -> ParsedFrame:
-        passes = tuple(OcrPassInput(source=src, tsv_text=text)
-                       for src, text in self.ocr_texts.items() if text is not None)
+        passes = []
+        for src, text in self.ocr_texts.items():
+            if text is None:
+                continue
+            sx, sy, ox, oy = self.geometries.get(src, (1.0, 1.0, 0.0, 0.0))
+            passes.append(OcrPassInput(source=src, tsv_text=text,
+                                       scale_x=sx, scale_y=sy, offset_x=ox, offset_y=oy))
         return ParsedFrame(self.frame_id, self.capture_id, self.state_epoch,
                            self.tap_width, self.tap_height,
-                           xml_text=self.xml_text, ocr_passes=passes)
+                           xml_text=self.xml_text, ocr_passes=tuple(passes))
 
 
 def observe_frame(source: ObservationSource, *, frame_id: str, capture_id: str,
@@ -72,15 +82,22 @@ def observe_frame(source: ObservationSource, *, frame_id: str, capture_id: str,
         xml_text = source.fetch_xml()
         calls.append("xml")
     ocr: dict[CoordinateSource, str] = {}
+    geometries: dict[CoordinateSource, tuple[float, float, float, float]] = {}
+    geometry_for = getattr(source, "geometry_for", None)
     for src in channels:
         if src in ocr:
             raise ValueError(f"通道 {src} 重复请求（应每通道只取一次）")
         text = source.fetch_ocr(src)
         if text is not None:
             ocr[src] = text
+            if geometry_for is not None:
+                g = geometry_for(src)
+                if g is not None:
+                    geometries[src] = tuple(float(v) for v in g)
         calls.append(f"ocr:{src.value}")
     return FrameObservation(frame_id, capture_id, state_epoch, tap_width, tap_height,
-                            xml_text=xml_text, ocr_texts=ocr, fetch_calls=tuple(calls))
+                            xml_text=xml_text, ocr_texts=ocr, geometries=geometries,
+                            fetch_calls=tuple(calls))
 
 
 def locate_all(obs: FrameObservation, specs: dict[str, TargetLocateSpec], *,

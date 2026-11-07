@@ -33,6 +33,9 @@ class TargetSpec:
     overlap: int = 3
     region: tuple[float, float, float, float] | None = None
     pill: tuple[float, float, float, float] | None = None
+    # 第二胶囊框（ADR-003）：同一目标在不同页型上位置不同时用；缺省 None=不启用，
+    # 因此现有 profile 与标定值完全不变（向后兼容）。
+    pill_channel: tuple[float, float, float, float] | None = None
     pill_mode: str = "inv"          # inv（反色+硬阈值）| color（原色），对齐旧 PILL_MODE_*
     coord: tuple[float, float] | None = None
     find_retry: int | None = None   # None = 用全局 find_retry

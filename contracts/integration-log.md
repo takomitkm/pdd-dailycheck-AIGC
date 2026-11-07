@@ -236,6 +236,17 @@
   = MainFrameActivity；默认时钟 lambda:0 会让 FocusState 校验失败 → 改真实单调时钟。
 - 测试 353 passed + 4 skipped（新增坐标兜底/等待跳转 2 项）。
 
+### 26. 2026-11-07 11:30 — ADR-003（第二胶囊框）+ 裁片通道几何
+- config/profile.py：TargetSpec 新增可选 `pill_channel`（缺省 None=不启用，
+  **现有 profile 与标定值完全不变**）；ADR-003 记录决策、备选与否决理由。
+- perception/observe.py：FrameObservation 增 `geometries`（每通道 scale/offset）——
+  裁片坐标必须换算回点空间，否则命中点全飞（旧脚本 band_pass 注释记过这个坑）。
+- vision/source.py：DeviceVisionSource 支持 band/pill 通道（按标定框裁片+预处理，
+  几何按「TAP/整图/放大倍数（5dp）」与「裁片原点回推（1dp）」登记）。
+- tests/perception/test_crop_geometry.py 3 项：pill 几何=0.5/339/480 → 点空间
+  (434-435, 524)（与真机实测 (435,524) 一致）、整页恒等几何、缺框不出文本不出几何。
+- 测试 356 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
