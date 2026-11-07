@@ -183,6 +183,17 @@
 - 未做：真机业务动作（点亮/领取/兑换）本轮一律未执行（只读）；端到端实跑待明确同意。
 - 记录：docs/refactor-v2/t18a-channel-report.md。
 
+### 21. 2026-11-07 11:00 — T16 真机干跑（零副作用）+ 优化量化
+- h61 上 staging 跑 dryrun_h61.py（真实 AdbDevice+TesseractEngine，DryRunDevice 拒绝
+  一切动作）：connect 10ms / screencap 654ms / locate 8ms，真机桌面 PNG 720×1280 881KB。
+- 单帧成本实测：重复截图+取XML 6033ms → 复用预取帧 5372ms（省 0.66s）→ 跳过 XML
+  **2277ms（省 3.2s，帧成本近半）**。→ T16 优先级：按页跳过/惰性 XML > 帧复用 >
+  同帧共享；单次全页 OCR ~2.2s 为硬底。
+- 安全发现：干跑在桌面用坐标兜底「命中」bag(100,895)——证明坐标兜底必须受
+  ActionIntent（expected_package=pdd+window APP）约束；**本轮未执行任何真实业务动作**。
+- 新增 AdbDevice.screenshot_bytes（严格 PNG 校验）+ 测试；文档
+  docs/refactor-v2/t16-real-device-measurement.md。测试 337 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

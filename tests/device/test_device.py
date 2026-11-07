@@ -207,6 +207,17 @@ def test_adb_capture_bad_png_raises_not_fake():
         dev.capture()
 
 
+def test_adb_screenshot_bytes_strict(tmp_path):
+    scripted = Scripted([(["adb", "-s", "ABC", "exec-out", "screencap"], (0, _png(720, 1280), b""))])
+    dev = AdbDevice("ABC", runner=scripted, now_ns=lambda: 100)
+    data = dev.screenshot_bytes()
+    assert data.startswith(b"\x89PNG") and len(data) > 20
+    # 坏图 → 抛（不返回半截）
+    bad = Scripted([(["adb", "-s", "ABC", "exec-out", "screencap"], (0, b"junk", b""))])
+    with pytest.raises(PngDecodeError):
+        AdbDevice("ABC", runner=bad, now_ns=lambda: 100).screenshot_bytes()
+
+
 def test_adb_read_hierarchy_falls_back_to_file_when_tty_empty():
     """真机坑（T18a）：dump /dev/tty 返回空 → 必须回退 dump 到文件再 cat，并清理。"""
     xml = b"<hierarchy><node text='x' bounds='[0,0][1,1]'/></hierarchy>"

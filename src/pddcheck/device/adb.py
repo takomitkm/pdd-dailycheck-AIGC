@@ -113,6 +113,14 @@ class AdbDevice:
                           focused_package=pkg, focused_activity=act,
                           resumed_package=resumed.group(1) if resumed else None)
 
+    def screenshot_bytes(self) -> bytes:
+        """只读取一帧像素（PNG bytes）；坏图抛 AdbError（不拿旧值凑）。干跑/测量用。"""
+        c = self._adb("exec-out", "screencap", "-p")
+        if c.rc != 0:
+            raise AdbError("screencap_failed", c.err.decode("utf-8", "replace")[:200])
+        png_size(c.out)                     # 严格解码校验
+        return c.out
+
     def _classify(self, pkg: str, act: str, text: str) -> WindowKind:
         if "keyguard" in act.lower() or "StatusBar" in pkg:
             return WindowKind.KEYGUARD if "keyguard" in act.lower() else WindowKind.STATUSBAR
