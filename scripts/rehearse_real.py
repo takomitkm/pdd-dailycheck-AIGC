@@ -19,6 +19,7 @@ from pddcheck.domain import CoordinateSource, ExecutionStatus
 from pddcheck.perception import TargetLocateSpec
 from pddcheck.perception.facts import facts_from_text
 from pddcheck.perception.observe import XmlPolicy
+from pddcheck.perception.pagekind import PageKind, classify_page
 from pddcheck.vision.engine import TesseractEngine
 from pddcheck.vision.source import DeviceVisionSource
 from pddcheck.workflow.stages import PageView, StageFailure, StagePolicy, StageRunner
@@ -171,6 +172,10 @@ def main(argv=None) -> int:
             rec.write(kind="band", box=list(box), chars=len(res.tsv_text or ""))
         except Exception as exc:
             rec.write(kind="band_error", error=f"{type(exc).__name__}: {exc}")
+        # 先把整页可读文本算出来（页型判定与 pill 通道选择都要用）
+        from pddcheck.perception import parse_tsv as _pt
+        readable_so_far = {"t": " ".join(ln.normalized_text
+                                         for ln in _pt("\n".join(texts)))}
         # pill 通道（多目标）：真机实测 bag 频道页那颗只有 color×2 psm7 认得出；
         # done/light 用 inv×2 psm7（现有 profile 标定值，实测 conf 96 命中「已点亮」）
         try:
@@ -181,7 +186,17 @@ def main(argv=None) -> int:
             from pddcheck.vision.preprocess import pill_crop_box, preprocess_pill
             im2 = Image.open(io.BytesIO(png))
             all_pill = []
-            for key, (pbox_spec, mode) in PILL_BOXES.items():
+            # 页型感知（真机实测：bag 的 pill 只在频道页有效、done/light 只在活动页有效）
+            page_kind = classify_page(readable_so_far["t"])
+            rec.write(kind="pagekind", kind_value=page_kind.value)
+            active_keys = {
+                PageKind.CHANNEL: ("bag",),
+                PageKind.ACTIVITY: ("done", "light", "exchange"),
+                PageKind.HOME: (),
+                PageKind.UNKNOWN: ("bag", "done", "light"),
+            }[page_kind]
+            for key in active_keys:
+                pbox_spec, mode = PILL_BOXES[key]
                 pbox = pill_crop_box(pbox_spec, im2.width, im2.height)
                 pcrop = preprocess_pill(im2, pbox, div=2, th=120, mode=mode)
                 pbuf = io.BytesIO()

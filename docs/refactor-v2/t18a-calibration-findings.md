@@ -112,3 +112,24 @@ bag/done/light 全部 candidates=[]）。→ 必须**按页型选通道**（ADR-
 - 真机耗时：全页 OCR psm6 p50 2.29s、psm11 2.16s；跳过 XML 单帧 2.28s vs 取 XML 5.45s
 - 真实 launcher activity：`com.xunmeng.pinduoduo/.ui.activity.MainFrameActivity`
   （与旧脚本 HOME_ACT 一致；启动后自己跳到 HomeActivity）
+
+## 8. 页型感知接通后：真机决策事实完整（2026-11-07 12:0x，v0.1.22）
+
+```
+stages: ["ready:ok", "entry:ok", "bag:ok", "facts:read"]     pages=6
+pagekind: home → channel → activity          ← 页型判定逐页正确
+facts: progress=5, done="今日已点亮" (done_from_pill="今日已点亮")
+```
+
+页型判据（perception/pagekind.py，真机日志回验）：
+- HomeActivity → home：20/20 全对
+- NewPageActivity → channel 39 / activity 3 / unknown 3（靠文本特征区分，activity 优先）
+- 特征：首页=推荐/食品/女装/限时秒杀；频道页=百亿补贴品质保障/抢低至5折/频道专享；
+  活动页=天内再点亮/必得/共100元券/今日已点亮/福袋加码
+
+页型驱动的通道选择（解决第 7 节的页型耦合）：
+- 频道页 → 只跑 bag 的 pill（color×2）
+- 活动页 → 只跑 done/light/exchange 的 pill（inv×2）
+- 首页/未知 → 不跑或全跑（保守）
+
+→ 「今日已点亮」现在能被读到，lit1 分支的事实齐备（progress + done）。
