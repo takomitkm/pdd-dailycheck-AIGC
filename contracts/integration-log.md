@@ -351,6 +351,15 @@
 - h61 0.1.25 部署；timer 已重装为 `--stages --dry-run`；手动触发实测：
   `exit=0 lit=None observes=0`（跳过），与旧流程无任何冲突。测试 386 passed + 4 skipped。
 
+### 42. 2026-11-07 13:40 — 用户批准：标定入 profile + pddcheck 接管（停旧 timer）
+- 批准 1：profiles/pdd/v1/profile.toml [targets.bag] 写入
+  `pill_channel = [0.472,0.375,0.75,0.4375]`；DEFAULTS 同步；防漂移/批准路径测试
+  按批准后口径更新；config 测试全绿，全量 386 passed + 4 skipped。
+- 批准 2：h61 接管步骤（下轮执行并验证）：`systemctl --user disable --now pdd.timer`；
+  pddcheck env 去掉 NO_PUSH；service 去掉 --dry-run；timer 改 10:00:00；daemon-reload。
+- 批准 3（未签到日真实 lit3 真点亮）：今日已签到，无法在不产生额外副作用前提下
+  验证真点亮；待下一个未签到日（下一次无 .done 标记且 timer 触发，或用户指定窗口）。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

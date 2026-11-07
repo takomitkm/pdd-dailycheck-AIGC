@@ -9,17 +9,17 @@ from pddcheck.config.profile import load_profile
 V1 = Path(__file__).resolve().parents[2] / "profiles" / "pdd" / "v1" / "profile.toml"
 
 
-def test_profile_bag_pill_channel_is_none_until_approved():
-    """未批准：v1 profile 的 pill_channel 必须是 None（防漂移）。"""
+def test_profile_bag_pill_channel_approved_value():
+    """2026-11-07 用户批准：v1 profile 载入已批准的频道页「抽福袋」标定。"""
     prof = load_profile(V1)
-    assert prof.target("bag").pill_channel is None
+    assert prof.target("bag").pill_channel == (0.472, 0.375, 0.75, 0.4375)
 
 
 def test_approved_profile_takes_precedence(tmp_path):
     """批准后（profile 写入）：CLI 读取逻辑应取 profile 值，而不是 fallback。"""
     text = V1.read_text(encoding="utf-8")
-    patched = text.replace("[targets.bag]",
-                           "[targets.bag]\npill_channel = [0.5, 0.4, 0.8, 0.45]", 1)
+    patched = text.replace("pill_channel = [0.472, 0.375, 0.75, 0.4375]",
+                           "pill_channel = [0.5, 0.4, 0.8, 0.45]", 1)
     f = tmp_path / "profile.toml"
     f.write_text(patched, encoding="utf-8")
     prof = load_profile(f)

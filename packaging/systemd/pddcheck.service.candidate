@@ -11,7 +11,7 @@ Type=oneshot
 # --stages：先走 就绪→入口→福袋 流程段（未签到日才会真正点亮；已签到会自动跳过）。
 Environment=LANG=C.UTF-8
 EnvironmentFile=%h/.config/pddcheck/env
-ExecStart=%h/.local/share/pddcheck/launcher.sh run --device ${PDDCHECK_DEVICE} --stages --dry-run
+ExecStart=%h/.local/share/pddcheck/launcher.sh run --device ${PDDCHECK_DEVICE} --stages
 Nice=10
 # 明确不重启：定时器负责节律，失败由推送暴露，绝不 Restart 反复点
 Restart=no

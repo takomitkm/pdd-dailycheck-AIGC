@@ -318,7 +318,9 @@ DEFAULTS = Profile(
                                region=(0.0, 0.30, 0.40, 0.80), coord=(0.125, 0.46875))),
         ("bag", TargetSpec(alias=("抽福袋", "去抢购"), overlap=3,
                            region=(0.0, 0.35, 1.0, 0.85), coord=(0.13889, 0.69922),
-                           pill=(0.02, 0.64, 0.32, 0.78), pill_mode="color",
+                           pill=(0.02, 0.64, 0.32, 0.78),
+                           # 频道页「抽福袋」（ADR-003；2026-11-07 真机实测+用户批准）
+                           pill_channel=(0.472, 0.375, 0.75, 0.4375), pill_mode="color",
                            find_retry=12, find_interval=3)),
         ("light", TargetSpec(alias=("立即点亮",), overlap=3,
                              region=(0.0, 0.08, 1.0, 0.42), coord=(0.83056, 0.22266),
