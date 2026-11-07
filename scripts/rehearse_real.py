@@ -25,8 +25,16 @@ from pddcheck.workflow.stages import PageView, StageFailure, StagePolicy, StageR
 
 PKG = "com.xunmeng.pinduoduo"
 HOME_ACT = "com.xunmeng.pinduoduo.ui.activity.HomeActivity"
-# 真机实测（t18a-calibration-findings）：频道页「抽福袋」只有 pill color×2 psm7 认得出
-BAG_PILL = (0.472, 0.375, 0.75, 0.4375)
+
+# 真机实测（t18a-calibration-findings）：各目标的裁片标定
+#   bag 频道页那颗：[0.472,0.375,0.75,0.4375] color ×2 psm7 → (435,524)
+#   done 活动页「今日已点亮」：现有 profile 值即可，inv ×2 psm7 → (600,290) conf 96
+PILL_BOXES = {
+    "bag": ((0.472, 0.375, 0.75, 0.4375), "color"),
+    "done": ((0.597, 0.184, 1.0, 0.270), "inv"),
+    "light": ((0.597, 0.184, 1.0, 0.270), "inv"),
+    "exchange": ((0.597, 0.184, 1.0, 0.270), "inv"),
+}
 
 SPECS = {
     "subsidy": TargetLocateSpec(key="subsidy", labels=("百亿补贴", "搜索补贴", "签到"),
@@ -163,43 +171,51 @@ def main(argv=None) -> int:
             rec.write(kind="band", box=list(box), chars=len(res.tsv_text or ""))
         except Exception as exc:
             rec.write(kind="band_error", error=f"{type(exc).__name__}: {exc}")
-        # pill 通道：真机实测频道页「抽福袋」只有这个配方认得出（color ×2 psm7）
+        # pill 通道（多目标）：真机实测 bag 频道页那颗只有 color×2 psm7 认得出；
+        # done/light 用 inv×2 psm7（现有 profile 标定值，实测 conf 96 命中「已点亮」）
         try:
             import io
             from PIL import Image
+            from pddcheck.perception import ocr_pass_candidates
+            from pddcheck.perception.ocr_pass import OcrPassInput
             from pddcheck.vision.preprocess import pill_crop_box, preprocess_pill
             im2 = Image.open(io.BytesIO(png))
-            pbox = pill_crop_box(BAG_PILL, im2.width, im2.height)
-            pcrop = preprocess_pill(im2, pbox, div=2, th=120, mode="color")
-            pbuf = io.BytesIO()
-            try:
-                pcrop.save(pbuf, format="PNG")
-            except TypeError:
-                pcrop.save(pbuf)
-            ptmp = f"/tmp/pdd-pill-{frames['n']}.png"
-            open(ptmp, "wb").write(pbuf.getvalue())
-            pres = engine.recognize(ptmp, 7)
-            if pres.status is ReadStatus.OK:
+            all_pill = []
+            for key, (pbox_spec, mode) in PILL_BOXES.items():
+                pbox = pill_crop_box(pbox_spec, im2.width, im2.height)
+                pcrop = preprocess_pill(im2, pbox, div=2, th=120, mode=mode)
+                pbuf = io.BytesIO()
+                try:
+                    pcrop.save(pbuf, format="PNG")
+                except TypeError:
+                    pcrop.save(pbuf)
+                ptmp = f"/tmp/pdd-pill-{key}-{frames['n']}.png"
+                open(ptmp, "wb").write(pbuf.getvalue())
+                pres = engine.recognize(ptmp, 7)
+                if pres.status is not ReadStatus.OK:
+                    rec.write(kind="pill", key=key, status=str(pres.status))
+                    continue
                 # 几何：scale=TAP/整图/2（5dp）、offset=裁片原点回推（1dp）
                 sx = float(f"{720/im2.width/2:.5f}")
                 sy = float(f"{1280/im2.height/2:.5f}")
                 ox = float(f"{pbox[0]/im2.width*720:.1f}")
                 oy = float(f"{pbox[1]/im2.height*1280:.1f}")
-                pill_text = pres.tsv_text
-                from pddcheck.perception import ocr_pass_candidates
-                from pddcheck.perception.ocr_pass import OcrPassInput
+                spec = SPECS[key]
                 pc = ocr_pass_candidates("f", "cap", 1,
                                          OcrPassInput(source=CoordinateSource.PILL,
-                                                      tsv_text=pill_text,
+                                                      tsv_text=pres.tsv_text,
                                                       scale_x=sx, scale_y=sy,
                                                       offset_x=ox, offset_y=oy),
-                                         "bag", ("抽福袋",), min_overlap=3, min_conf=40)
-                rec.write(kind="pill", box=list(pbox), geom=[sx, sy, ox, oy],
+                                         key, spec.labels, min_overlap=spec.min_overlap,
+                                         min_conf=40)
+                all_pill.extend(pc)
+                rec.write(kind="pill", key=key, mode=mode, box=list(pbox),
+                          geom=[sx, sy, ox, oy],
                           candidates=[(list(c.tap_point), c.overlap) for c in pc])
-                last_pill_cands["c"] = pc
-            else:
-                last_pill_cands["c"] = ()
-                rec.write(kind="pill", status=str(pres.status))
+                # 裁片里认到「今日已点亮」→ 直接记进 facts（整页读不到这个按钮）
+                if key in ("done", "light") and pc:
+                    done_hit["v"] = "今日已点亮"
+            last_pill_cands["c"] = tuple(all_pill)
         except Exception as exc:
             last_pill_cands["c"] = ()
             rec.write(kind="pill_error", error=f"{type(exc).__name__}: {exc}")
@@ -220,6 +236,7 @@ def main(argv=None) -> int:
 
     # 裁片通道候选供给器：StageRunner 用它补整页认不到的「抽福袋」
     last_pill_cands = {"c": ()}
+    done_hit = {"v": None}       # 裁片里认到「今日已点亮」时置位（整页读不到该按钮）
 
     def pill_candidates():
         return last_pill_cands["c"]
@@ -244,8 +261,11 @@ def main(argv=None) -> int:
         # 点亮页事实
         v = read_page()
         f = facts_from_text(v.ocr_text)
-        rec.write(kind="light_facts", progress=f.progress_count, done=f.done_text,
-                  exchange=f.exchange_text, pend=f.pend_text)
+        # 裁片里认到的「今日已点亮」优先（整页 OCR 读不到进度条右侧那个按钮）
+        done_text = f.done_text or done_hit["v"]
+        rec.write(kind="light_facts", progress=f.progress_count, done=done_text,
+                  exchange=f.exchange_text, pend=f.pend_text,
+                  done_from_pill=done_hit["v"])
         stages.append("facts:read")
     except StageFailure as exc:
         rec.write(kind="stage_failed", rc=exc.rc, why=exc.why)
