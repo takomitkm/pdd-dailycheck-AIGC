@@ -54,6 +54,8 @@ class PipelineConfig:
     bag_pill: tuple[tuple[float, float, float, float], str] | None = None
     pill_div: int = 2
     pill_th: int = 120
+    # 纯观察：识别与决策照做，业务动作一律拒绝、不写标记/账本、不推送（只留证据）
+    dry_run: bool = False
 
 
 class _ScreenFromPipeline:
@@ -146,12 +148,22 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                              step_wait_s=cfg.step_wait_s)
 
         def act(kind, point):
-            from pddcheck.domain import ActionIntent, ActionKind, WindowKind
+            from pddcheck.domain import (
+                ActionIntent, ActionKind, ActionReceipt, ExecutionStatus, WindowKind,
+            )
             mapping = {"tap": ActionKind.TAP, "back": ActionKind.BACK, "start": ActionKind.START,
                        "wake": ActionKind.WAKE, "dismiss_keyguard": ActionKind.DISMISS_KEYGUARD,
                        "swipe": ActionKind.SWIPE}
             k = mapping[kind]
             business = k in (ActionKind.TAP, ActionKind.BACK, ActionKind.SWIPE)
+            action_id = f"{cfg.run_id}-{kind}-{now_ns()}"
+            if cfg.dry_run and business:
+                # 纯观察：业务动作一律拒绝（不碰手机 UI），生命周期动作（唤醒/启动）仍允许，
+                # 因为不启动 app 就观察不到任何页面。
+                stats.setdefault("dry_rejected", []).append(kind)
+                t = max(1, now_ns())
+                return ActionReceipt(action_id, ExecutionStatus.REJECTED, t, t,
+                                     error_code="dry_run")
             intent = ActionIntent(
                 action_id=f"{cfg.run_id}-{kind}-{now_ns()}",
                 run_id=cfg.run_id, kind=k, source_capture_id="stage",
@@ -228,12 +240,28 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                 return ()
 
         try:
-            runner.ensure_ready()
-            stats["stages"].append("ready:ok")
-            runner.enter_subsidy(cfg.specs["subsidy"], scroll_to_top=runner.scroll_to_top)
-            stats["stages"].append("entry:ok")
-            runner.open_bag(cfg.specs["bag"], extra_candidates=bag_pill_candidates)
-            stats["stages"].append("bag:ok")
+            if cfg.dry_run:
+                # 纯观察：只做到「把手机带到 PDD + 认出当前页 + 记录本来会点哪里」，
+                # 不做任何业务动作（没有跳转就没法继续往下认，硬试只会得到误报 rc4/5）。
+                runner.ensure_ready()
+                stats["stages"].append("ready:ok")
+                from pddcheck.perception.pagekind import classify_page
+                v = read_page()
+                kind = classify_page(v.ocr_text)
+                stats["stages"].append(f"page:{kind.value}")
+                stats["dry_intent"] = {
+                    "subsidy": list(cfg.specs["subsidy"].coord)
+                    if cfg.specs.get("subsidy") and cfg.specs["subsidy"].coord else None,
+                    "bag_pill": list(cfg.bag_pill[0]) if cfg.bag_pill else None,
+                }
+                stats["stages"].append("dry:stop")   # 刻意停在这里，不点任何业务坐标
+            else:
+                runner.ensure_ready()
+                stats["stages"].append("ready:ok")
+                runner.enter_subsidy(cfg.specs["subsidy"], scroll_to_top=runner.scroll_to_top)
+                stats["stages"].append("entry:ok")
+                runner.open_bag(cfg.specs["bag"], extra_candidates=bag_pill_candidates)
+                stats["stages"].append("bag:ok")
         except StageFailure as exc:
             stats["stages"].append(f"failed:rc{exc.rc}")
             stats["stage_failure"] = exc.why
@@ -247,7 +275,8 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                    run_id=cfg.run_id, now_ns=now_ns, lease_factory=lease_factory,
                    force=cfg.force, close_app_on_ok=cfg.close_app_on_ok,
                    stage_failure_rc=stats.get("stage_failure_rc"),
-                   stage_failure_why=stats.get("stage_failure"))
+                   stage_failure_why=stats.get("stage_failure"),
+                   dry_run=cfg.dry_run)
     outcome = run_once(deps)
     stats["observe_calls"] = screen.observe_calls
     return outcome, stats

@@ -71,6 +71,7 @@ def _cmd_run(args) -> CliResult:
                                    else read_endpoint_file(home / "Desktop" / "pdd-push.url")),
                          force=bool(getattr(args, "force", False)), specs=specs,
                          run_stages=run_stages,
+                         dry_run=bool(getattr(args, "dry_run", False)),
                          bag_pill=bag_pill)
     dev = AdbDevice(serial)
     try:
@@ -176,6 +177,8 @@ def _build_parser():
         sp.add_argument("--force", action="store_true")
         sp.add_argument("--stages", action="store_true",
                         help="先走 就绪→入口→福袋 流程段（默认只做点亮段）")
+        sp.add_argument("--dry-run", action="store_true",
+                        help="纯观察：识别与决策照做，不执行业务动作、不写标记/账本、不推送（只留证据）")
     return p
 
 

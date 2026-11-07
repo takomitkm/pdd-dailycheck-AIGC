@@ -75,6 +75,10 @@ pddcheck.timer 10:30:00  enabled   ← 新流程，仅取证
   这是有意的兜底：所有业务动作仍过前台护栏（package+window），阶段失败不写标记只 HOME。
 - 手机若被占用/不在 pdd，`ensure_ready` 起不来就 rc7 收手，**不会在非 pdd 界面按 BACK 或点击**。
 
+**现在已装的 pddcheck.timer 是 `--dry-run`（纯观察）模式**：识别与决策照做，但**不执行
+任何业务动作、不写标记/账本、不推送**（只留证据与 notes）；真实签入仍完全由旧 pdd.timer
+负责。取证完成后要让 pddcheck 代签，需去掉 `--dry-run` 并一起停用旧 timer（用户批准后）。
+
 **回滚（一行）**
 ```
 ssh deb-h61 'systemctl --user disable --now pddcheck.timer'

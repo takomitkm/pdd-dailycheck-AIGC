@@ -23,6 +23,7 @@ class DeliveryStatus(StrEnum):
     BUSINESS_NONZERO = "business_nonzero"  # 2xx 但 JSON code≠0 / 解析不出 code
     NETWORK_ERROR = "network_error"        # 连接/超时/DNS
     NO_ENDPOINT = "no_endpoint"            # 未配置：0 次发送
+    SKIPPED = "skipped"                    # dry-run 等刻意不发送：0 次发送
 
 
 @dataclass(frozen=True, slots=True)

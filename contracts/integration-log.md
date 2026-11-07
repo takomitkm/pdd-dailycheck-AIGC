@@ -342,6 +342,15 @@
   enable 推送。**回滚**：`systemctl --user disable --now pddcheck.timer`（旧流程完全不受影响）。
 - 打包：packaging/systemd/pddcheck.timer.candidate + packaging/install-parallel.sh。
 
+### 41. 2026-11-07 13:30 — 纯观察模式（--dry-run）+ timer 切到 dry-run
+- run --dry-run：识别与决策照做，**不执行业务动作、不写标记/账本、不推送**（只留证据/notes）；
+  notify 增 DeliveryStatus.SKIPPED；flow/run_once dry 分支；bootstrap dry 阶段路径
+  （只做 ensure_ready + 页型判定 + 记录将点目标，不试跳转，避免误报 rc4）。
+- 目的：并行观察期 pddcheck **永不代签**，真实签入仍由旧 pdd.timer 负责；
+  取证后代签需用户批准去掉 --dry-run 并停用旧 timer。
+- h61 0.1.25 部署；timer 已重装为 `--stages --dry-run`；手动触发实测：
+  `exit=0 lit=None observes=0`（跳过），与旧流程无任何冲突。测试 386 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

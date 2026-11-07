@@ -69,6 +69,9 @@ class RunDeps:
     # 阶段失败后继续跑点亮会拿错页的事实做弱证明 → 误报 lit3）。
     stage_failure_rc: int | None = None
     stage_failure_why: str | None = None
+    # 纯观察（--dry-run）：识别与决策照做，但**不执行任何业务动作、不写标记/账本、不推送**。
+    # 用途：并行观察期只取证，确认新流程的判断与旧流程一致，而不代替签到。
+    dry_run: bool = False
 
 
 def _exit(rc: int, lit: int | None) -> ExitCode:
@@ -122,6 +125,11 @@ def run_once(deps: RunDeps) -> RunOutcome:
                 lit = 2
             elif pre.kind is CheckBeforeKind.PENDING:
                 lit = 4                  # pend 是 lit=4，进程码 0（acceptance §5）
+            elif deps.dry_run:
+                # 纯观察：本来会点这一枪，但**不点**（也不核实、不写标记）。
+                lit = 0
+                notes.append(f"dry-run：本来会点 {pre.before_count} 那一枪"
+                             f"（method={pre.kind.value}），本次不执行")
             else:
                 # 4) 点亮一枪 + 核实
                 intent = _make_tap_intent(deps, facts)
@@ -152,19 +160,23 @@ def run_once(deps: RunDeps) -> RunOutcome:
         marker_written = False
         ledger_written = None
         operational_failed = False
-        try:
-            if plan.marker_write:
-                deps.store.write_marker(deps.business_date)
-                marker_written = True
-            if plan.ledger_write is not None:
-                ok = deps.store.ledger_write(plan.ledger_write)
-                if not ok:
-                    raise OSError("账本写入失败")
-                ledger_written = plan.ledger_write
-        except OSError as exc:
-            # D04：业务成功但状态落盘失败 → 进程码 73，业务 rc 另存，绝不虚称已写
-            operational_failed = True
-            notes.append(f"状态写入失败（operational）：{exc}")
+        if deps.dry_run:
+            # 纯观察：不写标记、不写账本（否则会把今天标成「已签到」而实际没点）
+            notes.append("dry-run：跳过标记/账本写入与推送（只留证据）")
+        else:
+            try:
+                if plan.marker_write:
+                    deps.store.write_marker(deps.business_date)
+                    marker_written = True
+                if plan.ledger_write is not None:
+                    ok = deps.store.ledger_write(plan.ledger_write)
+                    if not ok:
+                        raise OSError("账本写入失败")
+                    ledger_written = plan.ledger_write
+            except OSError as exc:
+                # D04：业务成功但状态落盘失败 → 进程码 73，业务 rc 另存，绝不虚称已写
+                operational_failed = True
+                notes.append(f"状态写入失败（operational）：{exc}")
 
         # 6) 通知（失败不改业务 rc——I11）
         title, body = render_notification(NotifyInput(
@@ -173,7 +185,11 @@ def run_once(deps: RunDeps) -> RunOutcome:
             pend_days=facts.get("pend_days"),
             pend_line=facts.get("pend_line"),
             pend_msg="", exc_msg="", verify_why=""))
-        delivery = deps.notifier.send(deps.endpoint, title, body)
+        if deps.dry_run:
+            from pddcheck.notify import DeliveryResult, DeliveryStatus
+            delivery = DeliveryResult(DeliveryStatus.SKIPPED, 0, None, "dry-run")
+        else:
+            delivery = deps.notifier.send(deps.endpoint, title, body)
 
         if operational_failed:
             return RunOutcome(ExitCode.STATE_DIR_FAILED, lit, business_rc, title, body,
