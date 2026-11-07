@@ -35,8 +35,10 @@ def _cmd_run(args) -> CliResult:
     from pddcheck.vision.engine import TesseractEngine
     import os
 
-    if not args.device:
-        return CliResult(ExitCode.NO_ADB, stderr="run 需要 --device <serial>（禁止自动选设备）\n")
+    serial = args.device or os.environ.get("PDDCHECK_DEVICE", "")
+    if not serial:
+        return CliResult(ExitCode.NO_ADB,
+                         stderr="run 需要 --device <serial> 或 PDDCHECK_DEVICE（禁止自动选设备）\n")
     home = Path(os.environ.get("HOME", "."))
     state = Path(os.environ.get("PDDCHECK_STATE", home / ".local" / "share" / "pddcheck"))
     ev = Path(os.environ.get("PDDCHECK_EVIDENCE", home / "pddcheck-runs"))
@@ -70,7 +72,7 @@ def _cmd_run(args) -> CliResult:
                          force=bool(getattr(args, "force", False)), specs=specs,
                          run_stages=run_stages,
                          bag_pill=bag_pill)
-    dev = AdbDevice(args.device)
+    dev = AdbDevice(serial)
     try:
         dev.connect()
     except AdbError as exc:

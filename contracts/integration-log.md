@@ -323,6 +323,14 @@
   / fallback=真机实测值（裁片原点 (339,480)，中心点 (435,524)）。
 - 测试 383 passed + 4 skipped。
 
+### 39. 2026-11-07 13:05 — timer 生产隐患修复（device 来源 + ExecStart 参数）
+- **真隐患**：候选 unit 的 ExecStart 没带 run 参数 → 定时器每天会 rc69（run 无设备）。
+- cli/app.py：`--device` 缺省时读 `PDDCHECK_DEVICE`（两者都无仍 rc69，禁止自动选设备不变）。
+- unit 修正：`EnvironmentFile=%h/.config/pddcheck/env`（安装脚本写 PDDCHECK_DEVICE）
+  + `ExecStart=…launcher.sh run --device ${PDDCHECK_DEVICE} --stages`；h61 re-verify 通过。
+- tests/cli/test_device_env.py 2 项：两者都无→rc69 / 环境变量被接受（报连接失败而非没设备）。
+- 测试 385 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
