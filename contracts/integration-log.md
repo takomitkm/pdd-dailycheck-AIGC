@@ -105,6 +105,18 @@
 - 修：wheel 条目时间戳随构建时刻变导致同版本重建字节不同（真实不确定性 bug）——
   改固定时间戳，wheel 可复现（同输入同字节）。
 
+### 13. 2026-11-07 10:40 — T07.4 RapidOCR 挑战者（离线、独立 venv）
+- 在独立 .venv-rapid（不入库）用清华镜像装 rapidocr-onnxruntime 1.4.4 + onnxruntime
+  1.31.1，成功（首次 pip upgrade 卡住→跳过，直接装依赖 OK）。
+- scripts/bench_ocr_engine.py：逐帧双引擎对比（耗时 + 标签命中，同口径
+  normalize+连续段）；scripts/challenger_report.py 把同 12 帧的既有原生 tesseract
+  测量与 rapidocr 实测对齐（见 docs/refactor-v2/t07-rapidocr-challenger.json）。
+- 结论（同 12 帧，11-02 场）：RapidOCR 标签命中 ≈1.58× tesseract（召回更高，含更多
+  噪声字），但 CPU 耗时 ≈5.28×（p50 3.68s vs 0.21s）。→ 维持 Tesseract 为默认；
+  RapidOCR 作为召回备选，待 T16 引擎优化/GPU 或「tesseract 空读时回退」场景再评估。
+- 已知环境坑：Python 子进程调 wsl.exe 在本机返回 -1（交互式 shell 正常），故 tesseract
+  侧复用 T07 原生测量而非现跑；rapidocr 为进程内直接可测。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

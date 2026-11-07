@@ -40,3 +40,4 @@ reports/
 
 pytest-of-*/
 tmp*.toml
+.venv-rapid/

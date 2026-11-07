@@ -1,0 +1,32 @@
+{
+ "schema_version": 1,
+ "kind": "ocr-challenger-merged",
+ "frames": 12,
+ "tesseract": {
+  "latency_s": {
+   "n": 12,
+   "p50": 0.697
+  },
+  "label_hits_total": 31,
+  "text_chars_total": 1528,
+  "source": "reports/t07 原生测量 + ocr-v1 psm6 TSV"
+ },
+ "rapidocr": {
+  "latency_s": {
+   "n": 12,
+   "min": 0.658,
+   "p50": 3.677,
+   "p95": 4.58,
+   "max": 5.304
+  },
+  "label_hits_total": 49,
+  "text_chars_total": 2211,
+  "errors": {},
+  "avg_hits_per_frame": 4.08
+ },
+ "comparison": {
+  "latency_ratio_rapid_over_tess": 5.28,
+  "hit_ratio_rapid_over_tess": 1.58,
+  "note": "两引擎在同一 12 帧上；质量命中同口径（normalize+连续段≥2）"
+ }
+}
