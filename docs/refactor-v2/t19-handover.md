@@ -59,40 +59,30 @@ pddcheck run --device <serial> --stages   # 先走 就绪→入口→福袋（�
 - 行为基线 47 案 ×2 + 负例 11 + 变异 11/11 killed + 审计 8 claims：见 `docs/refactor-v2/`、`reports/`。
 - 真机演练：`scripts/rehearse_real.py`（分级放行动作，JSONL 取证）。
 
-## 已安装的并行观察 timer（2026-11-07，h61 用户级）
+## 生产 timer（2026-11-07，用户批准接管）
 
 ```
-pdd.timer      10:00:31  enabled   ← 旧生产流程（未动）
-pddcheck.timer 10:30:00  enabled   ← 新流程，仅取证
+pdd.timer      disabled   ← 旧流程已停（文件仍在，可回滚）
+pddcheck.timer 10:00:00  enabled   ← pddcheck 接管生产
 ```
 
-配置在 `~/.config/pddcheck/env`（600）：共享 `PDDCHECK_EVIDENCE=~/Desktop/pdd-runs`
-（与旧流程同一日标记根）、`PDDCHECK_NO_PUSH=1`（不推送，绝不与旧流程抢通知）。
+- h61 版本 `0.1.26`（`/home/user/pddcheck-staging/current`）
+- env `~/.config/pddcheck/env`（600）：`PDDCHECK_DEVICE=192.168.1.110:16132`，
+  `PDDCHECK_EVIDENCE=~/Desktop/pdd-runs`，`PDDCHECK_STATE=~/.local/share/pddcheck-state`，
+  **无 NO_PUSH**（允许推送，端点 `~/Desktop/pdd-push.url` present）
+- service：`run --device ${PDDCHECK_DEVICE} --stages`，`Restart=no`
+- 批准标定已落地：`profiles/pdd/v1/profile.toml` + `DEFAULTS.target("bag").pill_channel = (0.472,0.375,0.75,0.4375)`（CLI 优先读 profile，fallback 同值）
 
-**行为约定（重要）**
-- 旧流程当天成功（写了 `.done-<date>`）→ pddcheck 10:30 起来后 `observes=0` **安全跳过**（实测）。
-- **旧流程当天失败**（无标记）→ pddcheck 会**自己尝试完整签到**（就绪→入口→福袋→点亮）。
-  这是有意的兜底：所有业务动作仍过前台护栏（package+window），阶段失败不写标记只 HOME。
-- 手机若被占用/不在 pdd，`ensure_ready` 起不来就 rc7 收手，**不会在非 pdd 界面按 BACK 或点击**。
-
-**现在已装的 pddcheck.timer 是 `--dry-run`（纯观察）模式**：识别与决策照做，但**不执行
-任何业务动作、不写标记/账本、不推送**（只留证据与 notes）；真实签入仍完全由旧 pdd.timer
-负责。取证完成后要让 pddcheck 代签，需去掉 `--dry-run` 并一起停用旧 timer（用户批准后）。
-
-**回滚（一行）**
+**回滚到旧流程（一行）**
 ```
-ssh deb-h61 'systemctl --user disable --now pddcheck.timer'
+ssh deb-h61 'systemctl --user disable --now pddcheck.timer; systemctl --user enable --now pdd.timer'
 ```
 
-**将来让 pddcheck 接管（需用户批准）**：env 去掉 `PDDCHECK_NO_PUSH` → `systemctl --user disable --now pdd.timer` → 观察一天推送与 lit 值。
+## 待办（仅一项，等自然条件）
 
-## 待用户决定
+- **未签到日真实 lit3 真点亮**：今日已签到，不能伪造未签到状态。将在下一次自然无 `.done`
+  标记的运行中由 pddcheck 生产 timer 验证；如需手动窗口，请指定（并确认当日确实未签到）。
 
-1. **批准 bag.pill_channel 进 v1 profile**：[targets.bag] 加一行
-   `pill_channel = [0.472, 0.375, 0.75, 0.4375]`；解析/校验/测试已就位（缺省关）。
-2. **h61 装 systemd timer**（候选单元 `packaging/systemd/pddcheck.service.candidate`）：
-   用户级 oneshot，`Restart=no`，无 ExecStartPre；建议先与旧 pdd.timer 并行观察 1 天。
-3. **下一个未签到日**真机跑 lit3 真点亮（其余分支均已在真机验证过）。
 
 ## 已知边界
 

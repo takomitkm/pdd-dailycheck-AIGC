@@ -360,6 +360,14 @@
 - 批准 3（未签到日真实 lit3 真点亮）：今日已签到，无法在不产生额外副作用前提下
   验证真点亮；待下一个未签到日（下一次无 .done 标记且 timer 触发，或用户指定窗口）。
 
+### 43. 2026-11-07 13:50 — 生产接管执行完成（用户批准）
+- h61 takeover.sh：`pdd.timer` disabled+stopped；`pddcheck.timer` enabled 10:00:00；
+  service `run --device ${PDDCHECK_DEVICE} --stages`（无 dry-run）；env 无 NO_PUSH；
+  push 端点文件 present；old_pdd_service inactive；DEFAULTS.bag.pill_channel=(0.472,0.375,0.75,0.4375)。
+- 0.1.26 部署为 current。
+- 未签到日真实 lit3 真点亮：今日已签到（旧/新共用日标记语义），**不能伪造未签到状态**；
+  将在下一次自然无 .done 标记的运行中由 pddcheck 生产 timer 验证（或用户指定窗口）。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
