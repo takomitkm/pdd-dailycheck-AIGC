@@ -41,6 +41,16 @@ def _files() -> list[tuple[str, bytes]]:
     return out
 
 
+_FIXED_DATE = (1980, 1, 1, 0, 0, 0)   # 可复现构建：固定时间戳，同输入→同字节
+
+
+def _writestr(zf: zipfile.ZipFile, name: str, data: bytes) -> None:
+    info = zipfile.ZipInfo(name, date_time=_FIXED_DATE)
+    info.compress_type = zipfile.ZIP_DEFLATED
+    info.external_attr = 0o644 << 16
+    zf.writestr(info, data)
+
+
 def build(dist_dir: Path | None = None, version: str | None = None) -> Path:
     version = version or _version()
     dist_dir = Path(dist_dir or ROOT / "dist")
@@ -71,13 +81,13 @@ def build(dist_dir: Path | None = None, version: str | None = None) -> Path:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         for rel, data in files:
-            zf.writestr(rel, data)
+            _writestr(zf, rel, data)
             records.append((rel, _hash(data), str(len(data))))
-        zf.writestr(f"{dist_info}/METADATA", metadata)
+        _writestr(zf, f"{dist_info}/METADATA", metadata)
         records.append((f"{dist_info}/METADATA", _hash(metadata), str(len(metadata))))
-        zf.writestr(f"{dist_info}/WHEEL", wheel_meta)
+        _writestr(zf, f"{dist_info}/WHEEL", wheel_meta)
         records.append((f"{dist_info}/WHEEL", _hash(wheel_meta), str(len(wheel_meta))))
-        zf.writestr(f"{dist_info}/entry_points.txt", entry)
+        _writestr(zf, f"{dist_info}/entry_points.txt", entry)
         eb = entry.encode()
         records.append((f"{dist_info}/entry_points.txt", _hash(eb), str(len(eb))))
         # RECORD 自身哈希为空
@@ -86,7 +96,7 @@ def build(dist_dir: Path | None = None, version: str | None = None) -> Path:
         for row in records:
             w.writerow(row)
         w.writerow((f"{dist_info}/RECORD", "", ""))
-        zf.writestr(f"{dist_info}/RECORD", rec.getvalue())
+        _writestr(zf, f"{dist_info}/RECORD", rec.getvalue().encode())
     wheel_path.write_bytes(buf.getvalue())
     return wheel_path
 

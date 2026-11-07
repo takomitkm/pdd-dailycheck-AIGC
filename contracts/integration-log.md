@@ -95,6 +95,16 @@
 - 测试规模：274 passed + 3 skipped（POSIX 锁测试 Windows 跳过、Debian 真跑），16.7s。
 - 修：无斜杠 StatusBar 焦点识别；profile 测试改 tmp_path 不再污染 CWD。
 
+### 12. 2026-11-07 10:20 — T16 离线基线（真数据）
+- scripts/bench.py：OCR 墙钟（取 reports/t07 的 356 次真实调用）+ 纯感知微基准
+  （语料 356 份真 TSV ×2 轮）+ 成对比较（delta 需统计证据支撑）。
+- 基线结果（docs/refactor-v2/t16-baseline.json）：psm11 p50=1.41s/p95=2.91s（n=178）、
+  psm6 p50=1.06s/p95=1.97s（n=178）；parse_tsv p50=0.89ms、ocr_pass_candidates
+  p50=1.27ms。→ 纯感知 ~2ms 相对 OCR ~1.4s 可忽略，T16 优化重点在**引擎**
+  （RapidOCR 挑战者）与调用次数（同帧共享/按页跳过），不在业务代码热路径。
+- 修：wheel 条目时间戳随构建时刻变导致同版本重建字节不同（真实不确定性 bug）——
+  改固定时间戳，wheel 可复现（同输入同字节）。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

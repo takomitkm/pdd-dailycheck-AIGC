@@ -1,0 +1,50 @@
+{
+ "schema_version": 1,
+ "kind": "t16-baseline",
+ "wall_clock": {
+  "source": "reports\\t07\\batch-summary.json",
+  "engine_version": "tesseract 5.5.0",
+  "stages": {
+   "psm11": {
+    "n": 178,
+    "min": 0.36,
+    "p50": 1.4085,
+    "p95": 2.906,
+    "max": 4.33,
+    "mean": 1.4667
+   },
+   "psm6": {
+    "n": 178,
+    "min": 0.354,
+    "p50": 1.056,
+    "p95": 1.972,
+    "max": 3.791,
+    "mean": 1.1068
+   }
+  }
+ },
+ "perception": {
+  "files": 356,
+  "repeats": 2,
+  "calls": 712,
+  "deterministic": true,
+  "stages": {
+   "parse_tsv_ms": {
+    "n": 712,
+    "min": 0.0063,
+    "p50": 0.8901,
+    "p95": 1.9196,
+    "max": 3.5589,
+    "mean": 0.9684
+   },
+   "ocr_pass_candidates_ms": {
+    "n": 712,
+    "min": 0.0235,
+    "p50": 1.2665,
+    "p95": 2.7601,
+    "max": 4.1054,
+    "mean": 1.3697
+   }
+  }
+ }
+}
