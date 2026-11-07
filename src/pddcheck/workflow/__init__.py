@@ -15,6 +15,22 @@ from pddcheck.workflow.check_before import (
     CheckBeforeOutcome,
     check_done_before_decision,
 )
+from pddcheck.workflow.steps import (
+    ProofOutcome,
+    StepAction,
+    back_on_page_decision,
+    entry_guard_decision,
+    proof_ok_decision,
+    recovery_coord_decision,
+    top_retry_decision,
+)
+from pddcheck.workflow.terminal import (
+    ClosePolicy,
+    TerminalPlan,
+    ledger_plan,
+    notify_title,
+    terminal_plan,
+)
 
 __all__ = [
     "VerifyObservation",
@@ -24,4 +40,16 @@ __all__ = [
     "CheckBeforeKind",
     "CheckBeforeOutcome",
     "check_done_before_decision",
+    "StepAction",
+    "ProofOutcome",
+    "back_on_page_decision",
+    "entry_guard_decision",
+    "proof_ok_decision",
+    "recovery_coord_decision",
+    "top_retry_decision",
+    "ClosePolicy",
+    "TerminalPlan",
+    "ledger_plan",
+    "notify_title",
+    "terminal_plan",
 ]
