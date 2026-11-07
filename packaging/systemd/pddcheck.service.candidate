@@ -1,0 +1,15 @@
+# T17 候选单元（不安装、不触发现役 timer；只在 staging 校验语法用）
+# 用户级 oneshot：无 Restart；LANG 固定；Nice 让位；业务时区在程序内处理。
+[Unit]
+Description=PDD 每日签到（候选，未安装）
+After=network-online.target
+
+[Service]
+Type=oneshot
+# 凭据与状态路径由安装脚本展开；这里保持占位
+ExecStart=%h/.local/share/pddcheck/launcher.sh
+Environment=LANG=C.UTF-8
+Nice=10
+# 明确不重启：定时器负责节律，失败由推送暴露，绝不 Restart 反复点
+Restart=no
+# 连接在受锁且日标记之后（D03）：不在 ExecStartPre 里做设备连接

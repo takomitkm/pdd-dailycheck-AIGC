@@ -116,3 +116,12 @@ def main(argv: list[str] | None = None) -> int:
     if result.stderr:
         print(result.stderr, end="", file=sys.stderr)
     return int(result.code)
+
+
+def _console() -> None:
+    """console_scripts 入口：把 main 的返回码转成进程退出码。"""
+    raise SystemExit(main())
+
+
+if __name__ == "__main__":
+    _console()
