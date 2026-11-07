@@ -51,8 +51,10 @@
 
 ## 4. 已知风险与缺口（照实写）
 
-1. **端到端未接真机**：`run_once` 通过 `ScreenPort` seam 注入事实；真实「设备采集+OCR+
-   感知」绑定（device→vision→perception→flow）尚未在真实硬件上跑过。属 T18a 范畴。
+1. **端到端已接线、未上真机**：`cli/bootstrap.py` 已把「设备采集→共享观察→定位→
+   事实→决策→收尾→通知」装配成一条线，并用 FakeDevice+假引擎跑通 lit3/lit1/lit4
+   三路径（`tests/integration/test_pipeline_e2e.py`）。真机只需替换 device/engine
+   两个适配器（T18a），管线本身不再改动。
 2. **B01–B09 兼容差异**：见 `contracts/baseline/discrepancies.md`；B04（文字枪弱证明）、
    B05（rc0&lit0 不可达兼容分支）、B07（rc≠0 只 HOME）、B08（同名 Activity 残留风险）
    已在代码显式标注并有测试/注释，但 B08 无法用坐标消除。
