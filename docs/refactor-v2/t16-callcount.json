@@ -1,0 +1,29 @@
+{
+ "schema_version": 1,
+ "kind": "t16-callcount",
+ "frames": 178,
+ "targets": [
+  "popup",
+  "subsidy",
+  "bag",
+  "light",
+  "done",
+  "exchange",
+  "browse",
+  "pend",
+  "prize"
+ ],
+ "per_frame": {
+  "legacy": 69,
+  "shared": 9,
+  "lazy_xml_first": 9
+ },
+ "totals": {
+  "legacy": 12282,
+  "shared": 1602,
+  "lazy_xml_first": 1602
+ },
+ "reduction_shared_pct": 87.0,
+ "reduction_lazy_pct": 87.0,
+ "semantics": "只减少「没有目标需要」的调用；每个目标可用来源集合不变"
+}

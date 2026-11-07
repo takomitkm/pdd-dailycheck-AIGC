@@ -43,8 +43,26 @@ class TextLine:
     bottom: int
 
 
+def _int(cols, i: int, default: int = 0) -> int:
+    try:
+        return int(cols[i])
+    except (ValueError, IndexError):
+        return default
+
+
+def _float(cols, i: int, default: float = 0.0) -> float:
+    try:
+        return float(cols[i])
+    except (ValueError, IndexError):
+        return default
+
+
 def parse_tsv(tsv_text: str) -> tuple[TextLine, ...]:
-    """解析 TSV 文本 → 合行后的 TextLine 元组（保持文件顺序）。"""
+    """解析 TSV 文本 → 合行后的 TextLine 元组（保持文件顺序）。
+
+    健壮性：坏行进（列不足/非数字坐标或置信度/level 非 5）一律跳过或按 0 处理，
+    绝不因单行垃圾抛异常——引擎坏输出不能拖垮整帧（空结果≠错误）。
+    """
     lines: dict[tuple[int, int, int], dict] = {}
     order: list[tuple[int, int, int]] = []
     for row in tsv_text.splitlines():
@@ -54,10 +72,13 @@ def parse_tsv(tsv_text: str) -> tuple[TextLine, ...]:
         text = cols[11].strip()
         if text in ("", "-"):
             continue
-        key = (int(cols[2]), int(cols[3]), int(cols[4]))
-        left, top = int(cols[6]), int(cols[7])
-        box = (left, top, left + int(cols[8]), top + int(cols[9]))
-        conf = float(cols[10] or 0)
+        try:
+            key = (int(cols[2]), int(cols[3]), int(cols[4]))
+        except ValueError:
+            continue
+        left, top = _int(cols, 6), _int(cols, 7)
+        box = (left, top, left + _int(cols, 8), top + _int(cols, 9))
+        conf = _float(cols, 10)
         if key not in lines:
             lines[key] = {"tokens": [], "chars": [], "confs": [],
                           "l": 1 << 30, "u": 1 << 30, "r": 0, "d": 0, "raws": []}

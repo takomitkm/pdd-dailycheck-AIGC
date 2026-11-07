@@ -24,8 +24,9 @@ class Screen:
 
 
 def run_case(tmp_path, *, facts=None, obs=(), marker=False, force=False,
-             lock_busy=False, failures=(), ledger_seed=None, endpoint="http://stub/x"):
-    dev = FakeDevice(now_ns=lambda: 1000)
+             lock_busy=False, failures=(), ledger_seed=None, endpoint="http://stub/x",
+             tap=(720, 1280)):
+    dev = FakeDevice(now_ns=lambda: 1000, tap_size=tap)
     for f in failures:
         dev.inject_failure(f)
     store = DailyStore(tmp_path / "runs", tmp_path / "pause")

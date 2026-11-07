@@ -117,6 +117,16 @@
 - 已知环境坑：Python 子进程调 wsl.exe 在本机返回 -1（交互式 shell 正常），故 tesseract
   侧复用 T07 原生测量而非现跑；rapidocr 为进程内直接可测。
 
+### 14. 2026-11-07 10:55 — T16 结构证据 + 47×2 + 语料健壮性
+- scripts/callcount.py：同帧共享/惰性 XML 的**调用计数**（结构指标，不需引擎）：
+  旧每目标独立跑 69 次/帧 → 共享 9 → 惰性 9；**降 87%**（docs/refactor-v2/t16-callcount.json）。
+  语义：只减「无目标需要」的调用，每目标可用来源集合不变。
+- 47×2：流程场景在 1440×2560 点空间复跑结果不变；坐标兜底按 half-up 正确映射
+  (100,895)→(200,1790)（tests/integration/test_resolution.py）。
+- 语料健壮性：356 份真 TSV + 全 XML 全部不崩、可复现；发现并修 **parse_tsv 坏 conf
+  会抛异常**的真实 bug（改容错：坏行跳过/坏值按 0，与旧 awk 强制转换一致）。
+- 测试 306 passed + 4 skipped（53s，含语料扫描）。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
