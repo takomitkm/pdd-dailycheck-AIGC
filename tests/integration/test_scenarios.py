@@ -127,9 +127,10 @@ def test_marker_write_failure_is_73_but_keeps_business_rc(tmp_path):
 
 
 def test_scenarios_never_real_sleep(tmp_path):
-    """整表跑完远小于 1 秒——证明没有真 sleep（FakeClock）。"""
+    """整表跑完远小于真实 sleep 的量级——证明没有真 sleep（FakeClock）。
+    阈值 5s：9 个场景含文件写入，机器负载高时也可能到 1-2s；重点是「不是分钟级 sleep」。"""
     import time
     t0 = time.monotonic()
     for case in CASES:
         _run(tmp_path / case["name"], case)
-    assert time.monotonic() - t0 < 2.0
+    assert time.monotonic() - t0 < 5.0

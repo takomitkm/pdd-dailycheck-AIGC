@@ -152,6 +152,17 @@
 - 跨引擎一致性：同一框/文本/置信度下，两后端 parse_tsv 的行文本/几何/conf 完全一致。
 - 测试 326 passed + 4 skipped。
 
+### 18. 2026-11-07 11:40 — T14 组合根接线（端到端可跑）
+- cli/bootstrap.py：把真实类装配成一条线——设备采集→共享观察（observe_frame/
+  locate_all）→事实抽取→run_once（锁/日标记/点亮/核实/收尾/通知）。硬件用
+  FakeDevice 顶替；真机只换 device/engine 两个适配器，其余不动。
+- vision/source.py：DeviceVisionSource（一帧只截一次像素，fetch_ocr 复用）；
+  perception/facts.py：进度次数/待兑换天数/各标签的纯函数抽取（多措辞，读不到≠0）。
+- 端到端测试：lit3（点前4→点后3）、done(lit1 不点)、pend(lit4 账本3) 三路径；
+  共享观察一帧一取（observe_calls=2/1）。修：pend 判定词太窄（补「点亮任务已完成/
+  天后可兑换/券已放进口袋」）；「无真 sleep」阈值 2s→5s（负载波动）。
+- 测试 333 passed + 4 skipped。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
