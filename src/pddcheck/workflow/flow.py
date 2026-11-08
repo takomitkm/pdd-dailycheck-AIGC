@@ -242,17 +242,23 @@ def _browse_after_light(deps: "RunDeps", notes: list) -> bool:
     """点亮后的浏览任务（生产 11-08 实测：点「立即点亮」后进入
     「滑动浏览当前页面10秒即可点亮」页面，必须滚动 10 秒才真正点亮）。
 
-    手势参数照抄旧脚本 browse_page（pdd.sh L1227-1252 / L81-95，10-09/10-10 实测沉淀）：
-    - x=0.75×720=540；单次 y1=0.8×1280=1024 → y2=y1-半屏(640)=384（**不超过半屏**，
-      滑过头进度卡甩出屏幕）；
-    - **按压 800ms**（这才是计入浏览时长的部分；300ms 无效——11-08 实测滑了 20 下没点亮）；
-    - 两次之间不留空档（BROWSE_WAIT=0）；
-    - 按秒表滑满 15s（BROWSE_SECONDS，给 10s 计时留富余），保险丝 60 下。
+    手势按**屏幕比例**现算（用户口径 2026-11-08：不写死像素，跟随真实 tap 空间），
+    数值来自旧脚本 browse_page 的比例口径（pdd.sh L1227-1252 / L81-95）：
+    - x = 0.75 × tap_w（720 宽上是 540）；
+    - 单次 y1 = 0.8 × tap_h → y2 = y1 − 半屏（不超过半屏，滑过头进度卡甩出屏幕）；
+    - **按压 800ms**（这才是计入浏览时长的部分；300ms 无效——11-08 实测）；
+    - 两次之间不留空档；按秒表滑满 15s（给 10s 计时留富余），保险丝 60 下。
     返回是否滑满时长。
     """
     from pddcheck.domain.errors import InvalidDomain
     sleep = getattr(deps, "browse_sleep", None) or time.sleep
-    bx, y1, y2 = 540, 1024, 384
+    tw = int(getattr(deps.device, "tap_width", 0) or 720)
+    th = int(getattr(deps.device, "tap_height", 0) or 1280)
+    if tw <= 0 or th <= 0:
+        tw, th = 720, 1280
+    bx = int(tw * 0.75)
+    y1 = int(th * 0.8)
+    y2 = max(2, y1 - th // 2)          # 单次不超过半屏
     dur_ms = 800
     t0 = time.monotonic()
     ok = 0
@@ -264,18 +270,18 @@ def _browse_after_light(deps: "RunDeps", notes: list) -> bool:
                 run_id=deps.run_id, kind=ActionKind.SWIPE,
                 source_capture_id="cap", state_epoch=getattr(deps.device, "state_epoch", 0),
                 geometry_revision=0, deadline_ns=deps.now_ns() + 15_000_000_000,
-                reason=f"浏览任务滑动 {ok + 1}（x={bx} {y1}->{y2} {dur_ms}ms）",
+                reason=f"浏览任务滑动 {ok + 1}（比例 x=0.75 y=0.8→0.3 {dur_ms}ms）",
                 source_candidate_id="browse-cand",
                 target_key="browse",
                 expected_package="com.xunmeng.pinduoduo",
                 required_window_kind=WindowKind.APP)
-            deps.device.execute(intent, (bx, y1, bx, y2))
+            deps.device.execute(intent, (bx, y1, bx, y2, dur_ms))
             ok += 1
         except InvalidDomain as exc:
             notes.append(f"浏览段第 {ok + 1} 次滑动被拒：{exc}")
             break
     elapsed = round(time.monotonic() - t0, 1)
-    notes.append(f"浏览任务段：{ok} 次滑动 / {elapsed}s（目标 ≥10s）")
+    notes.append(f"浏览任务段：{ok} 次滑动 / {elapsed}s（目标 ≥10s，比例口径 {tw}x{th}）")
     return elapsed >= 10.0
 
 
