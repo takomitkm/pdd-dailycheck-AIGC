@@ -368,6 +368,17 @@
 - 未签到日真实 lit3 真点亮：今日已签到（旧/新共用日标记语义），**不能伪造未签到状态**；
   将在下一次自然无 .done 标记的运行中由 pddcheck 生产 timer 验证（或用户指定窗口）。
 
+### 44. 2026-11-08 20:00 — 生产首跑翻车 + 修复（0.1.27 已部署）
+- **11-08 10:00 生产首跑失败**：`ensure_ready → start` 被 AdbDevice 护栏拒绝
+  （`home_activity_missing: 必须显式 HOME_ACT 启动，禁止 monkey`）→ service FAILURE。
+  根因：bootstrap 的 act() 把 home_activity 只传进了 StagePolicy；**AdbDevice 构造没传**
+  （演练脚本传了所以演练通过，生产路径漏——演练与生产的分叉点）。
+- 旧 pdd.timer 已于 11-07 停用 → **11-08 当天签到未执行**（无推送、无标记）。
+- 修复：`run` 构造 AdbDevice 时传 `home_activity=cfg.home_activity`；回归测试 2 项
+  （源级断言 + 默认值）；388 passed + 4 skipped；0.1.27 部署为 current，已推 main。
+- 11-08 补签：不在授权窗口（21:00–03:00）内不做业务动作；待窗口内手动触发或
+  11-09 10:00 timer 自然验证。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
