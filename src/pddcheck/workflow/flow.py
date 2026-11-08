@@ -135,6 +135,20 @@ def run_once(deps: RunDeps) -> RunOutcome:
                 lit = 0
                 notes.append(f"dry-run：本来会点 {pre.before_count} 那一枪"
                              f"（method={pre.kind.value}），本次不执行")
+            elif facts.get("browse_page"):
+                # 生产 11-08 晚实测：点完「立即点亮」落在**浏览页**（「滑动浏览当前
+                # 页面10秒即可点亮」）——此时没有「立即点亮」按钮，正确动作是直接
+                # 做浏览段（滑满 10s），再核实。
+                if deps.dry_run:
+                    notes.append("dry-run：当前已是浏览页，本来会滑满 10s，本次不滑")
+                    lit = 0
+                else:
+                    swipe_ok = _browse_after_light(deps, notes)
+                    obs = deps.screen.post_tap_observations()
+                    decision = verify_light_decision(pre.before_count, facts.get("tap_method", "ocr"), obs)
+                    rc, lit = decision.rc, decision.lit
+                    notes.append(f"核实：{decision.proof_kind.value} — {decision.why}"
+                                 + ("（浏览页直滑）" if swipe_ok else ""))
             elif facts.get("tap_point") is None:
                 # 生产 11-08 补签踩到：整页读不到「立即点亮」→ tap_point=None，
                 # 旧弱证明把「没点」报成 lit3 并写标记。废除：无点不点，rc6 不写标记。

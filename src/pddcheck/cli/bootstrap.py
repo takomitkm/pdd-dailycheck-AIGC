@@ -102,6 +102,7 @@ class _ScreenFromPipeline:
         self.observe_calls += 1
         results = locate_all(obs, self._cfg.specs, min_conf=40) if self._cfg.specs else {}
         text = "\n".join(obs.ocr_texts.values())
+        self._last_raw_text = text          # 浏览页判定用（facts 字段不含任务条文案）
         facts = facts_from_text(text)
         # 裁片通道里认到的 done（整页读不到进度条右侧那个按钮）合并进事实
         done_cand = results.get("done")
@@ -116,10 +117,15 @@ class _ScreenFromPipeline:
         light = results.get("light")
         tap_point = light.winning.tap_point if light and light.winning else None
         self._tap_point = tap_point
+        # 浏览页判定（生产 11-08 晚）：整页文本含「滑动浏览」+「即可点亮」→ 已在浏览任务页
+        page_text = " ".join(str(v) for v in
+                             (facts.done_text, facts.exchange_text, facts.pend_text)) or ""
+        all_text = getattr(self, "_last_raw_text", "")
+        browse_page = ("滑动浏览" in all_text and "即可点亮" in all_text)
         return {"done_text": facts.done_text, "exchange_text": facts.exchange_text,
                 "pend_text": facts.pend_text, "pend_days": facts.pend_days,
                 "before_count": facts.progress_count, "tap_point": tap_point,
-                "tap_method": "ocr"}
+                "tap_method": "ocr", "browse_page": browse_page}
 
     def post_tap_observations(self) -> tuple[VerifyObservation, ...]:
         facts_after, _ = self._observe()
