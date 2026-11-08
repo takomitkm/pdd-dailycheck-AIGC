@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from pddcheck.perception import TargetLocateSpec, locate_all, observe_frame
 from pddcheck.perception.facts import facts_from_text
 from pddcheck.perception.observe import XmlPolicy
+from pddcheck.perception.pagekind import PageKind, classify_page
 
 
 class StageFailure(Exception):
@@ -67,11 +68,21 @@ class StageRunner:
 
         真机教训（T18a 连跑）：上一轮残留的页面（活动页/频道页）会让下一轮的
         入口判定产生 rc4/rc5 交替——必须先回到**首页**这个确定状态再开始。
+
+        生产教训（11-08 首跑补签）：手机停在**点亮活动页**上时，BACK 只会退到
+        频道页而回不到 HomeActivity → rc7 误伤。但活动页本身就是**可直接续跑的
+        起点**（点亮段只看页面事实）——所以页型判定为 activity 时直接接受，
+        不强求回首页（与旧脚本「STEPS 从当前页面续跑」同语义）。
         """
         v = self._read()
         if v.focus_package == self.policy.pkg and \
                 (v.focus_activity or "").endswith("HomeActivity"):
             return                                     # 已在首页
+        if v.focus_package == self.policy.pkg and \
+                not (v.focus_activity or "").endswith("HomeActivity"):
+            from pddcheck.perception.pagekind import classify_page
+            if classify_page(v.ocr_text) is PageKind.ACTIVITY:
+                return                                 # 已在点亮活动页：直接续跑
         if v.focus_package != self.policy.pkg:
             # 显式 HOME_ACT 启动（禁止 monkey 兜底）
             self._act("wake", None)
@@ -83,13 +94,15 @@ class StageRunner:
                 raise StageFailure(7, f"launch 后焦点不是 PDD（{v.focus_package}）")
             if (v.focus_activity or "").endswith("HomeActivity"):
                 return
-        # 在 PDD 但不在首页：按 BACK 逐步退回首页（上限 back_to_home 次）
+        # 在 PDD 但不在首页/活动页：按 BACK 逐步退回首页（上限 back_to_home 次）
         for _ in range(back_to_home):
             self._act("back", None)
             self.policy.wait_step()
             v = self._read()
             if (v.focus_activity or "").endswith("HomeActivity"):
                 return
+            if classify_page(v.ocr_text) is PageKind.ACTIVITY:
+                return                                 # 退的过程中落到活动页也可续跑
         raise StageFailure(7, f"退不回首页（当前 {v.focus_activity}）")
 
     # ---- 入口：回到/进入补贴活动页 --------------------------------------
