@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 
 from pddcheck.perception import TargetLocateSpec, locate_all, observe_frame
@@ -63,16 +64,18 @@ class StageRunner:
         self.policy = policy
 
     # ---- 就绪：唤醒/启动到 PDD -----------------------------------------
-    def ensure_ready(self, *, back_to_home: int = 3) -> None:
+    def ensure_ready(self, *, back_to_home: int = 3, launch_wait_s: float = 12.0) -> None:
         """把手机带到 PDD 首页（确定性起点）。
 
         真机教训（T18a 连跑）：上一轮残留的页面（活动页/频道页）会让下一轮的
         入口判定产生 rc4/rc5 交替——必须先回到**首页**这个确定状态再开始。
 
-        生产教训（11-08 首跑补签）：手机停在**点亮活动页**上时，BACK 只会退到
-        频道页而回不到 HomeActivity → rc7 误伤。但活动页本身就是**可直接续跑的
-        起点**（点亮段只看页面事实）——所以页型判定为 activity 时直接接受，
-        不强求回首页（与旧脚本「STEPS 从当前页面续跑」同语义）。
+        生产教训（11-08 首跑补签）：
+        1. 手机停在**点亮活动页**上时，BACK 只会退到频道页而回不到 HomeActivity
+           → rc7 误伤。活动页本身是可直接续跑的起点（页型判定 activity → 接受）。
+        2. **PDD 冷启动慢**：`am start` 发出后焦点切换可能远超 step_wait（实测 >4s）。
+           单次判定会误判「没起来」。→ start 后**轮询等待**焦点切换，上限
+           launch_wait_s（默认 12s）。
         """
         v = self._read()
         if v.focus_package == self.policy.pkg and \
@@ -80,7 +83,6 @@ class StageRunner:
             return                                     # 已在首页
         if v.focus_package == self.policy.pkg and \
                 not (v.focus_activity or "").endswith("HomeActivity"):
-            from pddcheck.perception.pagekind import classify_page
             if classify_page(v.ocr_text) is PageKind.ACTIVITY:
                 return                                 # 已在点亮活动页：直接续跑
         if v.focus_package != self.policy.pkg:
@@ -88,9 +90,16 @@ class StageRunner:
             self._act("wake", None)
             self._act("dismiss_keyguard", None)
             self._act("start", None)
-            self.policy.wait_step()
-            v = self._read()
-            if v.focus_package != self.policy.pkg:
+            # 轮询等焦点切到 PDD（冷启动实测可达 5–10s+）
+            deadline = time.monotonic() + launch_wait_s
+            launched = False
+            while time.monotonic() < deadline:
+                self.policy._sleep(2.0)
+                v = self._read()
+                if v.focus_package == self.policy.pkg:
+                    launched = True
+                    break
+            if not launched:
                 raise StageFailure(7, f"launch 后焦点不是 PDD（{v.focus_package}）")
             if (v.focus_activity or "").endswith("HomeActivity"):
                 return
