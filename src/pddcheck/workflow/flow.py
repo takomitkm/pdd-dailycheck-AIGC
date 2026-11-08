@@ -10,6 +10,7 @@ FakeDevice/FakeScreen 在毫秒内跑完整管线。业务失败绝不因通知�
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Protocol
 
@@ -72,6 +73,10 @@ class RunDeps:
     # 纯观察（--dry-run）：识别与决策照做，但**不执行任何业务动作、不写标记/账本、不推送**。
     # 用途：并行观察期只取证，确认新流程的判断与旧流程一致，而不代替签到。
     dry_run: bool = False
+    # 点亮后的浏览任务段（生产 11-08 实测必需：点「立即点亮」后是「滑动浏览10秒」页）。
+    # 默认 False：47 案行为基线不包含浏览段；CLI 真机路径显式开启。
+    browse_after_light: bool = False
+    browse_sleep: object | None = None   # 注入 sleep（测试用）；默认 time.sleep
 
 
 def _exit(rc: int, lit: int | None) -> ExitCode:
@@ -148,10 +153,17 @@ def run_once(deps: RunDeps) -> RunOutcome:
                     notes.append(f"动作执行状态未知（{receipt.error_code}），不重发按无法核实")
                     rc, lit = 1, None
                 else:
+                    # 4.5) 点亮后的**浏览任务段**（生产 11-08 晚实测：点「立即点亮」
+                    # 后跳到浏览页「滑动浏览当前页面10秒即可点亮」——必须滚动才算点亮。
+                    # 旧脚本 I06 同款：最终 20 次下滑）。做完再核实。
+                    swipe_ok = False
+                    if getattr(deps, "browse_after_light", False):
+                        swipe_ok = _browse_after_light(deps, notes)
                     obs = deps.screen.post_tap_observations()
                     decision = verify_light_decision(pre.before_count, facts.get("tap_method", "ocr"), obs)
                     rc, lit = decision.rc, decision.lit
-                    notes.append(f"核实：{decision.proof_kind.value} — {decision.why}")
+                    notes.append(f"核实：{decision.proof_kind.value} — {decision.why}"
+                                 + ("（浏览段已执行）" if swipe_ok else ""))
 
         # 内部 verify 的 rc=1（未过）对用户是 6（LIGHT_NOT_APPLIED）——acceptance §5
         business_rc = stage_rc if stage_rc is not None else (6 if rc == 1 else rc)
@@ -213,8 +225,39 @@ def run_once(deps: RunDeps) -> RunOutcome:
             lease.release()
 
 
-def _make_tap_intent(deps: RunDeps, facts: dict) -> ActionIntent:
-    return ActionIntent(
+def _browse_after_light(deps: "RunDeps", notes: list) -> bool:
+    """点亮后的浏览任务（生产 11-08 实测：点「立即点亮」后进入
+    「滑动浏览当前页面10秒即可点亮」页面，必须滚动 10 秒才真正点亮）。
+
+    旧脚本 I06 同款：最终 20 次下滑。这里做 20 次 swipe（每次后 ~1.5s，覆盖
+    10s 计时有富余），每次过护栏（expected_package= pdd + window APP）。
+    返回是否执行了足够次数（>=10）。
+    """
+    from pddcheck.domain.errors import InvalidDomain
+    sleep = getattr(deps, "browse_sleep", None) or time.sleep
+    ok = 0
+    for i in range(20):
+        try:
+            intent = ActionIntent(
+                action_id=f"{deps.run_id}-browse-{i}-{deps.now_ns()}",
+                run_id=deps.run_id, kind=ActionKind.SWIPE,
+                source_capture_id="cap", state_epoch=getattr(deps.device, "state_epoch", 0),
+                geometry_revision=0, deadline_ns=deps.now_ns() + 15_000_000_000,
+                reason=f"浏览任务下滑 {i + 1}/20", source_candidate_id="browse-cand",
+                target_key="browse",
+                expected_package="com.xunmeng.pinduoduo",
+                required_window_kind=WindowKind.APP)
+            deps.device.execute(intent, (360, 900, 360, 300))
+            ok += 1
+        except InvalidDomain as exc:
+            notes.append(f"浏览段第 {i + 1} 次下滑被拒：{exc}")
+            break
+        sleep(1.5)                    # 旧脚本节奏（含计时富余）
+    notes.append(f"浏览任务段：{ok}/20 次下滑完成")
+    return ok >= 10
+
+
+def _make_tap_intent(deps: RunDeps, facts: dict) -> ActionIntent:    return ActionIntent(
         action_id=f"{deps.run_id}-light-{deps.now_ns()}",
         run_id=deps.run_id,
         kind=ActionKind.TAP,

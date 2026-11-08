@@ -56,6 +56,8 @@ class PipelineConfig:
     pill_th: int = 120
     # light/done 的右上按钮裁片（profile [targets.light].pill 同值；整页读不出）
     light_pill: tuple[tuple[float, float, float, float], str] | None = None
+    # 点亮后浏览任务段（滑动 10s 才真点亮）；CLI 真机路径开、47 案基线关
+    browse_after_light: bool = False
     # 纯观察：识别与决策照做，业务动作一律拒绝、不写标记/账本、不推送（只留证据）
     dry_run: bool = False
 
@@ -289,7 +291,8 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                    force=cfg.force, close_app_on_ok=cfg.close_app_on_ok,
                    stage_failure_rc=stats.get("stage_failure_rc"),
                    stage_failure_why=stats.get("stage_failure"),
-                   dry_run=cfg.dry_run)
+                   dry_run=cfg.dry_run,
+                   browse_after_light=cfg.browse_after_light)
     outcome = run_once(deps)
     stats["observe_calls"] = screen.observe_calls
     return outcome, stats

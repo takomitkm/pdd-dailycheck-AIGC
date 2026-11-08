@@ -70,15 +70,21 @@ def _cmd_run(args) -> CliResult:
         except Exception:
             pc = None
         bag_pill = (pc, "color") if pc is not None else ((0.472, 0.375, 0.75, 0.4375), "color")
-    cfg = PipelineConfig(business_date=date, run_id=f"run-{date}",
-                         evidence_dir=str(ev / date),
-                         endpoint=(None if os.environ.get("PDDCHECK_NO_PUSH") == "1"
-                                   else read_endpoint_file(home / "Desktop" / "pdd-push.url")),
-                         force=bool(getattr(args, "force", False)), specs=specs,
-                         run_stages=run_stages,
-                         dry_run=bool(getattr(args, "dry_run", False)),
-                         bag_pill=bag_pill,
-                         light_pill=light_pill)
+    # 真机路径：点亮后浏览任务段（滑动 10s）——47 案基线不含此段，CLI 显式开
+    browse_after_light = not bool(getattr(args, "dry_run", False))
+    cfg = PipelineConfig(
+        business_date=date, run_id=f"run-{date}",
+        evidence_dir=str(ev / date),
+        endpoint=(None if os.environ.get("PDDCHECK_NO_PUSH") == "1"
+                  else read_endpoint_file(home / "Desktop" / "pdd-push.url")),
+        force=bool(getattr(args, "force", False)), specs=specs,
+        run_stages=run_stages,
+        dry_run=bool(getattr(args, "dry_run", False)),
+        bag_pill=bag_pill,
+        light_pill=light_pill,
+        browse_after_light=browse_after_light)
+    # 真机路径：点亮后浏览任务段（滑动 10s）——47 案基线不含此段，CLI 显式开
+    browse_after_light = not bool(getattr(args, "dry_run", False))
     # 显式 HOME_ACT（真机 resolve-activity 实测；护栏要求，禁止 monkey 兜底）
     dev = AdbDevice(serial, home_activity=cfg.home_activity)
     try:

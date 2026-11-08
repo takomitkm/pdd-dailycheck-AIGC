@@ -48,7 +48,9 @@ def _run(tmp_path, case):
         store=store, journal=Journal(tmp_path / "j.jsonl"), notifier=OK_SENDER,
         endpoint="http://stub/x", evidence_dir=str(tmp_path / "ev"),
         business_date="2026-11-07", run_id="run-1", now_ns=lambda: 1000,
-        lease_factory=lease, force=case.get("force", False))
+        lease_factory=lease, force=case.get("force", False),
+        browse_after_light=False,           # 基线口径：点亮后浏览段不在 47 案内
+        browse_sleep=lambda s: None)        # （真机路径才开；见 test_browse_after_light）
     return run_once(deps), dev
 
 
