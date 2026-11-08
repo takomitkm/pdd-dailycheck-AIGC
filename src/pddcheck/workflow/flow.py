@@ -229,32 +229,41 @@ def _browse_after_light(deps: "RunDeps", notes: list) -> bool:
     """点亮后的浏览任务（生产 11-08 实测：点「立即点亮」后进入
     「滑动浏览当前页面10秒即可点亮」页面，必须滚动 10 秒才真正点亮）。
 
-    旧脚本 I06 同款：最终 20 次下滑。这里做 20 次 swipe（每次后 ~1.5s，覆盖
-    10s 计时有富余），每次过护栏（expected_package= pdd + window APP）。
-    返回是否执行了足够次数（>=10）。
+    手势参数照抄旧脚本 browse_page（pdd.sh L1227-1252 / L81-95，10-09/10-10 实测沉淀）：
+    - x=0.75×720=540；单次 y1=0.8×1280=1024 → y2=y1-半屏(640)=384（**不超过半屏**，
+      滑过头进度卡甩出屏幕）；
+    - **按压 800ms**（这才是计入浏览时长的部分；300ms 无效——11-08 实测滑了 20 下没点亮）；
+    - 两次之间不留空档（BROWSE_WAIT=0）；
+    - 按秒表滑满 15s（BROWSE_SECONDS，给 10s 计时留富余），保险丝 60 下。
+    返回是否滑满时长。
     """
     from pddcheck.domain.errors import InvalidDomain
     sleep = getattr(deps, "browse_sleep", None) or time.sleep
+    bx, y1, y2 = 540, 1024, 384
+    dur_ms = 800
+    t0 = time.monotonic()
     ok = 0
-    for i in range(20):
+    max_swipes = 60
+    while time.monotonic() - t0 < 15.0 and ok < max_swipes:
         try:
             intent = ActionIntent(
-                action_id=f"{deps.run_id}-browse-{i}-{deps.now_ns()}",
+                action_id=f"{deps.run_id}-browse-{ok}-{deps.now_ns()}",
                 run_id=deps.run_id, kind=ActionKind.SWIPE,
                 source_capture_id="cap", state_epoch=getattr(deps.device, "state_epoch", 0),
                 geometry_revision=0, deadline_ns=deps.now_ns() + 15_000_000_000,
-                reason=f"浏览任务下滑 {i + 1}/20", source_candidate_id="browse-cand",
+                reason=f"浏览任务滑动 {ok + 1}（x={bx} {y1}->{y2} {dur_ms}ms）",
+                source_candidate_id="browse-cand",
                 target_key="browse",
                 expected_package="com.xunmeng.pinduoduo",
                 required_window_kind=WindowKind.APP)
-            deps.device.execute(intent, (360, 900, 360, 300))
+            deps.device.execute(intent, (bx, y1, bx, y2))
             ok += 1
         except InvalidDomain as exc:
-            notes.append(f"浏览段第 {i + 1} 次下滑被拒：{exc}")
+            notes.append(f"浏览段第 {ok + 1} 次滑动被拒：{exc}")
             break
-        sleep(1.5)                    # 旧脚本节奏（含计时富余）
-    notes.append(f"浏览任务段：{ok}/20 次下滑完成")
-    return ok >= 10
+    elapsed = round(time.monotonic() - t0, 1)
+    notes.append(f"浏览任务段：{ok} 次滑动 / {elapsed}s（目标 ≥10s）")
+    return elapsed >= 10.0
 
 
 def _make_tap_intent(deps: RunDeps, facts: dict) -> ActionIntent:    return ActionIntent(

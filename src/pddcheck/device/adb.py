@@ -184,7 +184,7 @@ class AdbDevice:
         if intent.kind.value == "tap" and (not point or len(point) != 2):
             return ActionReceipt(intent.action_id, ExecutionStatus.REJECTED, now, now,
                                  "tap_point_missing")
-        if intent.kind.value == "swipe" and (not point or len(point) != 4):
+        if intent.kind.value == "swipe" and (not point or len(point) < 4):
             return ActionReceipt(intent.action_id, ExecutionStatus.REJECTED, now, now,
                                  "swipe_point_missing")
         # 动作前前台校验（T06.6 安全护栏）：业务动作必须落在预期包/窗口上，否则拒绝。
@@ -221,8 +221,11 @@ class AdbDevice:
         if k == "swipe":
             if not point or len(point) != 4:
                 raise AdbError("swipe_point_missing", "SWIPE 需要 (x1,y1,x2,y2)")
+            # 按压时长：旧脚本 BROWSE_DUR=800ms 才计入浏览时长（300ms 无效）；
+            # 点 (x1,y1,x2,y2,dur) 五元组可自定义，缺省 800。
+            dur = point[4] if len(point) >= 5 else 800
             return self._adb("shell", "input", "swipe",
-                             *(str(v) for v in point), "300")
+                             *(str(v) for v in point[:4]), str(dur))
         if k == "back":
             return self._adb("shell", "input", "keyevent", "KEYCODE_BACK")
         if k == "home":
