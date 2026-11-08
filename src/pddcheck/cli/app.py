@@ -73,7 +73,8 @@ def _cmd_run(args) -> CliResult:
                          run_stages=run_stages,
                          dry_run=bool(getattr(args, "dry_run", False)),
                          bag_pill=bag_pill)
-    dev = AdbDevice(serial)
+    # 显式 HOME_ACT（真机 resolve-activity 实测；护栏要求，禁止 monkey 兜底）
+    dev = AdbDevice(serial, home_activity=cfg.home_activity)
     try:
         dev.connect()
     except AdbError as exc:
