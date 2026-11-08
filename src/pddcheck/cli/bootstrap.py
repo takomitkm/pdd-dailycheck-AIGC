@@ -258,6 +258,11 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
             else:
                 runner.ensure_ready()
                 stats["stages"].append("ready:ok")
+                # 弹窗清除（用户 11-08 现场口径：屏幕中间「邀请/抽」推广弹窗挡页面）
+                popup_spec = cfg.specs.get("popup")
+                n_pop = runner.dismiss_popup(popup_spec)
+                if n_pop:
+                    stats["stages"].append(f"popup:closed{n_pop}")
                 runner.enter_subsidy(cfg.specs["subsidy"], scroll_to_top=runner.scroll_to_top)
                 stats["stages"].append("entry:ok")
                 runner.open_bag(cfg.specs["bag"], extra_candidates=bag_pill_candidates)

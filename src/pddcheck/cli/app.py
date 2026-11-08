@@ -50,6 +50,9 @@ def _cmd_run(args) -> CliResult:
         "bag": TargetLocateSpec(key="bag", labels=("抽福袋",), min_overlap=3,
                                 coord=(0.13889, 0.69922)),
         "light": TargetLocateSpec(key="light", labels=("立即点亮",), min_overlap=4),
+        # 弹窗关闭词（旧脚本 POPUP 同款；profile [targets.popup] 同口径）
+        "popup": TargetLocateSpec(key="popup", labels=("关闭", "跳过广告", "暂不", "以后再说"),
+                                  min_overlap=2),
     }
     # --stages：先走 就绪→入口→福袋 流程段（真机验证见 t18a-calibration-findings.md）。
     run_stages = bool(getattr(args, "stages", False))

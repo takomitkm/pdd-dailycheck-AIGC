@@ -63,6 +63,49 @@ class StageRunner:
         self._act = act
         self.policy = policy
 
+    # ---- 弹窗：清掉挡页面的推广弹窗（用户 11-08 现场指引） ---------------
+    def dismiss_popup(self, popup_spec: TargetLocateSpec | None = None,
+                      max_rounds: int = 3) -> int:
+        """清掉屏幕中间的推广弹窗（「邀请好友抽福袋」这类带「邀请/抽」的）。
+
+        用户口径（2026-11-08 现场）：弹窗在屏幕中间，文本带「邀请」或「抽」。
+        处理顺序：
+        1. 认到 popup 关闭词（关闭/跳过广告/暂不/以后再说）→ 点它（最安全）；
+        2. 认不到关闭词但**整页文本命中弹窗特征**（邀请+抽 同时出现、且页型不是
+           activity）→ 点弹窗外缘（右上角惯例位）一次；
+        3. 每一轮后重读页面，文本特征消失/页型变了即停。
+        返回清除轮数（0=没弹窗）。不做为失败路径：清不掉也只记 notes，由后续段
+        按页面事实自然失败（不盲点）。
+        """
+        closed = 0
+        for _ in range(max_rounds):
+            v = self._read()
+            if v.focus_package != self.policy.pkg:
+                break
+            page = _Page(v.ocr_text)
+            # 1) 有关闭词：优先点关闭词
+            if popup_spec is not None:
+                res = locate_all(page.frame("popup"), {"popup": popup_spec},
+                                 min_conf=self.policy.min_conf)
+                r = res["popup"]
+                if r.winning is not None:
+                    self._act("tap", r.winning.tap_point)
+                    self.policy.wait_step()
+                    closed += 1
+                    continue
+            # 2) 弹窗特征（邀请/抽 同时出现）且不在活动页 → 点右上角惯例关闭位
+            text = v.ocr_text
+            if ("邀请" in text and "抽" in text) and \
+                    classify_page(text) is not PageKind.ACTIVITY:
+                # 惯例关闭位：弹窗右上角外缘（点空间 720×1280 的 (614, 385) 一带，
+                # 真机多枚弹窗的 × 都落在这一带；非精确标定，命中不了就算了）
+                self._act("tap", (614, 385))
+                self.policy.wait_step()
+                closed += 1
+                continue
+            break                                   # 没有弹窗特征 → 结束
+        return closed
+
     # ---- 就绪：唤醒/启动到 PDD -----------------------------------------
     def ensure_ready(self, *, back_to_home: int = 3, launch_wait_s: float = 12.0) -> None:
         """把手机带到 PDD 首页（确定性起点）。
@@ -170,6 +213,10 @@ class StageRunner:
         """
         for attempt in range(self.policy.prove_max):
             v = self._read()
+            # 已在点亮活动页（生产 11-08 补签踩到：手机停在活动页、当天福袋已抽）
+            # → open_bag 的目标已达成，直接通过（点亮段在当前页续跑）。
+            if classify_page(v.ocr_text) is PageKind.ACTIVITY:
+                return
             point = None
             # 顺序：裁片通道优先（真机实测频道页只有 pill 认得出；整页会把零散单字
             # 误配成「抽福袋」→ 点错地方），整页仅在无裁片供给器时使用。
