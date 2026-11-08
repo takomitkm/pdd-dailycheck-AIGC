@@ -54,6 +54,8 @@ class PipelineConfig:
     bag_pill: tuple[tuple[float, float, float, float], str] | None = None
     pill_div: int = 2
     pill_th: int = 120
+    # light/done 的右上按钮裁片（profile [targets.light].pill 同值；整页读不出）
+    light_pill: tuple[tuple[float, float, float, float], str] | None = None
     # 纯观察：识别与决策照做，业务动作一律拒绝、不写标记/账本、不推送（只留证据）
     dry_run: bool = False
 
@@ -69,6 +71,9 @@ class _ScreenFromPipeline:
         self._tap_point = None
         self.last_facts: ScreenFacts | None = None
         self.observe_calls = 0
+        # light/done 裁片通道（profile [targets.light].pill 已有真机验证值；
+        # 整页 OCR 读不出「立即点亮/今日已点亮」——进度条右侧的按钮）
+        self._light_pill = getattr(cfg, "light_pill", None)
 
     def _observe(self) -> tuple[ScreenFacts, object]:
         # 通道选择：整页恒取；有 pill/band 标定的目标才加对应裁片通道
@@ -78,11 +83,14 @@ class _ScreenFromPipeline:
             channels.append(CoordinateSource.PILL)
         if self._cfg.band_region is not None:
             channels.append(CoordinateSource.BAND)
+        if self._light_pill is not None:
+            channels.append(CoordinateSource.PILL_LIGHT)
         source = DeviceVisionSource(
             self._device, self._engine,
             pill_box=self._cfg.pill_box, pill_div=self._cfg.pill_div,
             pill_mode=self._cfg.pill_mode,
-            band_region=self._cfg.band_region, band_scale=self._cfg.band_scale)
+            band_region=self._cfg.band_region, band_scale=self._cfg.band_scale,
+            light_pill=self._light_pill)
         obs = observe_frame(source, frame_id=f"{self._cfg.run_id}-f", capture_id="cap",
                             state_epoch=getattr(self._device, "state_epoch", 0),
                             tap_width=getattr(self._device, "tap_width", 720),

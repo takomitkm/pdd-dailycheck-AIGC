@@ -130,6 +130,11 @@ def run_once(deps: RunDeps) -> RunOutcome:
                 lit = 0
                 notes.append(f"dry-run：本来会点 {pre.before_count} 那一枪"
                              f"（method={pre.kind.value}），本次不执行")
+            elif facts.get("tap_point") is None:
+                # 生产 11-08 补签踩到：整页读不到「立即点亮」→ tap_point=None，
+                # 旧弱证明把「没点」报成 lit3 并写标记。废除：无点不点，rc6 不写标记。
+                notes.append("点亮失败：定位不到「立即点亮」（整页+裁片都没有）→ rc6，不写标记")
+                rc, lit = 6, None
             else:
                 # 4) 点亮一枪 + 核实
                 intent = _make_tap_intent(deps, facts)

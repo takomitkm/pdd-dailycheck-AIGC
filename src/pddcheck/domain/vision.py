@@ -34,6 +34,7 @@ class CoordinateSource(StrEnum):
     TESSERACT_PAGE = "tesseract_page"
     BAND = "band"
     PILL = "pill"
+    PILL_LIGHT = "pill_light"          # light/done 的独立裁片（右上按钮，与 bag 的 pill 分框）
     CONFIG_COORD = "config_coord"
 
 

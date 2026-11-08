@@ -56,6 +56,8 @@ def _cmd_run(args) -> CliResult:
     }
     # --stages：先走 就绪→入口→福袋 流程段（真机验证见 t18a-calibration-findings.md）。
     run_stages = bool(getattr(args, "stages", False))
+    # light/done 右上按钮裁片（真机验证：pill inv×2 psm7 读「立即点亮/今日已点亮」conf 96）
+    light_pill = ((0.597, 0.184, 1.0, 0.270), "inv")
     # bag 裁片标定：优先读 profile 的 pill_channel（ADR-003；用户批准后写入即生效），
     # 读不到再用真机验证过的 fallback（t18a-calibration-findings §2，(435,524)）。
     bag_pill = None
@@ -75,7 +77,8 @@ def _cmd_run(args) -> CliResult:
                          force=bool(getattr(args, "force", False)), specs=specs,
                          run_stages=run_stages,
                          dry_run=bool(getattr(args, "dry_run", False)),
-                         bag_pill=bag_pill)
+                         bag_pill=bag_pill,
+                         light_pill=light_pill)
     # 显式 HOME_ACT（真机 resolve-activity 实测；护栏要求，禁止 monkey 兜底）
     dev = AdbDevice(serial, home_activity=cfg.home_activity)
     try:

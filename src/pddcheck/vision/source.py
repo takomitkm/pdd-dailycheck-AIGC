@@ -19,7 +19,8 @@ class DeviceVisionSource:
     def __init__(self, device, engine: OcrEngine, *, psm: int = 6,
                  screenshot=None, band_region=None, pill_box=None,
                  band_scale: int = 3, band_cutoff: int = 1,
-                 pill_div: int = 2, pill_th: int = 120, pill_mode: str = "color") -> None:
+                 pill_div: int = 2, pill_th: int = 120, pill_mode: str = "color",
+                 light_pill=None) -> None:
         self.device = device
         self.engine = engine
         self.psm = psm
@@ -33,6 +34,7 @@ class DeviceVisionSource:
         self.pill_div = pill_div
         self.pill_th = pill_th
         self.pill_mode = pill_mode
+        self.light_pill = light_pill      # (box, mode) 或 None；PILL_LIGHT 通道用
         self._geometry: dict[CoordinateSource, tuple[float, float, float, float]] = {}
 
     # ---- 取数 -------------------------------------------------------
@@ -64,7 +66,8 @@ class DeviceVisionSource:
             return None
         tmp = _write_temp(prepared)
         try:
-            res = self.engine.recognize(tmp, 7 if source is CoordinateSource.PILL else self.psm)
+            res = self.engine.recognize(tmp, 7 if source in (
+                CoordinateSource.PILL, CoordinateSource.PILL_LIGHT) else self.psm)
         finally:
             tmp.unlink(missing_ok=True)
         if res.status is not ReadStatus.OK:
@@ -94,6 +97,16 @@ class DeviceVisionSource:
                 return None, None
             img = preprocess_band(im, box, scale=self.band_scale, cutoff=self.band_cutoff)
             div = self.band_scale
+        elif source is CoordinateSource.PILL_LIGHT:
+            if self.light_pill is None:
+                return None, None
+            box_spec, mode = self.light_pill
+            box = pill_crop_box(box_spec, iw, ih)
+            if box[2] <= 8 or box[3] <= 8:
+                return None, None
+            img = preprocess_pill(im, box, div=self.pill_div, th=self.pill_th,
+                                  mode=mode)
+            div = self.pill_div
         else:
             if self.pill_box is None:
                 return None, None
