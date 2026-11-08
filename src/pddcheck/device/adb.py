@@ -219,8 +219,8 @@ class AdbDevice:
                 raise AdbError("tap_point_missing", "TAP 需要显式 (x, y)")
             return self._adb("shell", "input", "tap", str(point[0]), str(point[1]))
         if k == "swipe":
-            if not point or len(point) != 4:
-                raise AdbError("swipe_point_missing", "SWIPE 需要 (x1,y1,x2,y2)")
+            if not point or len(point) < 4:
+                raise AdbError("swipe_point_missing", "SWIPE 需要 (x1,y1,x2,y2[,dur])")
             # 按压时长：旧脚本 BROWSE_DUR=800ms 才计入浏览时长（300ms 无效）；
             # 点 (x1,y1,x2,y2,dur) 五元组可自定义，缺省 800。
             dur = point[4] if len(point) >= 5 else 800
