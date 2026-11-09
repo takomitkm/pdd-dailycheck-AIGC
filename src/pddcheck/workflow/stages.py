@@ -107,55 +107,57 @@ class StageRunner:
         return closed
 
     # ---- 就绪：唤醒/启动到 PDD -----------------------------------------
-    def ensure_ready(self, *, back_to_home: int = 3, launch_wait_s: float = 12.0) -> None:
-        """把手机带到 PDD 首页（确定性起点）。
+    def ensure_ready(self, *, back_to_home: int = 2, launch_wait_s: float = 30.0) -> None:
+        """把手机带到 PDD（确定性起点）。
 
-        真机教训（T18a 连跑）：上一轮残留的页面（活动页/频道页）会让下一轮的
-        入口判定产生 rc4/rc5 交替——必须先回到**首页**这个确定状态再开始。
-
-        生产教训（11-08 首跑补签）：
-        1. 手机停在**点亮活动页**上时，BACK 只会退到频道页而回不到 HomeActivity
-           → rc7 误伤。活动页本身是可直接续跑的起点（页型判定 activity → 接受）。
-        2. **PDD 冷启动慢**：`am start` 发出后焦点切换可能远超 step_wait（实测 >4s）。
-           单次判定会误判「没起来」。→ start 后**轮询等待**焦点切换，上限
-           launch_wait_s（默认 12s）。
+        真机教训（T18a 连跑）：残留页会让入口判定漂移 → 先回到首页。
+        生产教训：
+        1. 11-08：停在点亮活动页时 BACK 只会退到频道页 → rc7 误伤；活动页可直接续跑。
+        2. 11-08：PDD 冷启动 >4s，start 后必须轮询等焦点。
+        3. 11-09 10:00 过夜锁屏：wake/dismiss/start 三连发无间隔，dismiss 在屏幕
+           未亮时被吞、am start 被锁屏拦 → rc7。改旧脚本同款节拍（各等 1s），
+           轮询期间重发 dismiss+start（幂等：am start 只把已有 task 带前台）。
+        4. 11-09：classify_page 会把活动/浏览页误判成 home（共有「精选/热卖推荐」，
+           且横幅 OCR 读不出）→ 不能靠它决定 rc7。**只要焦点是 PDD 就当可续跑**：
+           入口/福袋/点亮段都按当前页自行处理；rc7 只留给「焦点真的不是 PDD」。
         """
         v = self._read()
         if v.focus_package == self.policy.pkg and \
                 (v.focus_activity or "").endswith("HomeActivity"):
             return                                     # 已在首页
-        if v.focus_package == self.policy.pkg and \
-                not (v.focus_activity or "").endswith("HomeActivity"):
-            if classify_page(v.ocr_text) is PageKind.ACTIVITY:
-                return                                 # 已在点亮活动页：直接续跑
-        if v.focus_package != self.policy.pkg:
-            # 显式 HOME_ACT 启动（禁止 monkey 兜底）
-            self._act("wake", None)
-            self._act("dismiss_keyguard", None)
-            self._act("start", None)
-            # 轮询等焦点切到 PDD（冷启动实测可达 5–10s+）
-            deadline = time.monotonic() + launch_wait_s
-            launched = False
-            while time.monotonic() < deadline:
-                self.policy._sleep(2.0)
+        if v.focus_package == self.policy.pkg:
+            # 已在 PDD 内：先试试能否退回首页（最多 back_to_home 次）；退不回也
+            # **不报错**——任何 PDD 页都是可续跑起点（旧脚本 STEPS 同语义）。
+            for _ in range(back_to_home):
+                self._act("back", None)
+                self.policy._sleep(1.0)
                 v = self._read()
-                if v.focus_package == self.policy.pkg:
-                    launched = True
-                    break
-            if not launched:
-                raise StageFailure(7, f"launch 后焦点不是 PDD（{v.focus_package}）")
-            if (v.focus_activity or "").endswith("HomeActivity"):
-                return
-        # 在 PDD 但不在首页/活动页：按 BACK 逐步退回首页（上限 back_to_home 次）
-        for _ in range(back_to_home):
-            self._act("back", None)
-            self.policy.wait_step()
+                if (v.focus_activity or "").endswith("HomeActivity"):
+                    return
+            return
+        # 焦点不是 PDD：显式 HOME_ACT 启动（禁止 monkey 兜底），旧脚本同款节拍
+        self._act("wake", None)
+        self.policy._sleep(1.0)
+        self._act("dismiss_keyguard", None)
+        self.policy._sleep(1.0)
+        self._act("start", None)
+        deadline = time.monotonic() + launch_wait_s
+        launched = False
+        n = 0
+        while time.monotonic() < deadline:
+            self.policy._sleep(2.0)
             v = self._read()
-            if (v.focus_activity or "").endswith("HomeActivity"):
-                return
-            if classify_page(v.ocr_text) is PageKind.ACTIVITY:
-                return                                 # 退的过程中落到活动页也可续跑
-        raise StageFailure(7, f"退不回首页（当前 {v.focus_activity}）")
+            if v.focus_package == self.policy.pkg:
+                launched = True
+                break
+            n += 1
+            if n % 2 == 0:
+                # 锁屏可能还没解：重发生命周期（wake/dismiss/start 均幂等，非业务动作）
+                self._act("dismiss_keyguard", None)
+                self.policy._sleep(1.0)
+                self._act("start", None)
+        if not launched:
+            raise StageFailure(7, f"launch 后焦点不是 PDD（{v.focus_package}）")
 
     # ---- 入口：回到/进入补贴活动页 --------------------------------------
     def scroll_to_top(self, swipes: int = 3) -> None:

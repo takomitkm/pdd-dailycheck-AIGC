@@ -59,11 +59,11 @@ def test_ensure_ready_backs_to_home_when_on_other_page():
     assert [c[0] for c in act.calls] == ["back"]
 
 
-def test_ensure_ready_fails_rc7_when_cannot_return_home():
+def test_ensure_ready_in_pdd_never_rc7_even_if_back_fails():
+    """11-09 生产口径：已在 PDD 内就是可续跑起点，退不回首页也不报 rc7。"""
     r, act = runner([PageView(PKG, ACT, "消费券页")])
-    with pytest.raises(StageFailure) as e:
-        r.ensure_ready(back_to_home=3)
-    assert e.value.rc == 7 and "退不回首页" in e.value.why
+    r.ensure_ready(back_to_home=3)
+    assert [c[0] for c in act.calls] == ["back", "back", "back"]
 
 
 def test_ensure_ready_noop_when_already_in_pdd():
