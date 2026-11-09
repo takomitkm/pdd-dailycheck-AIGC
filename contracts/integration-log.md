@@ -419,6 +419,23 @@
 - 用户口径：滑动跟随屏幕比例取位，不写死像素（与旧脚本 SWIPE_X/Y1/Y2 比例常量同思路）。
 - 0.1.37 部署 h61 为 current，已推 main（578d1dd）。
 
+### 48. 2026-11-09 23:30 — 10:00 生产 rc7 复盘 + 今日补签完成
+- 11-09 10:00 timer：`exit=7 lit=None rc=7 marker=False observes=0` → 当天没签到，
+  手机停在点亮页（用户发现）。23:09 授权窗口内补跑 0.1.37：`lit=3 marker=True sent`，
+  **截图核实真点亮**（「7天内再点亮3次必得 · 今日已点亮」，星星 2→3 颗）。
+- 根因（两处）：
+  1. **过夜锁屏**：wake/dismiss/start 三连发无间隔，旧脚本是 wake→1s→dismiss→1s→start；
+     dismiss 在屏未亮时被吞 → start 被锁屏拦 → 12s 轮询焦点一直非 PDD → rc7。
+  2. **页型误判**：classify_page 把活动/浏览页（含「精选/热卖推荐」、横幅 OCR 读不出）
+     判成 home → ensure_ready 走 BACK → 退不回首页 → rc7。
+- 修复（0.1.38/39）：
+  - connect 后立即探测 tap 尺寸（StageRunner 路径此前恒 0×0，比例手势全走回退值）；
+  - CLI 打出 stages/stage_failure（此前 rc7 的 why 被吞，查因要靠重跑诊断）；
+  - 生命周期按旧脚本节拍 + 轮询重发 dismiss/start（幂等），launch_wait 12→30s；
+  - **PDD 内任何页都当可续跑起点**，退不回首页不再 rc7；rc7 只留给焦点真的不是 PDD。
+- 验证：全量测试绿；熄屏模拟过夜 → `--stages --dry-run` 得
+  `ready:ok → page:activity → dry:stop`，rc7 消失；0.1.39 部署 h61，已推 main。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
