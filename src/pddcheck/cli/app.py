@@ -107,6 +107,12 @@ def _cmd_run(args) -> CliResult:
         line = (f"run {date}: exit={int(outcome.exit_code)} lit={outcome.lit} rc={outcome.rc} "
                 f"marker={outcome.marker_written} ledger={outcome.ledger_written} "
                 f"delivered={outcome.delivered} observes={stats['observe_calls']}\n")
+        # 流程段失败原因必须可见（生产 11-09 教训：rc7 的 why 只进 notes 被吞，
+        # 查因要靠重跑诊断）。stages 列表 + 失败 why 全部打出来。
+        if stats.get("stages"):
+            line += f"stages={stats['stages']}\n"
+        if stats.get("stage_failure"):
+            line += f"stage_failure={stats['stage_failure']}\n"
         return CliResult(outcome.exit_code, stdout=line)
     finally:
         if lease is not None:

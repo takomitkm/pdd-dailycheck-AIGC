@@ -96,6 +96,16 @@ class AdbDevice:
         if state != "device":
             raise AdbError("bad_state", state)
         self.state_epoch += 1
+        # 连接后立即探测一次 tap 尺寸（生产 11-09 教训：StageRunner 路径不调
+        # capture()，tap_width/height 一直 0×0，比例手势/几何全走回退值）。
+        try:
+            s = self._adb("exec-out", "screencap", "-p")
+            if s.rc == 0:
+                w, h = png_size(s.out)
+                if w > 0 and h > 0:
+                    self.tap_width, self.tap_height = w, h
+        except Exception:
+            pass                       # 探测失败不阻断连接；后续 capture 会再更新
         return state
 
     # ---- 观测 -------------------------------------------------------
