@@ -25,6 +25,28 @@ if sys.platform != "win32":
 # --------------------------------------------------------------- 原子写
 
 
+def test_prune_evidence_removes_old_dirs_keeps_markers_and_files(tmp_path):
+    """迁移审计 G9：旧 prune_evidence 口径——只删一层**目录**，
+    `.done-*` 标记文件与证据根本身不动；keep_days<=0 一个都不删。"""
+    import os
+    store = DailyStore(tmp_path / "runs", tmp_path / "pause")
+    root = store.evidence_root
+    (root / "2026-01-01").mkdir(parents=True)
+    (root / "2026-01-02" / "080000").mkdir(parents=True)   # 嵌套目录一并删
+    (root / "2026-11-07").mkdir(parents=True)              # 新目录保留
+    old_ts = 1_000_000_000                                 # 2001 年，必过期
+    for name in ("2026-01-01", "2026-01-02"):
+        os.utime(root / name, (old_ts, old_ts))
+    store.write_marker("2026-11-07")                       # 标记是文件，不是目录
+    removed = store.prune_evidence(7)
+    assert removed == 2
+    assert not (root / "2026-01-01").exists()
+    assert not (root / "2026-01-02").exists()
+    assert (root / "2026-11-07").exists()
+    assert store.marker_exists("2026-11-07")
+    assert store.prune_evidence(0) == 0                    # 0 = 不清理
+
+
 def test_atomic_write_roundtrip_and_overwrite(tmp_path):
     target = tmp_path / "state" / "marker"
     atomic_write_text(target, "v1")

@@ -58,6 +58,9 @@ class PipelineConfig:
     light_pill: tuple[tuple[float, float, float, float], str] | None = None
     # 点亮后浏览任务段（滑动 10s 才真点亮）；CLI 真机路径开、47 案基线关
     browse_after_light: bool = False
+    # 终态效果执行（迁移审计 G4/G8）：final_scroll（I06）+ close_policy 下发 +
+    # last_activity 采集；CLI 真机路径开、47 案基线关
+    execute_terminal_effects: bool = False
     # 纯观察：识别与决策照做，业务动作一律拒绝、不写标记/账本、不推送（只留证据）
     dry_run: bool = False
 
@@ -169,7 +172,7 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
             )
             mapping = {"tap": ActionKind.TAP, "back": ActionKind.BACK, "start": ActionKind.START,
                        "wake": ActionKind.WAKE, "dismiss_keyguard": ActionKind.DISMISS_KEYGUARD,
-                       "swipe": ActionKind.SWIPE}
+                       "swipe": ActionKind.SWIPE, "stop": ActionKind.STOP}
             k = mapping[kind]
             business = k in (ActionKind.TAP, ActionKind.BACK, ActionKind.SWIPE)
             action_id = f"{cfg.run_id}-{kind}-{now_ns()}"
@@ -298,7 +301,8 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                    stage_failure_rc=stats.get("stage_failure_rc"),
                    stage_failure_why=stats.get("stage_failure"),
                    dry_run=cfg.dry_run,
-                   browse_after_light=cfg.browse_after_light)
+                   browse_after_light=cfg.browse_after_light,
+                   execute_terminal_effects=cfg.execute_terminal_effects)
     outcome = run_once(deps)
     stats["observe_calls"] = screen.observe_calls
     return outcome, stats

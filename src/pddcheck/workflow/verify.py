@@ -43,6 +43,11 @@ class VerifyObservation:
     prize_text: bool = False
     pend_text: bool = False
     reenter_failed: bool = False       # 备用路线（重进福袋页）失败
+    # 迁移审计 G3：该帧上定位到的可点目标（None=没有）。
+    # take_point=奖励浮层「开心收下」中心——**只有奖励浮层证明分支**允许拿它点
+    #（契约 L197；旧 take_prize_overlay 只在读到浮层那两行字之后才被调）。
+    take_point: tuple[int, int] | None = None
+    bag_point: tuple[int, int] | None = None     # 频道页「抽福袋」胶囊（重进备用路线）
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +56,9 @@ class VerifyOutcome:
     lit: int | None                    # 3 / 4 / None
     proof_kind: ProofKind
     why: str
+    # G3：prize 分支带出的「开心收下」点击点（执行器收到非 None 才允许点收奖；
+    # 其它分支恒为 None——别的页面上的「开心收下」不得借用此策略）。
+    tap_point: tuple[int, int] | None = None
 
 
 def verify_light_decision(
@@ -83,8 +91,10 @@ def verify_light_decision(
 
     # —— 进度行读不到的救场阶梯（旧 L1339-1359）
     if after is None:
+        obs_popup = by_stage.get(VerifyStage.AFTER_POPUP)
         if text_at(VerifyStage.AFTER_POPUP, "prize_text"):
-            return VerifyOutcome(0, 3, ProofKind.PRIZE, "进度行读不到，但奖励浮层在场=点着了的凭据")
+            return VerifyOutcome(0, 3, ProofKind.PRIZE, "进度行读不到，但奖励浮层在场=点着了的凭据",
+                                 tap_point=obs_popup.take_point if obs_popup else None)
         if text_at(VerifyStage.AFTER_POPUP, "pend_text"):
             return VerifyOutcome(4, 4, ProofKind.PENDING, "进度行读不到，页面是任务已完成/待兑换")
         if text_at(VerifyStage.AFTER_POPUP, "done_text"):
@@ -92,23 +102,31 @@ def verify_light_decision(
         after = after_at(VerifyStage.AFTER_POPUP)
 
     # —— 备用路线：重进福袋页（旧 L1361-1373）
+    bag_point = None
     bag_reenter = by_stage.get(VerifyStage.AFTER_REENTER_BAG)
     if after is None and bag_reenter is not None:
         if bag_reenter.reenter_failed:
             return VerifyOutcome(1, None, ProofKind.NONE, "重进福袋页失败，进度读不到")
         after = bag_reenter.after_count
+        # 旧 verify_light 里这条路线点上「抽福袋」胶囊；bag_point 只是透传记录，
+        # 动作由执行器在跑这条路线时自己下发（决策核不点）。
+        bag_point = bag_reenter.bag_point
 
     # —— 前后对比（旧 L1374-1381）
     if before is not None and after is not None:
         if after < before:
             return VerifyOutcome(0, 3, ProofKind.COUNTER_DECREASE,
-                                 f"进度从 {before} 次变成 {after} 次")
+                                 f"进度从 {before} 次变成 {after} 次",
+                                 tap_point=bag_point)
         return VerifyOutcome(1, None, ProofKind.NONE,
-                             f"进度行的 {after} 次没变小（点前 {before} 次），这一枪没打进去")
+                             f"进度行的 {after} 次没变小（点前 {before} 次），这一枪没打进去",
+                             tap_point=bag_point)
 
     # —— 进度行始终读不到（旧 L1382-1388）：坐标枪不能算成功；认到字的枪按旧兼容放行
     if method == "coord":
         return VerifyOutcome(1, None, ProofKind.NONE,
-                             "读不到进度行里那个次数，而这一枪只有坐标兜底能打到，无法核实")
+                             "读不到进度行里那个次数，而这一枪只有坐标兜底能打到，无法核实",
+                             tap_point=bag_point)
     return VerifyOutcome(0, 3, ProofKind.LEGACY_TEXT_WITHOUT_COUNTER,
-                         "读不到进度行，但这一枪点的是认到的字，按原样算过（弱证明）")
+                         "读不到进度行，但这一枪点的是认到的字，按原样算过（弱证明）",
+                         tap_point=bag_point)

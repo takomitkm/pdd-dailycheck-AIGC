@@ -48,7 +48,41 @@ def test_ensure_ready_starts_app_when_not_foreground():
                      PageView(PKG, HOME, "")])
     r.ensure_ready()
     kinds = [c[0] for c in act.calls]
+    # G6（迁移审计）：焦点读得到且是别的应用 → 先 force-stop 再拉起（旧脚本 RESTART_APP）
+    assert kinds == ["stop", "wake", "dismiss_keyguard", "start"]
+
+
+def test_ensure_ready_no_stop_when_focus_unreadable():
+    """G6 安全半边：焦点读不到时绝不 force-stop（无法排除 PDD 就在前台，
+    am start 幂等、force-stop 不可逆）。照旧 wake→dismiss→start。"""
+    seq = [PageView(None, None, ""), PageView(PKG, HOME, "")]
+    pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=2, prove_max=3,
+                      step_wait_s=0, focus_retry=1, sleep=lambda s: None)
+    r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
+    r.ensure_ready()
+    kinds = [c[0] for c in r._act.calls]
+    assert "stop" not in kinds
     assert kinds == ["wake", "dismiss_keyguard", "start"]
+
+
+def test_ensure_ready_retries_unreadable_focus_then_proceeds():
+    """G7（迁移审计）：焦点读不到先重试几次再判定（旧脚本 FOCUS_RETRY，
+    躲过渡动画那一瞬）。第二轮读到了外国应用 → 正常走 stop→wake→…。"""
+    seq = [PageView(None, None, ""), PageView("com.android.launcher3", "Launcher", ""),
+           PageView(PKG, HOME, "")]
+    pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=2, prove_max=3,
+                      step_wait_s=0, sleep=lambda s: None)
+    r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
+    r.ensure_ready()
+    kinds = [c[0] for c in r._act.calls]
+    assert kinds == ["stop", "wake", "dismiss_keyguard", "start"]
+
+
+def test_ensure_ready_skips_stop_when_already_in_pdd():
+    """G6 边界：焦点已在 PDD 内（可续跑起点）→ 不 force-stop（11-09 定案）。"""
+    r, act = runner([PageView(PKG, ACT, "消费券页")])
+    r.ensure_ready(back_to_home=3)
+    assert "stop" not in [c[0] for c in act.calls]
 
 
 def test_ensure_ready_backs_to_home_when_on_other_page():

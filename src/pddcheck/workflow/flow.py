@@ -77,6 +77,12 @@ class RunDeps:
     # 默认 False：47 案行为基线不包含浏览段；CLI 真机路径显式开启。
     browse_after_light: bool = False
     browse_sleep: object | None = None   # 注入 sleep（测试用）；默认 time.sleep
+    # 终态效果执行（G4/G8 迁移审计补上）：final_scroll（I06 最终 20 次下滑）、
+    # close_policy 下发（rc0 force-stop+HOME / rc≠0 HOME / lit2/4 不动）、
+    # last_activity 采集。默认 False 保持 47 案基线；CLI 真机路径显式开启。
+    execute_terminal_effects: bool = False
+    # 证据保留天数（G9：旧 KEEP_DAYS=7；None/0=不清理）
+    keep_days: int | None = 7
 
 
 def _exit(rc: int, lit: int | None) -> ExitCode:
@@ -208,13 +214,34 @@ def run_once(deps: RunDeps) -> RunOutcome:
                 operational_failed = True
                 notes.append(f"状态写入失败（operational）：{exc}")
 
-        # 6) 通知（失败不改业务 rc——I11）
+        # 6) 终态效果执行（生产教训：terminal_plan 早就算出 close/final_scroll，
+        #    但执行器只把它当字符串写进 RunOutcome、从不真正下发 → 跑成功既不关 app、
+        #    也不做 I06 要求的最终 20 次下滑。这里补上，且严格按旧脚本收尾纪律：
+        #    rc0=force-stop+HOME；rc≠0=只 HOME；lit2/4=留在屏前一个键都不放。）
+        last_activity = None
+        if getattr(deps, "execute_terminal_effects", False) and not deps.dry_run:
+            if plan.final_scroll and business_rc == 0:
+                _final_scroll(deps, notes)
+            # last_activity 必须在关 app 之前读（pdd.sh L1622：按完 HOME 就只剩桌面了）。
+            last_activity = _read_last_activity(deps)
+            _apply_close_policy(deps, plan, notes)
+            # 证据保留（G9：旧 prune_evidence；失败只记 notes，不改业务 rc）
+            if getattr(deps, "keep_days", None):
+                try:
+                    pruned = deps.store.prune_evidence(deps.keep_days)
+                    if pruned:
+                        notes.append(f"证据清理：删 {pruned} 个过期目录（keep_days={deps.keep_days}）")
+                except Exception as exc:
+                    notes.append(f"证据清理失败（忽略）：{exc}")
+
+        # 7) 通知（失败不改业务 rc——I11）
         title, body = render_notification(NotifyInput(
             rc=business_rc, lit=lit, evidence_dir=deps.evidence_dir,
             steps=deps.steps_label, done_word=done_word,
             pend_days=facts.get("pend_days"),
             pend_line=facts.get("pend_line"),
-            pend_msg="", exc_msg="", verify_why=""))
+            pend_msg="", exc_msg="", verify_why="",
+            last_activity=last_activity))
         if deps.dry_run:
             from pddcheck.notify import DeliveryResult, DeliveryStatus
             delivery = DeliveryResult(DeliveryStatus.SKIPPED, 0, None, "dry-run")
@@ -285,7 +312,8 @@ def _browse_after_light(deps: "RunDeps", notes: list) -> bool:
     return elapsed >= 10.0
 
 
-def _make_tap_intent(deps: RunDeps, facts: dict) -> ActionIntent:    return ActionIntent(
+def _make_tap_intent(deps: RunDeps, facts: dict) -> ActionIntent:
+    return ActionIntent(
         action_id=f"{deps.run_id}-light-{deps.now_ns()}",
         run_id=deps.run_id,
         kind=ActionKind.TAP,
@@ -300,3 +328,81 @@ def _make_tap_intent(deps: RunDeps, facts: dict) -> ActionIntent:    return Acti
         required_window_kind=WindowKind.APP,
         allow_coord=facts.get("tap_method") == "coord",
     )
+
+
+def _stage_intent(deps: RunDeps, kind: ActionKind, reason: str) -> ActionIntent:
+    """终态收尾动作（STOP/HOME 是生命周期动作：不带候选依据、不带业务坐标）。"""
+    return ActionIntent(
+        action_id=f"{deps.run_id}-{kind.value}-{deps.now_ns()}",
+        run_id=deps.run_id, kind=kind, source_capture_id="terminal",
+        state_epoch=getattr(deps.device, "state_epoch", 0), geometry_revision=0,
+        deadline_ns=deps.now_ns() + 15_000_000_000, reason=reason)
+
+
+def _read_last_activity(deps: RunDeps) -> str | None:
+    """关 app 前读一次焦点 activity（pdd.sh L1622：按完 HOME 就只剩桌面了）。
+
+    读不到不阻塞收尾（旧口径：`last_act=读不到` 也照发推送）。
+    """
+    try:
+        fs = deps.device.focus()
+    except Exception:
+        return None
+    return getattr(fs, "focused_activity", None) or None
+
+
+def _apply_close_policy(deps: RunDeps, plan, notes: list) -> None:
+    """下发 close_policy（迁移审计 G4：terminal_plan 早就算好却从未执行）。
+
+    旧脚本收尾纪律（cmd_run L1628-1637）：
+    - STOP_AND_HOME：force-stop + HOME（rc0 正常完成）；
+    - HOME_ONLY：只按 HOME（rc≠0，B07：失败路径不 force-stop）；
+    - STAY：lit2/4 手机停在当前屏等她，一个键都不放。
+    单个动作失败只记 notes，不改业务 rc（终态收尾不影响判定，I11 同理）。
+    """
+    try:
+        if plan.close_policy is ClosePolicy.STOP_AND_HOME:
+            deps.device.execute(_stage_intent(deps, ActionKind.STOP, "正常完成，关掉 app"))
+            deps.device.execute(_stage_intent(deps, ActionKind.HOME, "关 app 后回桌面"))
+            notes.append("收尾：force-stop + HOME")
+        elif plan.close_policy is ClosePolicy.HOME_ONLY:
+            deps.device.execute(_stage_intent(deps, ActionKind.HOME, "失败收尾只按 HOME"))
+            notes.append("收尾：HOME")
+        else:                                     # STAY：lit2/4 一个键都不放
+            notes.append("收尾：留在当前屏（lit2/4 不关 app）")
+    except Exception as exc:                      # 收尾失败不污染业务结果
+        notes.append(f"收尾动作失败（忽略）：{exc}")
+
+
+def _final_scroll(deps: RunDeps, notes: list) -> None:
+    """成功后的最终 20 次下滑（I06；pdd.sh scroll_phase L1458-1467）。
+
+    比例口径同旧脚本 SWIPE_* 常量：x=0.75×w、y1=0.9375×h → y2=0.546875×h、
+    300ms 按压、20 次、次间隔 1s。与浏览段的 800ms/15s 是两件事，不合并。
+    失败只记 notes，不改业务 rc（收尾动作，判定早已完成）。
+    """
+    sleep = getattr(deps, "browse_sleep", None) or time.sleep
+    tw = int(getattr(deps.device, "tap_width", 0) or 720)
+    th = int(getattr(deps.device, "tap_height", 0) or 1280)
+    if tw <= 0 or th <= 0:
+        tw, th = 720, 1280
+    bx, y1 = int(tw * 0.75), int(th * 0.9375)
+    y2 = int(th * 0.546875)
+    ok = 0
+    for i in range(20):
+        try:
+            intent = ActionIntent(
+                action_id=f"{deps.run_id}-final-scroll-{i}-{deps.now_ns()}",
+                run_id=deps.run_id, kind=ActionKind.SWIPE,
+                source_capture_id="terminal", state_epoch=getattr(deps.device, "state_epoch", 0),
+                geometry_revision=0, deadline_ns=deps.now_ns() + 15_000_000_000,
+                reason=f"最终下滑 {i + 1}/20（x=0.75 {y1}→{y2} 300ms）",
+                source_candidate_id="final-scroll", target_key="final_scroll",
+                expected_package="com.xunmeng.pinduoduo", required_window_kind=WindowKind.APP)
+            deps.device.execute(intent, (bx, y1, bx, y2, 300))
+            ok += 1
+        except Exception as exc:
+            notes.append(f"最终下滑第 {i + 1} 次被拒（忽略）：{exc}")
+            break
+        sleep(1.0)
+    notes.append(f"最终下滑：{ok}/20（I06）")

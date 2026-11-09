@@ -50,3 +50,32 @@ class DailyStore:
 
     def ledger_clear(self) -> bool:
         return self.ledger_write(0)
+
+    # ---- 证据保留（迁移审计 G9：旧 prune_evidence / KEEP_DAYS 口径）----
+    def prune_evidence(self, keep_days: int) -> int:
+        """删除证据根下 keep_days 天前的**一层日期目录**；返回删除数。
+
+        旧口径（pdd.sh L1491-1494）：`find -mindepth 1 -maxdepth 1 -type d
+        -mtime +KEEP_DAYS -exec rm -rf` —— 只删目录，`.done-*` 标记文件
+        与证据根本身不动。keep_days<=0 或根不存在时一个都不删。
+        """
+        if keep_days <= 0:
+            return 0
+        import shutil
+        import time as _time
+        cutoff = _time.time() - keep_days * 86400
+        removed = 0
+        try:
+            entries = list(self.evidence_root.iterdir())
+        except OSError:
+            return 0
+        for entry in entries:
+            try:
+                if not entry.is_dir():
+                    continue
+                if entry.stat().st_mtime <= cutoff:
+                    shutil.rmtree(entry, ignore_errors=True)
+                    removed += 1
+            except OSError:
+                continue
+        return removed

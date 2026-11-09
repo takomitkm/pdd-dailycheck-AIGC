@@ -72,6 +72,9 @@ def _cmd_run(args) -> CliResult:
         bag_pill = (pc, "color") if pc is not None else ((0.472, 0.375, 0.75, 0.4375), "color")
     # 真机路径：点亮后浏览任务段（滑动 10s）——47 案基线不含此段，CLI 显式开
     browse_after_light = not bool(getattr(args, "dry_run", False))
+    # 真机路径：终态效果（I06 最终 20 次下滑 + close_policy 下发 + last_activity）
+    # ——迁移审计 G4/G8；dry-run 仍不执行任何业务/收尾动作
+    execute_terminal_effects = not bool(getattr(args, "dry_run", False))
     cfg = PipelineConfig(
         business_date=date, run_id=f"run-{date}",
         evidence_dir=str(ev / date),
@@ -82,9 +85,8 @@ def _cmd_run(args) -> CliResult:
         dry_run=bool(getattr(args, "dry_run", False)),
         bag_pill=bag_pill,
         light_pill=light_pill,
-        browse_after_light=browse_after_light)
-    # 真机路径：点亮后浏览任务段（滑动 10s）——47 案基线不含此段，CLI 显式开
-    browse_after_light = not bool(getattr(args, "dry_run", False))
+        browse_after_light=browse_after_light,
+        execute_terminal_effects=execute_terminal_effects)
     # 显式 HOME_ACT（真机 resolve-activity 实测；护栏要求，禁止 monkey 兜底）
     dev = AdbDevice(serial, home_activity=cfg.home_activity)
     try:

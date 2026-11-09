@@ -39,7 +39,9 @@ class StagePolicy:
     def __init__(self, *, pkg: str, home_activity: str, entry_retry: int = 2,
                  prove_max: int = 3, min_conf: int = 40,
                  allow_coord_fallback: bool = True,
-                 step_wait_s: float = 4.0, sleep=None) -> None:
+                 step_wait_s: float = 4.0, sleep=None,
+                 restart_app: bool = True, focus_retry: int = 3,
+                 focus_retry_wait_s: float = 1.0) -> None:
         self.pkg = pkg
         self.home_activity = home_activity
         self.entry_retry = entry_retry
@@ -50,6 +52,15 @@ class StagePolicy:
         self.allow_coord_fallback = allow_coord_fallback
         # 点击后等页面跳转（旧脚本 STEP_WAIT=4）——真机实测：不等就判「没进去」
         self.step_wait_s = step_wait_s
+        # G6（迁移审计）：RESTART_APP——**启动前** force-stop（旧脚本 launch_app
+        # L1423「避免停在旧页面」）。只在「焦点确实是别的应用」时执行：
+        # 焦点读不到时绝不 stop（无法排除 PDD 就在前台，am start 幂等、force-stop 不可逆）；
+        # 焦点已在 PDD 内时不 stop（11-09 定案：任何 PDD 页都可续跑）。
+        self.restart_app = restart_app
+        # G7（迁移审计）：FOCUS_RETRY——焦点读不到重试几次再判定（旧脚本 L694-698，
+        # 躲过渡动画那一瞬；真读不到 = 不点，重试只为读清）。
+        self.focus_retry = focus_retry
+        self.focus_retry_wait_s = focus_retry_wait_s
         self._sleep = sleep or (lambda s: __import__("time").sleep(s))
 
     def wait_step(self) -> None:
@@ -121,7 +132,13 @@ class StageRunner:
            且横幅 OCR 读不出）→ 不能靠它决定 rc7。**只要焦点是 PDD 就当可续跑**：
            入口/福袋/点亮段都按当前页自行处理；rc7 只留给「焦点真的不是 PDD」。
         """
+        # G7：焦点读不到时先重试（躲过渡动画；真读不到 = 不点，重试只为读清）。
         v = self._read()
+        for _ in range(max(0, self.policy.focus_retry - 1)):
+            if v.focus_package is not None:
+                break
+            self.policy._sleep(self.policy.focus_retry_wait_s)
+            v = self._read()
         if v.focus_package == self.policy.pkg and \
                 (v.focus_activity or "").endswith("HomeActivity"):
             return                                     # 已在首页
@@ -135,7 +152,12 @@ class StageRunner:
                 if (v.focus_activity or "").endswith("HomeActivity"):
                     return
             return
-        # 焦点不是 PDD：显式 HOME_ACT 启动（禁止 monkey 兜底），旧脚本同款节拍
+        # 焦点不是 PDD：显式 HOME_ACT 启动（禁止 monkey 兜底），旧脚本同款节拍。
+        # G6：焦点**读得到且是别的应用**才先 force-stop（RESTART_APP）；
+        # 焦点读不到时绝不 stop（无法排除 PDD 就在前台），am start 幂等照样发。
+        if self.policy.restart_app and v.focus_package is not None:
+            self._act("stop", None)
+            self.policy._sleep(1.0)
         self._act("wake", None)
         self.policy._sleep(1.0)
         self._act("dismiss_keyguard", None)

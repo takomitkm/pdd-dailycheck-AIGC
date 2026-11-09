@@ -436,6 +436,54 @@
 - 验证：全量测试绿；熄屏模拟过夜 → `--stages --dry-run` 得
   `ready:ok → page:activity → dry:stop`，rc7 消失；0.1.39 部署 h61，已推 main。
 
+### 49. 2026-11-10 06:07 — 用户令「再检查一下漏了哪些全搬过来」→ 全量行为级审计
+- 范围：pdd.sh（冻结 2073 行）逐节 ↔ pddcheck 源码（含 docs/refactor-v2 契约）。
+- **总判断：决策核 1:1 迁了，执行器没把决策跑起来**。三个铁证：
+  1. `terminal.py:66,80` 算出 `final_scroll`（I06 终态 20 次下滑），全仓库 grep 无第二处引用
+     —— flow.py 从不执行；
+  2. `verify.py:22-26` 定义 AFTER_BACK/AFTER_REENTER/AFTER_POPUP/AFTER_REENTER_BAG 四阶段，
+     `bootstrap.py:130-138` 只喂 AFTER_DIRECT —— 浏览段滑完从不 BACK 回落点核实，
+     永远落弱证明 lit3（11-08「假 lit3」的残留根因）；
+  3. `profile.toml [targets.take]` 连 coord/pill 都配好了，但全仓库没有任何代码会点「开心收下」
+     （契约 L197/验收 #19 #20 都要求这条分支）。
+- 漏项清单（9 项）：G1 verify 阶梯没接线 / G2 browse→BACK→reconcile / G3 奖励浮层收奖 /
+  G4 终态 20 次下滑 / G5 clear_popup_once / G6 RESTART_APP 启动前 force-stop /
+  G7 FOCUS_RETRY / G8 通知 last_activity（恒「读不到」）/ G9 prune_evidence。
+- 另发现一处审计时新增的**更严重缺口**：`terminal_plan.close_policy`（rc0 force-stop+HOME /
+  rc≠0 HOME / lit2/4 不动）同样只被当字符串写进 RunOutcome、从不下发 ——
+  即线上跑成功后 app 根本没关、也没有回桌面。
+- 故意不搬（有 ADR/设计决定，不列漏）：外置 pdd-ocr.conf（→profile TOML）、
+  probe/find/point/shot/status 诊断子命令（app.py:177 刻意 stub）、replay 的
+  --scan/--label/--all/--ocr（HTML 报告路线已覆盖核心口径）。
+- 选择：0.1.39 留在 h61 current 不动；新版本先全量 fake 测试 + 11:00 窗口真机 dry-run
+  再切换，绝不盲发（生产正在用的签名路径不许未验证就换）。
+
+### 50. 2026-11-10 07:10 — 第一批迁移落地（G4/G6/G7/G8/G9 + close_policy 执行）
+- **G4+close_policy（flow.py）**：`RunDeps.execute_terminal_effects`（默认 False 保 47 案基线，
+  CLI 真机路径开）。开启后按 terminal_plan 真正下发：
+  final_scroll（x=0.75w、y1=0.9375h→y2=0.546875h、300ms、20 次、隔 1s——与浏览段 800ms/15s
+  是两件事，不合并）→ `_read_last_activity`（关 app 前读焦点，pdd.sh L1622 同款）→
+  close_policy（STOP_AND_HOME=force-stop+HOME；HOME_ONLY=只 HOME（B07）；STAY=一个键不放）。
+  终态动作失败只记 notes 不改业务 rc（I11 同理）。顺手修了 `_make_tap_intent` 的
+  def 同行 return 格式。
+- **G8（flow.py）**：last_activity 进 render_notification → rc6/失败正文「最后停在 X 这一屏」
+  不再恒「读不到」。
+- **G9（storage/daily.py + flow.py）**：`DailyStore.prune_evidence(keep_days)` ——
+  旧口径：只删一层日期目录、`.done-*` 标记文件不动、keep_days<=0 不清理；
+  挂在终态效果段（同样受 execute_terminal_effects 门控，失败只记 notes）。
+- **G6/G7（stages.py）**：StagePolicy 增 `restart_app/focus_retry/focus_retry_wait_s`
+  （默认 = profile 值 true/3/1）。ensure_ready：焦点**读得到且是别的应用**才先 stop
+  再 wake→dismiss→start；焦点读不到绝不 stop（无法排除 PDD 就在前台——am start 幂等、
+  force-stop 不可逆）；焦点已在 PDD 内不 stop（11-09「任何页可续跑」定案不破坏）；
+  焦点读不到先重试 focus_retry 次（躲过渡动画，真读不到=不点）。
+  bootstrap act() 映射补 "stop"。
+- **测试**：改 1（test_stages 的 launch 断言补 stop）+ 新增 12
+  （test_terminal_effects.py 10 + storage prune 1 + stages G6/G7 3）。
+  全量 415 passed（4 skip 原有）。 FakeDevice 不存 point → 测试用 RecordingDevice
+  包一层记 (kind, point)，才能断言滑动比例口径 (540,1200,540,700,300)。
+- 教训（又踩一次）：持久终端跑长内联命令会被 PTY 回显拆碎卡死（AGENTS.md 早有记载）——
+  本次 pty-20 就这么死的；改用脚本 `.tmp/run-pdd-tests.ps1` + 一次性 pwsh 跑，输出可靠。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
