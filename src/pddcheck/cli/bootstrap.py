@@ -46,6 +46,10 @@ class PipelineConfig:
     # 真机验证见 docs/refactor-v2/t18a-calibration-findings.md
     run_stages: bool = False
     home_activity: str = "com.xunmeng.pinduoduo.ui.activity.HomeActivity"
+    # 冷启动入口（旧脚本 HOME_ACT=MainFrameActivity；`am start -n 包名/Activity`）。
+    # 与 home_activity（「已在首页」匹配口径=HomeActivity）分开——11-10 rc7 的根因是
+    # 把裸类名塞给 am start -n（缺包名前缀），冷启动从来没成功过。
+    launch_activity: str = "com.xunmeng.pinduoduo.ui.activity.MainFrameActivity"
     entry_retry: int = 2
     prove_max: int = 3
     step_wait_s: float = 4.0

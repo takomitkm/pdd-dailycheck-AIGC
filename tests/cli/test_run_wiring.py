@@ -25,10 +25,11 @@ def test_run_wires_adapters_and_maps_outcome(tmp_path, monkeypatch):
     ROW2 = ROW1.replace("4次必得", "3次必得")
 
     class FakeAdb:
-        def __init__(self, serial, *, home_activity=None):
+        def __init__(self, serial, *, home_activity=None, launch_activity=None):
             self.serial = serial
             self.state_epoch = 0
             self.home_activity = home_activity
+            self.launch_activity = launch_activity
         def connect(self): return "device"
         def read_hierarchy(self): return "<hierarchy></hierarchy>"
         def screenshot_bytes(self): return b"png"

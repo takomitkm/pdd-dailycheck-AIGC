@@ -258,3 +258,46 @@ def test_adb_read_hierarchy_falls_back_to_file_when_tty_empty():
     assert "<hierarchy" in dev.read_hierarchy()
     # 确认清理动作真的发了（不在手机上留垃圾）
     assert any("rm" in " ".join(c) for c in scripted.calls)
+
+
+# ----------------------------------------------------- 冷启动组件名（11-10 rc7 回归）
+
+MAIN = "com.xunmeng.pinduoduo/com.xunmeng.pinduoduo.ui.activity.MainFrameActivity"
+HOME = "com.xunmeng.pinduoduo/com.xunmeng.pinduoduo.ui.activity.HomeActivity"
+
+
+def test_adb_start_uses_pkg_prefixed_component():
+    """11-10 rc7 根因回归：`am start -n` 必须「包名/Activity」，裸类名 am 解析不到
+    → 冷启动从来没成功过（只有手机恰好在 PDD 页时才碰巧跑通）。"""
+    scripted = Scripted([
+        (["adb", "-s", "ABC", "shell", "am", "start", "-n", MAIN],
+         (0, b"Starting: Intent { cmp=" + MAIN.encode() + b" }\n", b"")),
+    ])
+    dev = AdbDevice("ABC", runner=scripted, now_ns=lambda: 100,
+                    home_activity="com.xunmeng.pinduoduo.ui.activity.HomeActivity",
+                    launch_activity="com.xunmeng.pinduoduo.ui.activity.MainFrameActivity")
+    r = dev.execute(intent(kind=ActionKind.START, deadline=5000), None)
+    assert r.status is ExecutionStatus.ACKNOWLEDGED
+    assert scripted.calls[-1] == ["adb", "-s", "ABC", "shell", "am", "start", "-n", MAIN]
+
+
+def test_adb_start_falls_back_to_home_activity_when_launch_fails():
+    """主入口起不来（am 打 Error）→ 退 HomeActivity（旧脚本 HOME_ACT/HOME_ACT_ALT 同序）。"""
+    scripted = Scripted([
+        (["adb", "-s", "ABC", "shell", "am", "start", "-n", MAIN],
+         (1, b"", b"Error: Activity class {...} does not exist.\n")),
+        (["adb", "-s", "ABC", "shell", "am", "start", "-n", HOME],
+         (0, b"Starting: Intent { cmp=" + HOME.encode() + b" }\n", b"")),
+    ])
+    dev = AdbDevice("ABC", runner=scripted, now_ns=lambda: 100,
+                    home_activity="com.xunmeng.pinduoduo.ui.activity.HomeActivity",
+                    launch_activity="com.xunmeng.pinduoduo.ui.activity.MainFrameActivity")
+    r = dev.execute(intent(kind=ActionKind.START, deadline=5000), None)
+    assert r.status is ExecutionStatus.ACKNOWLEDGED
+    assert scripted.calls[-1][-1] == HOME            # 退到了 HomeActivity
+
+
+def test_adb_start_without_activity_fails_closed():
+    dev = AdbDevice("ABC", runner=Scripted([(["adb"], (0, b"", b""))]), now_ns=lambda: 100)
+    with pytest.raises(AdbError, match="home_activity"):
+        dev.execute(intent(kind=ActionKind.START, deadline=5000), None)

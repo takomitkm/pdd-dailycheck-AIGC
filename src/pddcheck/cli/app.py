@@ -96,7 +96,10 @@ def _cmd_run(args) -> CliResult:
         execute_terminal_effects=execute_terminal_effects,
         verify_ladder=verify_ladder)
     # 显式 HOME_ACT（真机 resolve-activity 实测；护栏要求，禁止 monkey 兜底）
-    dev = AdbDevice(serial, home_activity=cfg.home_activity)
+    # home_activity=「已在首页」匹配口径（HomeActivity）；launch_activity=冷启动入口
+    # （MainFrameActivity，`am start -n 包名/Activity`——11-10 rc7 根因修复）
+    dev = AdbDevice(serial, home_activity=cfg.home_activity,
+                    launch_activity=cfg.launch_activity)
     try:
         dev.connect()
     except AdbError as exc:

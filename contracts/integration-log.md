@@ -511,6 +511,30 @@
 - 关键安全不变量仍成立：无 tap_point → 不点、不写标记；坐标兜底只在主线/奖励上下文；
   每个业务动作仍过前台护栏（expected_package+WindowKind.APP）。
 
+### 52. 2026-11-10 10:55 — 「又不行」：10:00 rc7 真根因 = `am start -n` 组件名缺包名前缀
+- 现象：11-10 10:00 timer `exit=7 rc=7 marker=False observes=0`，`stages=['failed:rc7']`，
+  `stage_failure=launch 后焦点不是 PDD（com.android.launcher3）`——手机在桌面，30s 内
+  焦点始终不是 PDD。11-09 10:00 同款 rc7。
+- **真根因**：`adb._dispatch("start")` 发的是 `am start -n <裸类名>`，
+  `home_activity` 是 `com.xunmeng.pinduoduo.ui.activity.HomeActivity`（**缺 `包名/` 前缀**），
+  且用的是 HomeActivity 而非冷启动入口 MainFrameActivity。`am start -n` 要求
+  `PACKAGE/ACTIVITY`（pdd.sh L1426 正是 `$PKG/$HOME_ACT`），裸类名解析不到组件 → 冷启动
+  从来没成功过。
+- **为什么之前「看起来能用」**：11-08 晚 / 11-09 23:09 的手动补签，手机当时**已经停在
+  PDD 页** → `ensure_ready` 首轮焦点就是 PDD → 提前返回、**根本没调 `start`** → 假成功。
+  每次 10:00 手机在桌面（需要冷启动）就必然 rc7。两次手动成功把我误导成「流程没问题」。
+- **修复（0.1.41）**：
+  1. `AdbDevice` 增 `launch_activity`（默认 MainFrameActivity）；`_launch_components()`
+     归一化成 `包名/Activity`（已带 `/` 不再加），先 MainFrameActivity、失败退 HomeActivity
+     （旧脚本 HOME_ACT/HOME_ACT_ALT 同序）；`am start` 结果**rc 和输出里的 Error 都查**。
+  2. `PipelineConfig.launch_activity` 默认 MainFrameActivity（与 `home_activity`
+     =HomeActivity 的「已在首页」匹配口径分开——后者给 stages 用，前者给冷启动用）。
+  3. `app.py` 传 `launch_activity=cfg.launch_activity`。
+- **回归测试**：test_device 3 条（组件名带包名 / 主入口失败退 Home / 无配置 fail-closed）；
+  test_run_wiring 的 FakeAdb 补 `launch_activity` 形参。全量 **426 passed（4 skip）**。
+- 教训：**「手动补签成功」不能证明自动冷启动路径可用**——必须把手机压回桌面再测冷启动。
+  这也是 0.1.38/39「过夜锁屏节拍」修复没救回 rc7 的原因：病根不在节拍，在组件名。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

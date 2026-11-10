@@ -66,12 +66,20 @@ def _subprocess_runner(argv, timeout_s):
 class AdbDevice:
     def __init__(self, serial: str, *, runner=None, timeout_s: float = 20.0,
                  pkg: str = "com.xunmeng.pinduoduo", now_ns=None,
-                 home_activity: str | None = None) -> None:
+                 home_activity: str | None = None,
+                 launch_activity: str | None = None) -> None:
         if not serial:
             raise AdbError("serial_required", "必须显式指定设备 serial，禁止自动选第一台")
         self.serial = serial
         self.pkg = pkg
+        # home_activity：启动失败时的兜底组件（也是「已在首页」的匹配口径，由 stages 用）
         self.home_activity = home_activity
+        # launch_activity：冷启动入口（旧脚本 L1426 `am start -n "$PKG/$HOME_ACT"`，
+        # HOME_ACT=MainFrameActivity——PDD 自己再跳到 HomeActivity）。
+        # 11-10 rc7 根因：此前把裸类名（且是 HomeActivity）直接塞给 `am start -n`，
+        # 缺 `包名/` 前缀 → am 解析不出组件 → 冷启动从来没成功过，只有手机恰好在
+        # PDD 页时才「碰巧」跑通（ensure_ready 提前返回、压根没调 start）。
+        self.launch_activity = launch_activity
         self._run = runner or _subprocess_runner
         self._timeout_s = timeout_s
         # 真实单调时钟（纳秒）；领域对象要求时间戳 >= 1
@@ -222,6 +230,21 @@ class AdbDevice:
                                  now, self._now(), "adb_rc", c.err.decode("utf-8", "replace")[:200])
         return ActionReceipt(intent.action_id, ExecutionStatus.ACKNOWLEDGED, now, self._now())
 
+    def _launch_components(self) -> list[str]:
+        """`am start -n` 的候选组件（**必须 `包名/Activity`**）。
+
+        旧脚本 L1426 先 `$PKG/$HOME_ACT`（MainFrameActivity）、失败再退 `HOME_ACT_ALT`
+        （HomeActivity）。裸类名或已带 `/` 的串都归一化成完整组件；去重。
+        """
+        comps: list[str] = []
+        for act in (self.launch_activity, self.home_activity):
+            if not act:
+                continue
+            comp = act if "/" in act else f"{self.pkg}/{act}"
+            if comp not in comps:
+                comps.append(comp)
+        return comps
+
     def _dispatch(self, intent: ActionIntent, point: tuple[int, ...] | None) -> Completed:
         k = intent.kind.value
         if k == "tap":
@@ -245,9 +268,17 @@ class AdbDevice:
         if k == "dismiss_keyguard":
             return self._adb("shell", "wm", "dismiss-keyguard")
         if k == "start":
-            if not self.home_activity:
+            comps = self._launch_components()
+            if not comps:
                 raise AdbError("home_activity_missing", "必须显式 HOME_ACT 启动，禁止 monkey")
-            return self._adb("shell", "am", "start", "-n", self.home_activity)
+            last: Completed | None = None
+            for comp in comps:
+                last = self._adb("shell", "am", "start", "-n", comp)
+                blob = (last.out or b"") + (last.err or b"")
+                # am start 可能 rc=0 但打印 Error（组件解析不到）——两个都查
+                if last.rc == 0 and b"Error" not in blob:
+                    return last
+            return last if last is not None else Completed(1, b"", b"no_component")
         if k == "stop":
             return self._adb("shell", "am", "force-stop", self.pkg)
         raise InvalidDomain(f"未知动作 {k}")
