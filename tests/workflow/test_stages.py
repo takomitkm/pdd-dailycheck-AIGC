@@ -52,17 +52,16 @@ def test_ensure_ready_starts_app_when_not_foreground():
     assert kinds == ["stop", "wake", "dismiss_keyguard", "start"]
 
 
-def test_ensure_ready_no_stop_when_focus_unreadable():
-    """G6 安全半边：焦点读不到时绝不 force-stop（无法排除 PDD 就在前台，
-    am start 幂等、force-stop 不可逆）。照旧 wake→dismiss→start。"""
+def test_ensure_ready_clean_restarts_when_focus_unreadable():
+    """11-10 定案：不在首页就 force-stop 干净拉起（RESTART_APP），焦点读不到也重启
+    （force-stop 对陈旧页是 intended；冷启动组件名已修，能可靠回首页）。"""
     seq = [PageView(None, None, ""), PageView(PKG, HOME, "")]
     pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=2, prove_max=3,
                       step_wait_s=0, focus_retry=1, sleep=lambda s: None)
     r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
     r.ensure_ready()
     kinds = [c[0] for c in r._act.calls]
-    assert "stop" not in kinds
-    assert kinds == ["wake", "dismiss_keyguard", "start"]
+    assert kinds == ["stop", "wake", "dismiss_keyguard", "start"]
 
 
 def test_ensure_ready_retries_unreadable_focus_then_proceeds():
@@ -78,26 +77,22 @@ def test_ensure_ready_retries_unreadable_focus_then_proceeds():
     assert kinds == ["stop", "wake", "dismiss_keyguard", "start"]
 
 
-def test_ensure_ready_skips_stop_when_already_in_pdd():
-    """G6 边界：焦点已在 PDD 内（可续跑起点）→ 不 force-stop（11-09 定案）。"""
-    r, act = runner([PageView(PKG, ACT, "消费券页")])
-    r.ensure_ready(back_to_home=3)
-    assert "stop" not in [c[0] for c in act.calls]
-
-
-def test_ensure_ready_backs_to_home_when_on_other_page():
-    """确定性起点：在 PDD 但不在首页 → BACK 退回首页（真机连跑教训）。"""
+def test_ensure_ready_restarts_stale_pdd_page_to_home():
+    """11-10：在 PDD 但停在陈旧店铺/促销页（非首页）→ force-stop 干净拉起到首页，
+    不再「续跑错页」（那会让 entry 假 ok → bag rc5）。"""
     r, act = runner([PageView(PKG, ACT, "消费券页"),
                      PageView(PKG, HOME, "")])
     r.ensure_ready()
-    assert [c[0] for c in act.calls] == ["back"]
+    assert [c[0] for c in act.calls] == ["stop", "wake", "dismiss_keyguard", "start"]
 
 
-def test_ensure_ready_in_pdd_never_rc7_even_if_back_fails():
-    """11-09 生产口径：已在 PDD 内就是可续跑起点，退不回首页也不报 rc7。"""
+def test_ensure_ready_in_pdd_nonhome_never_rc7_after_clean_restart():
+    """干净重启后只要焦点是 PDD 就不报 rc7（哪怕落在活动页而非首页）。"""
     r, act = runner([PageView(PKG, ACT, "消费券页")])
-    r.ensure_ready(back_to_home=3)
-    assert [c[0] for c in act.calls] == ["back", "back", "back"]
+    r.ensure_ready()
+    kinds = [c[0] for c in act.calls]
+    assert kinds[0] == "stop"
+    assert "start" in kinds
 
 
 def test_ensure_ready_noop_when_already_in_pdd():
@@ -115,7 +110,7 @@ def test_ensure_ready_rc7_when_launch_fails():
 
 def test_enter_subsidy_taps_and_stops_when_in_activity():
     r, act = runner([PageView(PKG, HOME, "百亿补贴 搜索补贴"),
-                     PageView(PKG, ACT, "")])
+                     PageView(PKG, ACT, "抽福袋 精选 奢品馆")])
     r.enter_subsidy(SUBSIDY)
     assert [c[0] for c in act.calls] == ["tap"]
 
@@ -133,7 +128,7 @@ def test_enter_subsidy_retries_with_back_then_fails_rc4():
 def test_enter_subsidy_uses_coord_fallback_when_text_not_found():
     """认不到字时用标定坐标点一次（旧脚本同款：入口是艺术字图片）。"""
     pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=0, prove_max=1, step_wait_s=0)
-    seq = [PageView(PKG, HOME, "限时秒杀 免费领礼物"), PageView(PKG, ACT, "")]
+    seq = [PageView(PKG, HOME, "限时秒杀 免费领礼物"), PageView(PKG, ACT, "抽福袋")]
     r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
     spec = TargetLocateSpec(key="subsidy", labels=("百亿补贴",), min_overlap=3,
                             coord=(0.125, 0.46875))
@@ -147,7 +142,7 @@ def test_enter_subsidy_waits_step_after_tap():
     slept = []
     pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=0, prove_max=1,
                       step_wait_s=4.0, sleep=lambda s: slept.append(s))
-    seq = [PageView(PKG, HOME, "限时秒杀"), PageView(PKG, ACT, "")]
+    seq = [PageView(PKG, HOME, "限时秒杀"), PageView(PKG, ACT, "抽福袋")]
     r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
     spec = TargetLocateSpec(key="subsidy", labels=("百亿补贴",), min_overlap=3,
                             coord=(0.125, 0.46875))

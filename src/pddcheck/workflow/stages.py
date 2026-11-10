@@ -142,20 +142,11 @@ class StageRunner:
         if v.focus_package == self.policy.pkg and \
                 (v.focus_activity or "").endswith("HomeActivity"):
             return                                     # 已在首页
-        if v.focus_package == self.policy.pkg:
-            # 已在 PDD 内：先试试能否退回首页（最多 back_to_home 次）；退不回也
-            # **不报错**——任何 PDD 页都是可续跑起点（旧脚本 STEPS 同语义）。
-            for _ in range(back_to_home):
-                self._act("back", None)
-                self.policy._sleep(1.0)
-                v = self._read()
-                if (v.focus_activity or "").endswith("HomeActivity"):
-                    return
-            return
-        # 焦点不是 PDD：显式 HOME_ACT 启动（禁止 monkey 兜底），旧脚本同款节拍。
-        # G6：焦点**读得到且是别的应用**才先 force-stop（RESTART_APP）；
-        # 焦点读不到时绝不 stop（无法排除 PDD 就在前台），am start 幂等照样发。
-        if self.policy.restart_app and v.focus_package is not None:
+        # 11-10 真机教训：PDD 任务栈会恢复到**陈旧店铺/促销页**（NewPageActivity），
+        # 「任何 PDD 页可续跑」会让入口/福袋在错页上跑（entry 假 ok → bag rc5）。
+        # 冷启动组件名修好后（T59），改为旧脚本 RESTART_APP 口径：**不在首页就
+        # force-stop 再干净拉起**，保证确定性首页起点。force-stop 对陈旧页是 intended。
+        if self.policy.restart_app:
             self._act("stop", None)
             self.policy._sleep(1.0)
         self._act("wake", None)
@@ -199,9 +190,8 @@ class StageRunner:
         attempts = self.policy.entry_retry + 1
         for attempt in range(attempts):
             v = self._read()
-            if v.focus_activity and v.focus_activity != self.policy.home_activity \
-                    and v.focus_package == self.policy.pkg:
-                return                                     # 已在活动页
+            if v.focus_package == self.policy.pkg and _in_subsidy_channel(v.ocr_text):
+                return                                     # 已在补贴频道
             page = _Page(v.ocr_text)
             res = locate_all(page.frame("entry"), {spec.key: spec}, min_conf=self.policy.min_conf)
             r = res[spec.key]
@@ -209,7 +199,7 @@ class StageRunner:
                 self._act("tap", r.winning.tap_point)
                 self.policy.wait_step()                   # 等页面跳转（真机实测必需）
                 v2 = self._read()
-                if v2.focus_activity and v2.focus_activity != self.policy.home_activity:
+                if _in_subsidy_channel(v2.ocr_text):
                     return
             elif spec.coord is not None and self.policy.allow_coord_fallback:
                 # 认不到字就用标定坐标点一次（旧脚本同款：入口是图片，字未必认得到）
@@ -218,13 +208,13 @@ class StageRunner:
                 self._act("tap", pt)
                 self.policy.wait_step()                   # 等跳转（真机实测：不等等于没点）
                 v2 = self._read()
-                if v2.focus_activity and v2.focus_activity != self.policy.home_activity:
+                if _in_subsidy_channel(v2.ocr_text):
                     return
             if attempt < attempts - 1:
                 if scroll_to_top is not None and attempt == 0:
                     scroll_to_top(swipes)               # 滑到顶再认一轮
                 else:
-                    self._act("back", None)                # 退掉遮罩再试
+                    self._act("back", None)                # 退掉遮罩/错页再试
         raise StageFailure(4, "入口连着点还是没进补贴活动页")
 
     # ---- 福袋：点进福袋页并证明（进度/待兑换/已点亮 任一） ---------------
@@ -270,6 +260,17 @@ class StageRunner:
             if attempt < self.policy.prove_max - 1:
                 self._act("back", None)                    # 轮播另一帧，退一步换一帧
         raise StageFailure(5, "福袋页进不去/证明失败")
+
+
+def _in_subsidy_channel(text: str) -> bool:
+    """落地页是不是「百亿补贴」频道（11-10 真机教训）。
+
+    不能只看 `activity != home_activity`：多多买菜/店铺/促销页也都是
+    NewPageActivity，会把「点错入口」误判成「进对了」（entry 假 ok → bag rc5）。
+    认频道特征字：抽福袋 / 搜低价 / 精选+奢品馆（首页是「推荐」不是「精选」，
+    且无抽福袋/搜低价，不会误判）。
+    """
+    return ("抽福袋" in text) or ("搜低价" in text) or ("精选" in text and "奢品馆" in text)
 
 
 class _Page:

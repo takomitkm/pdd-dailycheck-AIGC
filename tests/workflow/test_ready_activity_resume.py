@@ -40,21 +40,19 @@ def runner(pages, policy=None):
                                              step_wait_s=0)), act
 
 
-def test_on_activity_page_back_attempts_but_no_rc7():
-    """生产 11-09：停在活动页 → 尝试退回首页（最多 back_to_home 次），退不回也不 rc7。"""
+def test_on_stale_activity_page_clean_restarts_no_rc7():
+    """11-10 定案（取代 11-09「可续跑」）：停在陈旧活动/店铺页 → force-stop 干净拉起；
+    重启后只要焦点是 PDD 就不 rc7。"""
     r, act = runner([PageView(PKG, ACT, ACT_TEXT)])
-    r.ensure_ready(back_to_home=0)
-    assert act.calls == []
-    r2, act2 = runner([PageView(PKG, ACT, ACT_TEXT)] * 3)
-    r2.ensure_ready(back_to_home=2)
-    assert [c[0] for c in act2.calls] == ["back", "back"]
+    r.ensure_ready()
+    assert [c[0] for c in act.calls] == ["stop", "wake", "dismiss_keyguard", "start"]
 
 
-def test_back_landing_on_home_returns():
+def test_clean_restart_lands_home():
     r, act = runner([PageView(PKG, ACT, CHANNEL_TEXT),
                      PageView(PKG, HOME, "推荐 食品 女装")])
     r.ensure_ready()
-    assert [c[0] for c in act.calls] == ["back"]
+    assert [c[0] for c in act.calls] == ["stop", "wake", "dismiss_keyguard", "start"]
 
 
 def test_rc7_only_when_focus_never_reaches_pdd():

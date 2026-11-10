@@ -46,7 +46,7 @@ def _cmd_run(args) -> CliResult:
 
     specs = {
         "subsidy": TargetLocateSpec(key="subsidy", labels=("百亿补贴", "搜索补贴"), min_overlap=3,
-                                    coord=(0.125, 0.46875)),
+                                    coord=(0.10417, 0.55859)),   # (75,715) 11-10 实测（11.11 横幅把入口下移；旧 (90,600) 已漂移到多多买菜行）
         "bag": TargetLocateSpec(key="bag", labels=("抽福袋",), min_overlap=3,
                                 coord=(0.13889, 0.69922)),
         "light": TargetLocateSpec(key="light", labels=("立即点亮",), min_overlap=4),
