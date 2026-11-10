@@ -61,6 +61,9 @@ class PipelineConfig:
     # 终态效果执行（迁移审计 G4/G8）：final_scroll（I06）+ close_policy 下发 +
     # last_activity 采集；CLI 真机路径开、47 案基线关
     execute_terminal_effects: bool = False
+    # verify 四阶段阶梯真执行（G1/G2/G3/G5）：browse→BACK→reconcile + 清浮层复读 +
+    # 奖励浮层点「开心收下」；CLI 真机路径开、47 案基线关
+    verify_ladder: bool = False
     # 纯观察：识别与决策照做，业务动作一律拒绝、不写标记/账本、不推送（只留证据）
     dry_run: bool = False
 
@@ -130,15 +133,46 @@ class _ScreenFromPipeline:
                 "before_count": facts.progress_count, "tap_point": tap_point,
                 "tap_method": "ocr", "browse_page": browse_page}
 
-    def post_tap_observations(self) -> tuple[VerifyObservation, ...]:
-        facts_after, _ = self._observe()
-        before = self._before.progress_count if self._before else None
+    def post_tap_observations(self, stage: VerifyStage = VerifyStage.AFTER_DIRECT
+                              ) -> tuple[VerifyObservation, ...]:
+        facts_after, results = self._observe()
         after = facts_after.progress_count
-        return (VerifyObservation(VerifyStage.AFTER_DIRECT,
+        # G3：奖励浮层在场 → 定位「开心收下」（旧 take_prize_overlay）。整页读不到它
+        # （pdd.sh L106-107：只有裁片档读得出），所以认不到字就退配置中心（分数=0 也点，
+        # 但**只有奖励浮层证明分支**会拿这个点——契约 L197）。
+        take_point = None
+        if facts_after.prize_text is not None:
+            take_point = self._take_point(results)
+        return (VerifyObservation(stage,
                                   after_count=after,
                                   done_text=facts_after.done_text is not None,
                                   prize_text=facts_after.prize_text is not None,
-                                  pend_text=facts_after.pend_text is not None),)
+                                  pend_text=facts_after.pend_text is not None,
+                                  take_point=take_point),)
+
+    def _take_point(self, results) -> tuple[int, int] | None:
+        """「开心收下」点击点：认到字优先，认不到退配置中心（旧 COORD_take 口径）。"""
+        r = results.get("take")
+        if r is not None and r.winning is not None and r.winning.tap_point is not None:
+            return r.winning.tap_point
+        spec = self._cfg.specs.get("take")
+        if spec is None or spec.coord is None:
+            return None
+        tw = int(getattr(self._device, "tap_width", 0) or 720)
+        th = int(getattr(self._device, "tap_height", 0) or 1280)
+        return (int(spec.coord[0] * tw), int(spec.coord[1] * th))
+
+    def locate_target(self, key: str) -> tuple[int, int] | None:
+        """G1/G2/G5：当前帧定位某目标（bag 胶囊 / popup 关闭词）。认不到字 → None。
+
+        语义与旧 text_present 一致：**不收坐标兜底**（认不到字就是认不到，绝不盲点——
+        10-11 的 rc=5 就是盲点坐标惹的）。
+        """
+        _, results = self._observe()
+        r = results.get(key)
+        if r is not None and r.winning is not None and r.winning.tap_point is not None:
+            return r.winning.tap_point
+        return None
 
 
 def _write_tmp_png(data: bytes):
@@ -302,7 +336,8 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                    stage_failure_why=stats.get("stage_failure"),
                    dry_run=cfg.dry_run,
                    browse_after_light=cfg.browse_after_light,
-                   execute_terminal_effects=cfg.execute_terminal_effects)
+                   execute_terminal_effects=cfg.execute_terminal_effects,
+                   verify_ladder=cfg.verify_ladder)
     outcome = run_once(deps)
     stats["observe_calls"] = screen.observe_calls
     return outcome, stats

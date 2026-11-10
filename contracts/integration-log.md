@@ -484,6 +484,33 @@
 - 教训（又踩一次）：持久终端跑长内联命令会被 PTY 回显拆碎卡死（AGENTS.md 早有记载）——
   本次 pty-20 就这么死的；改用脚本 `.tmp/run-pdd-tests.ps1` + 一次性 pwsh 跑，输出可靠。
 
+### 51. 2026-11-10 08:15 — 第二批迁移落地（G1/G2/G3/G5：verify 四阶段阶梯真执行）
+- **根因回顾**：11-08「假 lit3」的本质——浏览段滑完后从不 BACK，`post_tap_observations`
+  只喂 AFTER_DIRECT（消费券页，进度行本就不在），verify_light_decision 走到「认到字 +
+  读不到进度 → 弱证明 lit3」。决策核有完整阶梯，执行器没喂。
+- **flow.py**：新增 `_verify_after_light(browsed, verify_ladder)`——
+  - verify_ladder=False（47 案基线）：照旧单次 post_tap_observations；
+  - True：按旧 verify_light L1299-1389 跑：
+    browsed → BACK（旧 L1317「滑完必按」）→ AFTER_BACK 读进度；
+    读不到且落点认到「抽福袋」胶囊（`locate_target("bag")`，**认不到字绝不盲点**）→
+    点回活动页 → AFTER_REENTER；仍读不到 → 认到浮层关闭词才点掉 → AFTER_POPUP。
+  奖励浮层分支：判定核给 take 点才 `_take_prize`（契约 L197：只有 PRIZE 分支给点；
+  非奖励分支 VerifyOutcome.tap_point 恒 None，结构上保证别的页面「开心收下」借不到）。
+- **verify.py**：VerifyObservation 增 take_point/bag_point，VerifyOutcome 增 tap_point
+  （默认 None，向后兼容）；PRIZE 分支带出 take_point，其余分支不点。
+- **bootstrap.py**：`post_tap_observations(stage=...)` 按级标注；prize 在场时
+  `_take_point`（认到字优先，认不到退配置中心 COORD_take=(0.49861,0.58750)，分数=0 也点——
+  与旧 take_prize_overlay 同口径，gate 是「浮层那两行字已在场」）；新增 `locate_target(key)`
+  （纯帧定位，不收坐标兜底）。PipelineConfig 增 verify_ladder。
+- **app.py**：specs 增 take（profile [targets.take] 同口径）；真机路径 verify_ladder=not dry_run。
+- **未接线（显式记录，fail-safe）**：AFTER_REENTER_BAG（重进福袋页兜底）要跨 StageRunner 层，
+  本版不跑——不跑这条救场路的失败形态就是 rc6（旧脚本该路线失败也是 rc6），
+  只少一条救场路，**不会多一次误报成功**。留作后续单独做（需把 runner.open_bag 抽成回调）。
+- **测试**：新增 tests/workflow/test_verify_ladder.py 9 条（G5 done/popup、G3 收奖+非奖励不点、
+  G2 BACK/reenter/认不到不盲点、基线单观察），全量 **423 passed（4 skip 原有）**。
+- 关键安全不变量仍成立：无 tap_point → 不点、不写标记；坐标兜底只在主线/奖励上下文；
+  每个业务动作仍过前台护栏（expected_package+WindowKind.APP）。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。

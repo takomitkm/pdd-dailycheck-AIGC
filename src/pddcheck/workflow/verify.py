@@ -102,31 +102,25 @@ def verify_light_decision(
         after = after_at(VerifyStage.AFTER_POPUP)
 
     # —— 备用路线：重进福袋页（旧 L1361-1373）
-    bag_point = None
     bag_reenter = by_stage.get(VerifyStage.AFTER_REENTER_BAG)
     if after is None and bag_reenter is not None:
         if bag_reenter.reenter_failed:
             return VerifyOutcome(1, None, ProofKind.NONE, "重进福袋页失败，进度读不到")
         after = bag_reenter.after_count
-        # 旧 verify_light 里这条路线点上「抽福袋」胶囊；bag_point 只是透传记录，
-        # 动作由执行器在跑这条路线时自己下发（决策核不点）。
-        bag_point = bag_reenter.bag_point
+        # 旧 verify_light 里这条路线点上「抽福袋」胶囊：动作由执行器跑这条路线时
+        # 自己下发（决策核不点），bag_point 仅透传给调用方记录。
 
     # —— 前后对比（旧 L1374-1381）
     if before is not None and after is not None:
         if after < before:
             return VerifyOutcome(0, 3, ProofKind.COUNTER_DECREASE,
-                                 f"进度从 {before} 次变成 {after} 次",
-                                 tap_point=bag_point)
+                                 f"进度从 {before} 次变成 {after} 次")
         return VerifyOutcome(1, None, ProofKind.NONE,
-                             f"进度行的 {after} 次没变小（点前 {before} 次），这一枪没打进去",
-                             tap_point=bag_point)
+                             f"进度行的 {after} 次没变小（点前 {before} 次），这一枪没打进去")
 
     # —— 进度行始终读不到（旧 L1382-1388）：坐标枪不能算成功；认到字的枪按旧兼容放行
     if method == "coord":
         return VerifyOutcome(1, None, ProofKind.NONE,
-                             "读不到进度行里那个次数，而这一枪只有坐标兜底能打到，无法核实",
-                             tap_point=bag_point)
+                             "读不到进度行里那个次数，而这一枪只有坐标兜底能打到，无法核实")
     return VerifyOutcome(0, 3, ProofKind.LEGACY_TEXT_WITHOUT_COUNTER,
-                         "读不到进度行，但这一枪点的是认到的字，按原样算过（弱证明）",
-                         tap_point=bag_point)
+                         "读不到进度行，但这一枪点的是认到的字，按原样算过（弱证明）")

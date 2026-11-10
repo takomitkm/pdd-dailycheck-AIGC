@@ -53,6 +53,10 @@ def _cmd_run(args) -> CliResult:
         # 弹窗关闭词（旧脚本 POPUP 同款；profile [targets.popup] 同口径）
         "popup": TargetLocateSpec(key="popup", labels=("关闭", "跳过广告", "暂不", "以后再说"),
                                   min_overlap=2),
+        # 奖励浮层主按钮「开心收下」（G3 迁移；profile [targets.take] 同口径）。
+        # 整页读不到它，靠 coord 兜底 / 裁片档；只有奖励浮层证明分支会用这颗点。
+        "take": TargetLocateSpec(key="take", labels=("开心收下",), min_overlap=3,
+                                 coord=(0.49861, 0.58750)),
     }
     # --stages：先走 就绪→入口→福袋 流程段（真机验证见 t18a-calibration-findings.md）。
     run_stages = bool(getattr(args, "stages", False))
@@ -75,6 +79,9 @@ def _cmd_run(args) -> CliResult:
     # 真机路径：终态效果（I06 最终 20 次下滑 + close_policy 下发 + last_activity）
     # ——迁移审计 G4/G8；dry-run 仍不执行任何业务/收尾动作
     execute_terminal_effects = not bool(getattr(args, "dry_run", False))
+    # 真机路径：verify 四阶段阶梯（browse→BACK→reconcile / 清浮层 / 收奖）
+    # ——迁移审计 G1/G2/G3/G5；dry-run 不跑
+    verify_ladder = not bool(getattr(args, "dry_run", False))
     cfg = PipelineConfig(
         business_date=date, run_id=f"run-{date}",
         evidence_dir=str(ev / date),
@@ -86,7 +93,8 @@ def _cmd_run(args) -> CliResult:
         bag_pill=bag_pill,
         light_pill=light_pill,
         browse_after_light=browse_after_light,
-        execute_terminal_effects=execute_terminal_effects)
+        execute_terminal_effects=execute_terminal_effects,
+        verify_ladder=verify_ladder)
     # 显式 HOME_ACT（真机 resolve-activity 实测；护栏要求，禁止 monkey 兜底）
     dev = AdbDevice(serial, home_activity=cfg.home_activity)
     try:

@@ -31,7 +31,21 @@ class ScreenPort(Protocol):
     """读屏事实（生产里 = 采集+OCR+感知的组合；测试里 = 脚本）。"""
 
     def light_facts(self) -> dict: ...
-    def post_tap_observations(self) -> tuple[VerifyObservation, ...]: ...
+
+    def post_tap_observations(self, stage: VerifyStage = VerifyStage.AFTER_DIRECT
+                              ) -> tuple[VerifyObservation, ...]:
+        """核实观察。stage=本次读屏属于 verify 阶梯的哪一级（G1 接线）；
+        阶梯关（47 案基线）时调用方不传参，实现按 AFTER_DIRECT 标注。"""
+        ...
+
+    def locate_target(self, key: str) -> tuple[int, int] | None:
+        """G1/G2/G5：当前帧上定位某目标（bag 胶囊/popup 关闭词），没有则 None。
+
+        语义协议（生产 ScreenPort 必须真实现）：纯观察帧定位，绝不点、绝不盲点
+        坐标兜底——认不到字就 None（旧 text_present 口径）。
+        测试 Screen 可不实现（getattr 鸭子判断会跳过）。
+        """
+        ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,6 +97,10 @@ class RunDeps:
     execute_terminal_effects: bool = False
     # 证据保留天数（G9：旧 KEEP_DAYS=7；None/0=不清理）
     keep_days: int | None = 7
+    # G1/G2/G3/G5（迁移审计）：verify 四阶段阶梯真执行——浏览滑完 BACK 回落点核实、
+    # 落频道页认到 bag 再点回活动页、清浮层复读、重进福袋页兜底、奖励浮层点「开心收下」。
+    # 默认 False（47 案基线只喂 AFTER_DIRECT）；CLI 真机路径显式开启。
+    verify_ladder: bool = False
 
 
 def _exit(rc: int, lit: int | None) -> ExitCode:
@@ -154,7 +172,8 @@ def run_once(deps: RunDeps) -> RunOutcome:
                 else:
                     notes.append("定位不到「立即点亮」→ 按浏览任务处理（滑 15s 后核实）")
                     swipe_ok = _browse_after_light(deps, notes)
-                    obs = deps.screen.post_tap_observations()
+                    obs = _verify_after_light(deps, notes, browsed=True,
+                                              verify_ladder=getattr(deps, "verify_ladder", False))
                     decision = verify_light_decision(pre.before_count, facts.get("tap_method", "ocr"), obs)
                     rc, lit = decision.rc, decision.lit
                     notes.append(f"核实：{decision.proof_kind.value} — {decision.why}"
@@ -178,9 +197,14 @@ def run_once(deps: RunDeps) -> RunOutcome:
                     swipe_ok = False
                     if getattr(deps, "browse_after_light", False):
                         swipe_ok = _browse_after_light(deps, notes)
-                    obs = deps.screen.post_tap_observations()
+                    obs = _verify_after_light(deps, notes, browsed=swipe_ok,
+                                              verify_ladder=getattr(deps, "verify_ladder", False))
                     decision = verify_light_decision(pre.before_count, facts.get("tap_method", "ocr"), obs)
                     rc, lit = decision.rc, decision.lit
+                    if decision.tap_point is not None and not deps.dry_run:
+                        # G3：奖励浮层在场=点着了的凭据，顺手把「开心收下」点掉
+                        #（契约 L197：只有奖励浮层证明分支允许 take；判定核给点才许点）
+                        _take_prize(deps, decision.tap_point, notes)
                     notes.append(f"核实：{decision.proof_kind.value} — {decision.why}"
                                  + ("（浏览段已执行）" if swipe_ok else ""))
 
@@ -263,6 +287,105 @@ def run_once(deps: RunDeps) -> RunOutcome:
     finally:
         if lease is not None:
             lease.release()
+
+
+def _verify_after_light(deps: RunDeps, notes: list, *, browsed: bool,
+                        verify_ladder: bool) -> tuple[VerifyObservation, ...]:
+    """点亮后的核实观察收集。
+
+    - verify_ladder=False（47 案基线）：照旧单次 post_tap_observations；
+    - verify_ladder=True（G1/G2/G5 迁移）：跑旧 verify_light 的阶梯——
+      1. browsed 时先 BACK 离开浏览/消费券页，落点读进度（AFTER_BACK）；
+      2. 进度读不到且认到「抽福袋」胶囊 → 点它回活动页再读（AFTER_REENTER）；
+      3. 仍读不到 → 清浮层（认到关闭词才点）再读（AFTER_POPUP）。
+    未接线：AFTER_REENTER_BAG（重进福袋页兜底）要跨 StageRunner 层，本版不跑；
+    不跑这条救场路的失败形态仍是 rc6（旧脚本这条路线失败也是 rc6）——
+    只少一条救场路，不会多一次误报成功。每步动作失败只记 notes，
+    观察交给 verify_light_decision 按旧阶梯判。
+    """
+    if not verify_ladder:
+        return deps.screen.post_tap_observations()
+
+    obs: list[VerifyObservation] = []
+    if browsed:
+        # G2：BACK 离开浏览页（旧 L1316-1319「滑完必按 BACK」）
+        _stage_back(deps, notes, "浏览完，按 BACK 离开消费券页")
+        obs.extend(deps.screen.post_tap_observations(VerifyStage.AFTER_BACK))
+        if _obs_count(obs) is None:
+            # 落频道页且认到「抽福袋」胶囊 → 点回活动页（旧 L1322-1327）
+            bag_point = _locate_on_screen(deps, notes, "bag")
+            if bag_point is not None:
+                _tap_point(deps, bag_point, "BACK 落在频道页，点「抽福袋」胶囊回活动页", notes)
+                obs.extend(deps.screen.post_tap_observations(VerifyStage.AFTER_REENTER))
+    else:
+        obs.extend(deps.screen.post_tap_observations())          # AFTER_DIRECT
+
+    if _obs_count(obs) is None:
+        # G5：进度行读不到，可能是浮层盖着——清浮层（认到关闭词才点）再读（旧 L1353-1358）
+        popup_point = _locate_on_screen(deps, notes, "popup")
+        if popup_point is not None:
+            _tap_point(deps, popup_point, "进度行读不到，先点掉浮层再读", notes)
+        obs.extend(deps.screen.post_tap_observations(VerifyStage.AFTER_POPUP))
+    return tuple(obs)
+
+
+def _obs_count(obs: tuple[VerifyObservation, ...]) -> int | None:
+    """已收观察里是否已有进度数字（任一阶段）；没有则 None。"""
+    for o in obs:
+        if o.after_count is not None:
+            return o.after_count
+    return None
+
+
+def _locate_on_screen(deps: RunDeps, notes: list, key: str) -> tuple[int, int] | None:
+    """给 verify 阶梯用：当前帧上认某目标（bag 胶囊 / popup 关闭词）。
+
+    ScreenPort 可实现 locate_target(key)->(x,y)|None；没实现就跳过这一路
+    （绝不盲点——10-11 的 rc=5 就是盲点坐标惹的）。
+    """
+    locate = getattr(deps.screen, "locate_target", None)
+    if locate is None:
+        return None
+    try:
+        return locate(key)
+    except Exception as exc:
+        notes.append(f"落点认 {key} 失败（跳过这一路）：{exc}")
+        return None
+
+
+def _stage_back(deps: RunDeps, notes: list, reason: str) -> None:
+    try:
+        intent = ActionIntent(
+            action_id=f"{deps.run_id}-back-{deps.now_ns()}",
+            run_id=deps.run_id, kind=ActionKind.BACK,
+            source_capture_id="verify", state_epoch=getattr(deps.device, "state_epoch", 0),
+            geometry_revision=0, deadline_ns=deps.now_ns() + 15_000_000_000,
+            reason=reason, source_candidate_id="verify-back", target_key="verify",
+            expected_package="com.xunmeng.pinduoduo", required_window_kind=WindowKind.APP)
+        deps.device.execute(intent, None)
+    except Exception as exc:
+        notes.append(f"BACK 被拒（继续核实）：{exc}")
+
+
+def _tap_point(deps: RunDeps, point: tuple[int, int], reason: str, notes: list) -> None:
+    try:
+        intent = ActionIntent(
+            action_id=f"{deps.run_id}-tap-{deps.now_ns()}",
+            run_id=deps.run_id, kind=ActionKind.TAP,
+            source_capture_id="verify", state_epoch=getattr(deps.device, "state_epoch", 0),
+            geometry_revision=0, deadline_ns=deps.now_ns() + 15_000_000_000,
+            reason=reason, source_candidate_id="verify-tap", target_key="verify",
+            expected_package="com.xunmeng.pinduoduo", required_window_kind=WindowKind.APP)
+        receipt = deps.device.execute(intent, point)
+        # 成功/拒绝都留痕（真机查因需要「这一枪到底打没打成」）
+        notes.append(f"{reason}（{point}，{receipt.status.value}）")
+    except Exception as exc:
+        notes.append(f"点 {point} 被拒（继续核实）：{exc}")
+
+
+def _take_prize(deps: RunDeps, point: tuple[int, int], notes: list) -> None:
+    """G3：奖励浮层在场 + 判定核给了 take 点 → 点「开心收下」收奖（旧 take_prize_overlay）。"""
+    _tap_point(deps, point, "奖励浮层在场，点「开心收下」收下", notes)
 
 
 def _browse_after_light(deps: "RunDeps", notes: list) -> bool:
