@@ -535,6 +535,29 @@
 - 教训：**「手动补签成功」不能证明自动冷启动路径可用**——必须把手机压回桌面再测冷启动。
   这也是 0.1.38/39「过夜锁屏节拍」修复没救回 rc7 的原因：病根不在节拍，在组件名。
 
+### 53. 2026-11-10 11:27 — 真机逐屏复盘 + 手动补签 + 0.1.42 端到端验证 + 切 current
+- 11:04 窗口内用 0.1.41 dry-run 从**桌面**复现冷启动：`ready:ok`（rc7 消失）→ 证明 T59 组件名修复有效。
+- 但真实跑仍 `entry:ok → bag:rc5`。逐屏截图+OCR 定位两个**布局**问题：
+  1. **陈旧任务栈**：PDD 恢复到店铺页/「柚子免费领」促销弹窗（NewPageActivity），
+     `enter_subsidy` 只看 `activity!=home` 误判 entry:ok，bag 在错页 rc5。BACK 能关弹窗但
+     治标；正解=旧脚本 RESTART_APP：**不在首页就 force-stop 干净拉起**（实测 force-stop 后
+     am start 可靠回 HomeActivity）。
+  2. **入口坐标漂移**：首页多了「11.11大促」横幅把「百亿补贴」从 (90,600) 推到 (75,715)；
+     旧坐标点到多多买菜行。且「百亿补贴」是艺术字 psm6/11 都读不出 → 只能坐标+落地校验。
+- **手动补签今天**（逐屏 adb）：关弹窗→force-stop 回首页→点(75,715)进频道→点(435,524)抽福袋→
+  点(600,288)立即点亮→滑 16×800ms→BACK→再点抽福袋核实：进度 3→2、「今日已点亮」、星 3→4。
+  写 `.done-2026-11-10`。
+- **代码修复（0.1.42/T60）**：ensure_ready 不在首页就 force-stop+wake+dismiss+start（取代
+  11-09「可续跑」权宜）；enter_subsidy 落地校验改认频道特征字（抽福袋/搜低价/精选+奢品馆，
+  `_in_subsidy_channel`），不再信 `activity!=home`；subsidy 坐标更新 (0.10417,0.55859)=(75,715)。
+- **端到端验证**：0.1.42 `run --stages --force` → `exit=0 lit=3 marker=True delivered=sent
+  observes=6 stages=[ready:ok,entry:ok,bag:ok]`。rc7/rc5 全消失。（lit3 为今天已点亮、进度行
+  读不到时的 B04 兼容弱证明，无副作用；明天未点亮走真实计数核实。）
+- **部署**：`current` 切 0.1.42；timer 下次 11-11 10:00。回滚一行 `printf "0.1.41\n" > current`。
+- 测试：更新 6 条旧「可续跑/不stop/BACK回首页」断言为干净重启；全量绿。
+- 教训：**入口/页型判定不能信 activity 名**（店铺/促销/多多买菜都是 NewPageActivity），
+  要认页面特征字；坐标是标定值会随横幅漂移，落地校验+重试是安全网。
+
 ## 待办记账
 
 - [ ] WSL 实跑 run-sandbox-local.sh：--self-check → 47×2 全矩阵 → 反例四项。
