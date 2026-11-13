@@ -77,10 +77,12 @@ def anchor_candidates(words: list[AnchorWord], *, anchors: tuple[str, ...],
                 break
     if not hits:
         return []
-    # 同一行（±8px）只留一个锚点，且**同一行内优先更短的匹配**（更精确）
+    # 同一排（±24px，容纳 OCR 逐字切分与合并行的 y 抖动）只留一个锚点，
+    # 且**同一排内优先更短（更精确）的匹配**——合并行往往是「整排图标文字 + 乱码」
+    # 拼一起，用它算 x 会偏、且会多出一串重复候选（11-13 真机实测）。
     by_row: dict[int, tuple[int, int, AnchorWord]] = {}
     for alen, y, w in hits:
-        key = y // 8
+        key = y // 24
         cur = by_row.get(key)
         if cur is None or alen < cur[0]:
             by_row[key] = (alen, y, w)
