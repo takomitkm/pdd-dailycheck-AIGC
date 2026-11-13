@@ -45,8 +45,12 @@ def _cmd_run(args) -> CliResult:
     date = __import__("datetime").date.today().isoformat()
 
     specs = {
+        # 入口「百亿补贴」是艺术字图标（11-13 真机：psm6 乱码、psm11 偶发）→
+        # **关掉这里的坐标兜底**（allow_coord=False），让 stages 的优先级生效：
+        # 文字命中 → 锚点推算（可读图标行 + 偏移）→ 标定坐标（最后兜底）。
+        # 11-10 实测坐标 (75,715)；11-11 那天版式漂移导致落空 → 锚点更抗漂移。
         "subsidy": TargetLocateSpec(key="subsidy", labels=("百亿补贴", "搜索补贴"), min_overlap=3,
-                                    coord=(0.10417, 0.55859)),   # (75,715) 11-10 实测（11.11 横幅把入口下移；旧 (90,600) 已漂移到多多买菜行）
+                                    coord=(0.10417, 0.55859), allow_coord=False),
         "bag": TargetLocateSpec(key="bag", labels=("抽福袋",), min_overlap=3,
                                 coord=(0.13889, 0.69922)),
         "light": TargetLocateSpec(key="light", labels=("立即点亮",), min_overlap=4),

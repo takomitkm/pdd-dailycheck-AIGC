@@ -116,17 +116,19 @@ def test_enter_subsidy_taps_and_stops_when_in_activity():
 
 
 def test_enter_subsidy_retries_with_back_then_fails_rc4():
-    # 每次都在首页，且 tap 后焦点仍在首页 → 用完 entry_retry → rc4
+    """每一枪点错就 BACK 退掉（pdd.sh 同款），用完 entry_retry+1 枪 → rc4。"""
     r, act = runner([PageView(PKG, HOME, "百亿补贴")])
     with pytest.raises(StageFailure) as e:
         r.enter_subsidy(SUBSIDY)
     assert e.value.rc == 4
     kinds = [c[0] for c in act.calls]
-    assert kinds.count("back") == POLICY.entry_retry      # 退两次
+    # entry_retry+1 枪，每枪点错退一次
+    assert kinds.count("tap") == POLICY.entry_retry + 1
+    assert kinds.count("back") == POLICY.entry_retry + 1
 
 
 def test_enter_subsidy_uses_coord_fallback_when_text_not_found():
-    """认不到字时用标定坐标点一次（旧脚本同款：入口是艺术字图片）。"""
+    """认不到字、又没有锚点供给器时用标定坐标点一次（旧脚本同款：入口是艺术字图片）。"""
     pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=0, prove_max=1, step_wait_s=0)
     seq = [PageView(PKG, HOME, "限时秒杀 免费领礼物"), PageView(PKG, ACT, "抽福袋")]
     r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
@@ -135,6 +137,43 @@ def test_enter_subsidy_uses_coord_fallback_when_text_not_found():
     r.enter_subsidy(spec)
     # 坐标换算：0.125*720=90、0.46875*1280=600
     assert r._act.calls == [("tap", (90, 600))]
+
+
+def test_enter_subsidy_anchor_point_used_when_text_not_found():
+    """11-13 加固：认不到字时先用**锚点推算**的点（优先于固定坐标）。"""
+    pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=0, prove_max=1, step_wait_s=0)
+    seq = [PageView(PKG, HOME, "限时秒杀 免费领礼物"), PageView(PKG, ACT, "抽福袋")]
+    r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
+    spec = TargetLocateSpec(key="subsidy", labels=("百亿补贴",), min_overlap=3,
+                            coord=(0.125, 0.46875))
+    r.enter_subsidy(spec, anchor_points=lambda: [(36, 772)])
+    assert r._act.calls == [("tap", (36, 772))]      # 锚点点，没用坐标
+
+
+def test_enter_subsidy_anchor_wrong_point_backs_and_tries_next():
+    """锚点候选点错了 → BACK 退掉再试下一个（点错就退，不拿盲点冒充成功）。"""
+    pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=0, prove_max=1, step_wait_s=0)
+    seq = [PageView(PKG, HOME, "限时秒杀"),
+           PageView(PKG, HOME, "限时秒杀"),      # 第一个候选点错（还在首页）
+           PageView(PKG, ACT, "抽福袋 精选 奢品馆")]   # 第二个候选点对
+    r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
+    spec = TargetLocateSpec(key="subsidy", labels=("百亿补贴",), min_overlap=3,
+                            coord=(0.125, 0.46875))
+    r.enter_subsidy(spec, anchor_points=lambda: [(36, 700), (36, 772)])
+    assert r._act.calls == [("tap", (36, 700)), ("back", None), ("tap", (36, 772))]
+
+
+def test_enter_subsidy_empty_anchor_list_does_not_blind_tap():
+    """锚点供给器给不出候选（认不到锚点）→ 不点这一枪（安全不变量：绝不盲点）。"""
+    pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=0, prove_max=1, step_wait_s=0)
+    seq = [PageView(PKG, HOME, "限时秒杀")]
+    r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
+    spec = TargetLocateSpec(key="subsidy", labels=("百亿补贴",), min_overlap=3,
+                            coord=None, allow_coord=False)
+    with pytest.raises(StageFailure) as e:
+        r.enter_subsidy(spec, anchor_points=lambda: [])
+    assert e.value.rc == 4
+    assert [c[0] for c in r._act.calls] == []        # 一个 tap 都没有
 
 
 def test_enter_subsidy_waits_step_after_tap():

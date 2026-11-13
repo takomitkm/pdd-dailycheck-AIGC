@@ -32,6 +32,10 @@ class CoordinateSource(StrEnum):
     XML = "xml"
     OCR = "ocr"
     TESSERACT_PAGE = "tesseract_page"
+    # 整页第二档：稀疏文字 psm 11（旧脚本 L824「OCR_PSM=11 与 OCR_PSM_PAGE=6 两档都跑」）。
+    # 11-13 真机实测：首页「官方补贴」艺术字**只有 psm 11 读得出**（conf 81），
+    # psm 6 同位置读成乱码 —— 只跑 psm 6 会让入口定位退化成纯坐标（11-11 rc4 之一因）。
+    TESSERACT_SPARSE = "tesseract_sparse"
     BAND = "band"
     PILL = "pill"
     PILL_LIGHT = "pill_light"          # light/done 的独立裁片（右上按钮，与 bag 的 pill 分框）

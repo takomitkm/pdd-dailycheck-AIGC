@@ -68,6 +68,15 @@ class PipelineConfig:
     # verify 四阶段阶梯真执行（G1/G2/G3/G5）：browse→BACK→reconcile + 清浮层复读 +
     # 奖励浮层点「开心收下」；CLI 真机路径开、47 案基线关
     verify_ladder: bool = False
+    # 入口锚点（11-13 加固）：首页「百亿补贴」是艺术字（OCR 读不稳），改用
+    # **可读图标行文字** + 偏移推算候选点。认不到锚点 → 不点（绝不盲点）。
+    entry_anchor_labels: tuple[str, ...] = ("限时秒杀", "充值中心", "免费领礼物", "多多果园")
+    # (dx, dy) 屏幕比例，相对锚点文字框左上角；多组 = 多个候选（逐个试点 + 落地校验）。
+    # 11-13 实测：锚点「限时秒杀」文字 x=36..109 y=452..469；百亿补贴图标区
+    # x≈30..120 y≈680..790 → dx≈0（与图标行同列），dy≈0.18~0.26（商品行高度会变）。
+    entry_anchor_offsets: tuple[tuple[float, float], ...] = (
+        (0.0, 0.20), (0.0, 0.26), (0.02, 0.23), (0.0, 0.14),
+    )
     # 纯观察：识别与决策照做，业务动作一律拒绝、不写标记/账本、不推送（只留证据）
     dry_run: bool = False
 
@@ -88,9 +97,10 @@ class _ScreenFromPipeline:
         self._light_pill = getattr(cfg, "light_pill", None)
 
     def _observe(self) -> tuple[ScreenFacts, object]:
-        # 通道选择：整页恒取；有 pill/band 标定的目标才加对应裁片通道
-        # （真机实测：频道页「抽福袋」只有 pill color×2 psm7 认得出，整页与 band 都不行）
-        channels = [CoordinateSource.TESSERACT_PAGE]
+        # 通道选择：整页恒取两档（稀疏 psm11 先、整页 psm6 后——旧脚本 L824 同序）；
+        # 有 pill/band 标定的目标才加对应裁片通道
+        # （真机实测：频道页「抽福袋」只有 pill color×2 psm7 认得出，整页与 band 都不行）。
+        channels = [CoordinateSource.TESSERACT_SPARSE, CoordinateSource.TESSERACT_PAGE]
         if self._cfg.pill_box is not None:
             channels.append(CoordinateSource.PILL)
         if self._cfg.band_region is not None:
@@ -245,7 +255,8 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                                 state_epoch=getattr(device, "state_epoch", 0),
                                 tap_width=getattr(device, "tap_width", 720),
                                 tap_height=getattr(device, "tap_height", 1280),
-                                channels=(CoordinateSource.TESSERACT_PAGE,),
+                                channels=(CoordinateSource.TESSERACT_SPARSE,
+                                          CoordinateSource.TESSERACT_PAGE),
                                 xml_policy=XmlPolicy.SKIP)
             stats["observe_calls"] += 1
             text = " ".join(ln.normalized_text
@@ -254,6 +265,44 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
             return PageView(fs.focused_package, fs.focused_activity, text)
 
         runner = StageRunner(read_page, act, policy)
+
+        def entry_anchor_candidates():
+            """首页「百亿补贴」入口的**锚点推算**候选点（11-13 加固）。
+
+            背景：「百亿补贴」是艺术字图标，psm6 读成乱码、psm11 偶发（同一张图
+            一次 conf 81、另两次 'SEAM' conf 38）→ 不能靠 OCR 认它。
+            但同页图标行文字「限时秒杀/充值中心/免费领礼物/多多果园」**稳定可读**
+            （11-13 实测 conf 85~97），且百亿补贴卡片恒在其下方同列。
+
+            做法：认到锚点文字 → 按 (dx,dy) 偏移推算候选点 → 逐个试点，
+            由落地校验（认到「抽福袋/搜低价/精选+奢品馆」）裁决；
+            **认不到锚点就返回空**（绝不盲点）。
+            """
+            from pddcheck.domain import CoordinateSource
+            from pddcheck.perception.anchor import anchor_candidates, words_from_tsv
+            from pddcheck.perception import observe_frame
+            try:
+                src = DeviceVisionSource(device, engine, pill_box=cfg.pill_box,
+                                         pill_div=cfg.pill_div, pill_mode=cfg.pill_mode)
+                obs = observe_frame(src, frame_id=f"{cfg.run_id}-a", capture_id="anchor",
+                                    state_epoch=getattr(device, "state_epoch", 0),
+                                    tap_width=getattr(device, "tap_width", 720),
+                                    tap_height=getattr(device, "tap_height", 1280),
+                                    channels=(CoordinateSource.TESSERACT_SPARSE,
+                                              CoordinateSource.TESSERACT_PAGE),
+                                    xml_policy=XmlPolicy.SKIP)
+                stats["observe_calls"] += 1
+                words = words_from_tsv(list(obs.ocr_texts.values()), min_conf=40.0)
+                cands = anchor_candidates(
+                    words,
+                    anchors=cfg.entry_anchor_labels,
+                    offsets=cfg.entry_anchor_offsets,
+                    scale_w=int(getattr(device, "tap_width", 0) or 720),
+                    scale_h=int(getattr(device, "tap_height", 0) or 1280))
+                return [(c.x, c.y) for c in cands]
+            except Exception as exc:
+                stats.setdefault("anchor_errors", []).append(str(exc))
+                return []
 
         def bag_pill_candidates():
             """频道页「抽福袋」裁片候选（真机实测只有 pill color×2 psm7 认得出）。"""
@@ -320,7 +369,8 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                 n_pop = runner.dismiss_popup(popup_spec)
                 if n_pop:
                     stats["stages"].append(f"popup:closed{n_pop}")
-                runner.enter_subsidy(cfg.specs["subsidy"], scroll_to_top=runner.scroll_to_top)
+                runner.enter_subsidy(cfg.specs["subsidy"], scroll_to_top=runner.scroll_to_top,
+                                     anchor_points=entry_anchor_candidates)
                 stats["stages"].append("entry:ok")
                 runner.open_bag(cfg.specs["bag"], extra_candidates=bag_pill_candidates)
                 stats["stages"].append("bag:ok")

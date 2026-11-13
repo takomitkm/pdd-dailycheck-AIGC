@@ -17,6 +17,7 @@ from pddcheck.vision.engine import OcrEngine
 
 class DeviceVisionSource:
     def __init__(self, device, engine: OcrEngine, *, psm: int = 6,
+                 sparse_psm: int = 11,
                  screenshot=None, band_region=None, pill_box=None,
                  band_scale: int = 3, band_cutoff: int = 1,
                  pill_div: int = 2, pill_th: int = 120, pill_mode: str = "color",
@@ -24,6 +25,10 @@ class DeviceVisionSource:
         self.device = device
         self.engine = engine
         self.psm = psm
+        # 整页第二档（稀疏文字）：旧脚本 L824「OCR_PSM=11 与 OCR_PSM_PAGE=6 两档都跑」。
+        # 11-13 真机实测：首页「官方补贴」艺术字只有 psm 11 读得出（conf 81），
+        # psm 6 同位置是乱码 —— 只跑一档会让入口退化成纯坐标（11-11 rc4 之一因）。
+        self.sparse_psm = sparse_psm
         self._screenshot = screenshot or getattr(device, "screenshot_bytes", None)
         self._frame: bytes | None = None
         self._frame_taken = False
@@ -56,6 +61,14 @@ class DeviceVisionSource:
             return None
         if source is CoordinateSource.TESSERACT_PAGE:
             res = self.engine.recognize(data, self.psm)
+            if res.status is ReadStatus.OK:
+                self._geometry[source] = (1.0, 1.0, 0.0, 0.0)
+                return res.tsv_text
+            return None
+        if source is CoordinateSource.TESSERACT_SPARSE:
+            # 整页第二档（稀疏文字）：与 TESSERACT_PAGE 同一张图、同一几何（1,1,0,0），
+            # 只是换识别模式（不重截屏——帧缓存已复用）。
+            res = self.engine.recognize(data, self.sparse_psm)
             if res.status is ReadStatus.OK:
                 self._geometry[source] = (1.0, 1.0, 0.0, 0.0)
                 return res.tsv_text

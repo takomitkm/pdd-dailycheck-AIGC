@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from pddcheck.perception import TargetLocateSpec, locate_all, observe_frame
 from pddcheck.perception.facts import facts_from_text
@@ -180,12 +180,18 @@ class StageRunner:
         self.policy.wait_step()
 
     def enter_subsidy(self, spec: TargetLocateSpec, *, scroll_to_top=None,
-                      swipes: int = 3) -> None:
+                      swipes: int = 3, anchor_points=None) -> None:
         """进补贴活动页。
 
         scroll_to_top：可选回调（滚回页面顶部再认一轮）——旧脚本的做法是
         「认不到字多半页面没在顶端 → 滑到最顶端再认一次」（旧 L1074-1078）。
         没提供该回调时不滚动（纯文本判定环境用）。
+
+        anchor_points：可选供给器 ()->list[(x,y)]，返回**锚点推算**的入口候选
+        （11-13 加固：首页「百亿补贴」是艺术字，OCR 读不稳 → 改用可读的图标行文字
+        「限时秒杀/充值中心/免费领礼物」+ 偏移推算）。每个候选点下去后用落地校验
+        （认到「抽福袋/搜低价/精选+奢品馆」）裁决；点错就 BACK 再试下一个。
+        供给器返回空列表 = 没有可信锚点 → 不点（绝不盲点）。
         """
         attempts = self.policy.entry_retry + 1
         for attempt in range(attempts):
@@ -193,27 +199,56 @@ class StageRunner:
             if v.focus_package == self.policy.pkg and _in_subsidy_channel(v.ocr_text):
                 return                                     # 已在补贴频道
             page = _Page(v.ocr_text)
-            res = locate_all(page.frame("entry"), {spec.key: spec}, min_conf=self.policy.min_conf)
+            # **文字定位时禁用坐标兜底**（11-13）：否则 locate_all 会直接给一个
+            # CONFIG_COORD 候选当 winner，锚点/坐标分支就永远轮不到。
+            # 优先级在这里显式排：文字 → 锚点 → 标定坐标。
+            text_spec = (spec if not spec.allow_coord
+                         else replace(spec, allow_coord=False))
+            res = locate_all(page.frame("entry"), {spec.key: text_spec},
+                             min_conf=self.policy.min_conf)
             r = res[spec.key]
+            tapped = False
             if r.winning is not None:
                 self._act("tap", r.winning.tap_point)
                 self.policy.wait_step()                   # 等页面跳转（真机实测必需）
                 v2 = self._read()
                 if _in_subsidy_channel(v2.ocr_text):
                     return
+                # 点错了 → 退掉，让下一轮在干净页面重来（pdd.sh 同款：点错就 BACK）
+                self._act("back", None)
+                self.policy._sleep(1.0)
+                tapped = True
+            elif anchor_points is not None:
+                # 锚点推算（11-13 加固，优先于固定坐标）：认到可读图标行文字 →
+                # 推算百亿补贴图标位置。每个候选靠落地校验裁决；点错立即 BACK
+                # 退掉再试下一个（pdd.sh 的精神：点错就退，不拿盲点冒充成功）。
+                for cand in anchor_points():
+                    if not cand:
+                        continue
+                    self._act("tap", (cand[0], cand[1]))
+                    self.policy.wait_step()
+                    v2 = self._read()
+                    if _in_subsidy_channel(v2.ocr_text):
+                        return
+                    self._act("back", None)               # 点错了 → 退回首页再试下一个
+                    self.policy._sleep(1.0)
+                tapped = True
             elif spec.coord is not None and self.policy.allow_coord_fallback:
-                # 认不到字就用标定坐标点一次（旧脚本同款：入口是图片，字未必认得到）
-                # 护栏：AdbDevice 会校验前台是 pdd，否则拒绝动作。
+                # 认不到字、又没有锚点 → 退标定坐标点一次（旧脚本同款：入口是图片，
+                # 字未必认得到）。护栏：AdbDevice 会校验前台是 pdd，否则拒绝动作。
                 pt = (int(spec.coord[0] * 720), int(spec.coord[1] * 1280))
                 self._act("tap", pt)
                 self.policy.wait_step()                   # 等跳转（真机实测：不等等于没点）
                 v2 = self._read()
                 if _in_subsidy_channel(v2.ocr_text):
                     return
+                self._act("back", None)                   # 点错了 → 退掉再试
+                self.policy._sleep(1.0)
+                tapped = True
             if attempt < attempts - 1:
-                if scroll_to_top is not None and attempt == 0:
+                if scroll_to_top is not None and attempt == 0 and not tapped:
                     scroll_to_top(swipes)               # 滑到顶再认一轮
-                else:
+                elif not tapped:
                     self._act("back", None)                # 退掉遮罩/错页再试
         raise StageFailure(4, "入口连着点还是没进补贴活动页")
 
