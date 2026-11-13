@@ -64,25 +64,27 @@ def anchor_candidates(words: list[AnchorWord], *, anchors: tuple[str, ...],
     """
     if scale_w <= 0 or scale_h <= 0:
         return []
-    hits: list[tuple[int, AnchorWord]] = []
+    hits: list[tuple[int, int, AnchorWord]] = []
     for w in words:
         clean = w.text.replace(" ", "")
         for a in anchors:
             if a in clean:
-                hits.append((w.y, w))
+                # 记录「匹配长度」：同一个 y 上可能有合并行（整排图标文字合一行）与
+                # 单词行；**更精确（更短）的匹配优先**——合并行的 x 是最左，
+                # 而我们要的是某一格自己的 x（11-13 真机：图标行被合行后 x=36..670，
+                # 直接用会让所有候选都落在最左列）。
+                hits.append((len(a), w.y, w))
                 break
     if not hits:
         return []
-    # 同一锚点只取最上那个词行（图标行是横排，逐字切分时 y 相同）
-    hits.sort(key=lambda t: (t[0], t[1].x))
-    seen_y: set[int] = set()
-    picked: list[AnchorWord] = []
-    for y, w in hits:
-        key = y // 8                      # 同一行（±8px）算同一个锚点
-        if key in seen_y:
-            continue
-        seen_y.add(key)
-        picked.append(w)
+    # 同一行（±8px）只留一个锚点，且**同一行内优先更短的匹配**（更精确）
+    by_row: dict[int, tuple[int, int, AnchorWord]] = {}
+    for alen, y, w in hits:
+        key = y // 8
+        cur = by_row.get(key)
+        if cur is None or alen < cur[0]:
+            by_row[key] = (alen, y, w)
+    picked = [v[2] for v in sorted(by_row.values(), key=lambda t: t[1])]
     out: list[AnchorCandidate] = []
     for w in picked:
         for dx, dy in offsets:
