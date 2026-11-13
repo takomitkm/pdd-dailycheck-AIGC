@@ -301,6 +301,8 @@ def build_and_run(*, device, engine: OcrEngine, store: DailyStore,
                     offsets=cfg.entry_anchor_offsets,
                     scale_w=int(getattr(device, "tap_width", 0) or 720),
                     scale_h=int(getattr(device, "tap_height", 0) or 1280))
+                stats["entry_anchor_candidates"] = [
+                    {"xy": list(c.tap_point), "why": c.why} for c in cands]
                 return [(c.x, c.y) for c in cands]
             except Exception as exc:
                 stats.setdefault("anchor_errors", []).append(str(exc))

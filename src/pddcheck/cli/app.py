@@ -130,6 +130,12 @@ def _cmd_run(args) -> CliResult:
             line += f"stages={stats['stages']}\n"
         if stats.get("stage_failure"):
             line += f"stage_failure={stats['stage_failure']}\n"
+        # 入口锚点候选（11-13 加固）：看得见才知道入口是「锚点命中」还是「坐标兜底」。
+        if stats.get("entry_anchor_candidates") is not None:
+            cands = stats["entry_anchor_candidates"]
+            line += (f"entry_anchors={len(cands)}"
+                     + ("".join(f" [{c['xy']}]" for c in cands) if cands else " (无锚点)")
+                     + "\n")
         return CliResult(outcome.exit_code, stdout=line)
     finally:
         if lease is not None:
