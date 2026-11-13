@@ -163,8 +163,19 @@ def test_enter_subsidy_anchor_wrong_point_backs_and_tries_next():
     assert r._act.calls == [("tap", (36, 700)), ("back", None), ("tap", (36, 772))]
 
 
+def test_enter_subsidy_empty_anchors_falls_back_to_coord():
+    """锚点认不到（空列表）→ 落到标定坐标（不是不点）。"""
+    pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=0, prove_max=1, step_wait_s=0)
+    seq = [PageView(PKG, HOME, "限时秒杀"), PageView(PKG, ACT, "抽福袋")]
+    r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)
+    spec = TargetLocateSpec(key="subsidy", labels=("百亿补贴",), min_overlap=3,
+                            coord=(0.125, 0.46875))
+    r.enter_subsidy(spec, anchor_points=lambda: [])
+    assert r._act.calls == [("tap", (90, 600))]
+
+
 def test_enter_subsidy_empty_anchor_list_does_not_blind_tap():
-    """锚点供给器给不出候选（认不到锚点）→ 不点这一枪（安全不变量：绝不盲点）。"""
+    """锚点供给器给不出候选（认不到锚点）且**也没有坐标** → 不点这一枪（绝不盲点）。"""
     pol = StagePolicy(pkg=PKG, home_activity=HOME, entry_retry=0, prove_max=1, step_wait_s=0)
     seq = [PageView(PKG, HOME, "限时秒杀")]
     r = StageRunner(lambda: seq.pop(0) if len(seq) > 1 else seq[0], Actor(), pol)

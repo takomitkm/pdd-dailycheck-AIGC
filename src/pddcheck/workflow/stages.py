@@ -208,6 +208,8 @@ class StageRunner:
                              min_conf=self.policy.min_conf)
             r = res[spec.key]
             tapped = False
+            anchors = list(anchor_points()) if anchor_points is not None else []
+            anchors = [c for c in anchors if c]
             if r.winning is not None:
                 self._act("tap", r.winning.tap_point)
                 self.policy.wait_step()                   # 等页面跳转（真机实测必需）
@@ -218,13 +220,11 @@ class StageRunner:
                 self._act("back", None)
                 self.policy._sleep(1.0)
                 tapped = True
-            elif anchor_points is not None:
+            elif anchors:
                 # 锚点推算（11-13 加固，优先于固定坐标）：认到可读图标行文字 →
                 # 推算百亿补贴图标位置。每个候选靠落地校验裁决；点错立即 BACK
                 # 退掉再试下一个（pdd.sh 的精神：点错就退，不拿盲点冒充成功）。
-                for cand in anchor_points():
-                    if not cand:
-                        continue
+                for cand in anchors:
                     self._act("tap", (cand[0], cand[1]))
                     self.policy.wait_step()
                     v2 = self._read()
